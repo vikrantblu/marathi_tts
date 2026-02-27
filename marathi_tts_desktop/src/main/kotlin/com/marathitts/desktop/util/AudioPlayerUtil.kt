@@ -58,6 +58,24 @@ class AudioPlayerUtil {
         mediaPlayer?.play()
     }
 
+    /** Audio duration in milliseconds, or -1.0 if unknown. */
+    val durationMs: Double
+        get() = mediaPlayer?.totalDuration?.toMillis() ?: -1.0
+
+    /** Current playback position in milliseconds. */
+    val currentTimeMs: Double
+        get() = mediaPlayer?.currentTime?.toMillis() ?: 0.0
+
+    /** Register a callback for when media is ready (duration available). */
+    fun setOnReady(action: () -> Unit) {
+        mediaPlayer?.setOnReady(action)
+    }
+
+    /** Register a callback for when playback finishes. */
+    fun setOnEndOfMedia(action: () -> Unit) {
+        mediaPlayer?.setOnEndOfMedia(action)
+    }
+
     val isPlaying: Boolean
         get() = mediaPlayer?.status == MediaPlayer.Status.PLAYING
 }

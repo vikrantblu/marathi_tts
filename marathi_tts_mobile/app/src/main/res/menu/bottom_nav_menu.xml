@@ -1,49 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item
-        android:id="@+id/ttsFragment"
-        android:icon="@android:drawable/ic_btn_speak_now"
-        android:title="@string/tab_tts"/>
+    <group android:id="@+id/group_speech"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/ttsFragment"
+            android:icon="@android:drawable/ic_btn_speak_now"
+            android:title="@string/tab_tts"/>
+        <item
+            android:id="@+id/emotionFragment"
+            android:icon="@android:drawable/ic_menu_info_details"
+            android:title="@string/tab_emotion"/>
+        <item
+            android:id="@+id/sttFragment"
+            android:icon="@android:drawable/ic_lock_silent_mode_off"
+            android:title="@string/tab_stt"/>
+    </group>
 
-    <item
-        android:id="@+id/emotionFragment"
-        android:icon="@android:drawable/ic_menu_info_details"
-        android:title="@string/tab_emotion"/>
+    <item android:title="@string/group_text_input">
+        <menu>
+            <group android:id="@+id/group_input"
+                android:checkableBehavior="single">
+                <item
+                    android:id="@+id/ocrFragment"
+                    android:icon="@android:drawable/ic_menu_camera"
+                    android:title="@string/tab_ocr"/>
+                <item
+                    android:id="@+id/pdfFragment"
+                    android:icon="@android:drawable/ic_menu_agenda"
+                    android:title="@string/tab_pdf"/>
+                <item
+                    android:id="@+id/webFetchFragment"
+                    android:icon="@android:drawable/ic_menu_search"
+                    android:title="@string/tab_web"/>
+                <item
+                    android:id="@+id/correctionFragment"
+                    android:icon="@android:drawable/ic_menu_edit"
+                    android:title="@string/tab_correction"/>
+                <item
+                    android:id="@+id/bookReaderFragment"
+                    android:icon="@android:drawable/ic_menu_gallery"
+                    android:title="@string/tab_book_reader"/>
+            </group>
+        </menu>
+    </item>
 
-    <item
-        android:id="@+id/ocrFragment"
-        android:icon="@android:drawable/ic_menu_camera"
-        android:title="@string/tab_ocr"/>
-
-    <item
-        android:id="@+id/correctionFragment"
-        android:icon="@android:drawable/ic_menu_edit"
-        android:title="@string/tab_correction"/>
-
-    <item
-        android:id="@+id/pdfFragment"
-        android:icon="@android:drawable/ic_menu_agenda"
-        android:title="@string/tab_pdf"/>
-
-    <item
-        android:id="@+id/webFetchFragment"
-        android:icon="@android:drawable/ic_menu_search"
-        android:title="@string/tab_web"/>
-
-    <item
-        android:id="@+id/sttFragment"
-        android:icon="@android:drawable/ic_btn_speak_now"
-        android:title="@string/tab_stt"/>
-
-    <item
-        android:id="@+id/modiFragment"
-        android:icon="@android:drawable/ic_menu_sort_by_size"
-        android:title="@string/tab_modi"/>
-
-    <item
-        android:id="@+id/stotraFragment"
-        android:icon="@android:drawable/ic_menu_my_calendar"
-        android:title="@string/tab_stotra"/>
+    <item android:title="@string/group_library">
+        <menu>
+            <group android:id="@+id/group_library"
+                android:checkableBehavior="single">
+                <item
+                    android:id="@+id/modiFragment"
+                    android:icon="@android:drawable/ic_menu_sort_by_size"
+                    android:title="@string/tab_modi"/>
+                <item
+                    android:id="@+id/stotraFragment"
+                    android:icon="@android:drawable/ic_menu_my_calendar"
+                    android:title="@string/tab_stotra"/>
+            </group>
+        </menu>
+    </item>
 
 </menu>

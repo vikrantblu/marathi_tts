@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.marathitts.mobile.service.NativeImageOcr
+import com.marathitts.mobile.service.TextReflow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -26,12 +27,14 @@ class OcrViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = OcrState(isLoading = true, status = "Extracting text…")
         viewModelScope.launch {
             try {
-                val text = withContext(Dispatchers.IO) {
+                val rawText = withContext(Dispatchers.IO) {
                     NativeImageOcr.extract(File(imagePath))
                 }
-                if (text.isBlank()) {
+                if (rawText.isBlank()) {
                     _state.value = OcrState(status = "No text found in image")
                 } else {
+                    // Reflow: join word-wrapped lines so TTS doesn't pause at visual line breaks
+                    val text = TextReflow.reflow(rawText)
                     _state.value = OcrState(text = text, status = "Extraction complete ✓")
                 }
             } catch (e: Exception) {

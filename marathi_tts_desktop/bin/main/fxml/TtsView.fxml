@@ -47,6 +47,16 @@
                 <Label text="Voice Settings" styleClass="section-label"/>
                 <Region prefHeight="12"/>
 
+                <!-- Language selector -->
+                <VBox styleClass="section-card" spacing="6">
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Language" prefWidth="60"/>
+                        <ComboBox fx:id="languageCombo" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    </HBox>
+                </VBox>
+
+                <Region prefHeight="8"/>
+
                 <!-- Speed -->
                 <VBox styleClass="section-card" spacing="6">
                     <HBox alignment="CENTER_LEFT" spacing="8">
@@ -76,6 +86,14 @@
                 <!-- Emotion + options -->
                 <VBox styleClass="section-card" spacing="8">
                     <Label text="Speech Mode" styleClass="section-label"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Engine" prefWidth="60"/>
+                        <ComboBox fx:id="engineCombo" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    </HBox>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Voice" prefWidth="60"/>
+                        <ComboBox fx:id="genderCombo" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    </HBox>
                     <HBox spacing="8" alignment="CENTER_LEFT">
                         <Label text="Emotion" prefWidth="60"/>
                         <ComboBox fx:id="emotionCombo" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Image preview -->
+    <ImageView
+        android:id="@+id/image_preview"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:scaleType="centerInside"
+        android:background="#f0f0f0"
+        android:contentDescription="Book page preview"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Capture buttons — large for elderly users -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/capture_spread_btn"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:text="@string/btn_capture_spread"
+            android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/capture_single_btn"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:text="@string/btn_capture_single"
+            android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/browse_btn"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:text="@string/btn_browse_image"/>
+    </LinearLayout>
+
+    <!-- Page info -->
+    <TextView
+        android:id="@+id/page_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?attr/textAppearanceLabelMedium"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone"/>
+
+    <!-- Extracted text (scrollable, takes remaining space) -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_extracted_text"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:layout_marginBottom="4dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="8dp">
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/extracted_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="200dp"
+                android:inputType="textMultiLine"
+                android:gravity="top"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </ScrollView>
+
+    <!-- Action buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/read_aloud_btn"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:textSize="15sp"
+            android:text="@string/btn_read_aloud"
+            android:enabled="false"
+            android:layout_marginEnd="8dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/clear_btn"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:text="@string/btn_clear"/>
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/book_reader_hint"
+        android:textAppearance="?attr/textAppearanceLabelMedium"/>
+</LinearLayout>

@@ -68,6 +68,11 @@
                 <fx:include fx:id="modiView" source="ModiView.fxml"/>
             </Tab>
 
+            <!-- Stotra Library Tab -->
+            <Tab text="📿  Stotra Library">
+                <fx:include fx:id="stotraView" source="StotraView.fxml"/>
+            </Tab>
+
         </TabPane>
     </center>
 

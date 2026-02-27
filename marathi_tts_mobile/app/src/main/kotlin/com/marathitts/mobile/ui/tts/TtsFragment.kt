@@ -1,6 +1,12 @@
 package com.marathitts.mobile.ui.tts
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.BackgroundColorSpan
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +30,9 @@ class TtsFragment : Fragment() {
 
     private val viewModel: TtsViewModel by viewModels()
     private val audioPlayer = AudioPlayerService()
+    private val highlightHandler = Handler(Looper.getMainLooper())
+    private var highlightRunnable: Runnable? = null
+    private var originalText: String = ""
 
     companion object {
         val EMOTIONS = listOf(
@@ -42,8 +51,17 @@ class TtsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Accept text passed from other fragments (STT / Correction / PDF / Web)
+        // Accept text passed from other fragments (OCR / STT / Correction / PDF / Web / Emotion)
         arguments?.getString("tts_text")?.let { binding.textInput.setText(it) }
+
+        // Accept emotion passed from Emotion fragment
+        arguments?.getString("tts_emotion")?.let { emotionName ->
+            val idx = EMOTIONS.indexOfFirst { it.equals(emotionName, ignoreCase = true) }
+            if (idx >= 0) {
+                binding.emotionSpinner.setSelection(idx)
+                binding.autoDetectCheck.isChecked = false
+            }
+        }
 
         // ── Engine spinner ───────────────────────────────────────────
         val engineAdapter = ArrayAdapter(
@@ -68,6 +86,15 @@ class TtsFragment : Fragment() {
         langAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.languageSpinner.adapter = langAdapter
 
+        // ── Gender spinner ───────────────────────────────────────────
+        val genderAdapter = ArrayAdapter(
+            requireContext(), android.R.layout.simple_spinner_item,
+            TtsEngineManager.GENDER_NAMES
+        )
+        genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.genderSpinner.adapter = genderAdapter
+        binding.genderSpinner.setSelection(0) // Female (default)
+
         // Emotion spinner
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, EMOTIONS)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -88,6 +115,14 @@ class TtsFragment : Fragment() {
         binding.pitchSlider.setLabelFormatter(labelFmt)
         binding.volumeSlider.setLabelFormatter(labelFmt)
 
+        // Real-time speed/volume adjustment during playback
+        binding.speedSlider.addOnChangeListener { _, value, _ ->
+            audioPlayer.setSpeed(value / 10f)
+        }
+        binding.volumeSlider.addOnChangeListener { _, value, _ ->
+            audioPlayer.setVolume(value / 10f)
+        }
+
         binding.generateBtn.setOnClickListener {
             val text = binding.textInput.text.toString().trim()
             if (text.isEmpty()) {
@@ -105,6 +140,7 @@ class TtsFragment : Fragment() {
                 text = text,
                 engineIndex = binding.engineSpinner.selectedItemPosition,
                 langCode = TtsEngineManager.LANGUAGE_CODES[binding.languageSpinner.selectedItemPosition],
+                gender = TtsEngineManager.GENDER_CODES[binding.genderSpinner.selectedItemPosition],
                 speed = binding.speedSlider.value / 10f,
                 pitch = binding.pitchSlider.value / 10f,
                 volume = binding.volumeSlider.value / 10f,
@@ -116,14 +152,20 @@ class TtsFragment : Fragment() {
 
         binding.playBtn.setOnClickListener {
             val path = viewModel.state.value?.audioPath ?: return@setOnClickListener
+            originalText = binding.textInput.text.toString()
             audioPlayer.play(path) {
-                requireActivity().runOnUiThread { binding.statusText.text = "Playback complete" }
+                requireActivity().runOnUiThread {
+                    binding.statusText.text = "Playback complete"
+                    stopWordHighlight()
+                }
             }
             binding.statusText.text = "Playing…"
+            startWordHighlight()
         }
 
         binding.stopBtn.setOnClickListener {
             audioPlayer.stop()
+            stopWordHighlight()
             binding.statusText.text = "Stopped"
         }
 
@@ -155,6 +197,84 @@ class TtsFragment : Fragment() {
         }
     }
 
+    /**
+     * Start word-by-word highlighting synced to audio duration.
+     * Uses Handler.postDelayed loop that checks currentPosition vs duration
+     * to compute which word should be highlighted, then uses SpannableString.
+     */
+    private fun startWordHighlight() {
+        stopWordHighlight()
+        val text = originalText
+        val words = text.split("\\s+".toRegex()).filter { it.isNotEmpty() }
+        if (words.isEmpty()) return
+
+        // Pre-compute word start/end positions
+        val wordPositions = mutableListOf<Pair<Int, Int>>()
+        var searchFrom = 0
+        for (word in words) {
+            val idx = text.indexOf(word, searchFrom)
+            if (idx >= 0) {
+                wordPositions.add(idx to idx + word.length)
+                searchFrom = idx + word.length
+            }
+        }
+        if (wordPositions.isEmpty()) return
+
+        val highlightBg = 0xFF2196F3.toInt()   // Material Blue 500
+        val highlightFg = 0xFFFFFFFF.toInt()    // White text
+
+        highlightRunnable = object : Runnable {
+            override fun run() {
+                if (!audioPlayer.isPlaying || _binding == null) {
+                    stopWordHighlight()
+                    return
+                }
+                val duration = audioPlayer.durationMs
+                val position = audioPlayer.currentPositionMs
+                if (duration <= 0) {
+                    highlightHandler.postDelayed(this, 100)
+                    return
+                }
+
+                // Calculate which word to highlight based on position/duration ratio
+                val progress = position.toFloat() / duration.toFloat()
+                val wordIdx = (progress * wordPositions.size).toInt()
+                    .coerceIn(0, wordPositions.size - 1)
+
+                val spannable = SpannableString(text)
+                val (start, end) = wordPositions[wordIdx]
+                spannable.setSpan(
+                    BackgroundColorSpan(highlightBg), start, end,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                spannable.setSpan(
+                    ForegroundColorSpan(highlightFg), start, end,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                _binding?.textInput?.setText(spannable)
+                _binding?.textInput?.setSelection(end.coerceAtMost(text.length))
+
+                // Schedule next update (~50ms for smooth tracking)
+                val msPerWord = if (wordPositions.size > 1) {
+                    (duration / wordPositions.size).toLong().coerceIn(50L, 500L)
+                } else 200L
+                highlightHandler.postDelayed(this, msPerWord.coerceAtLeast(50L))
+            }
+        }
+        highlightHandler.post(highlightRunnable!!)
+    }
+
+    private fun stopWordHighlight() {
+        highlightRunnable?.let { highlightHandler.removeCallbacks(it) }
+        highlightRunnable = null
+        // Restore original text without spans
+        if (_binding != null && originalText.isNotEmpty()) {
+            val cursorPos = _binding?.textInput?.selectionEnd ?: 0
+            _binding?.textInput?.setText(originalText)
+            _binding?.textInput?.setSelection(cursorPos.coerceAtMost(originalText.length))
+        }
+    }
+
     private fun showFeedbackDialog() {
         val ratingsItems = arrayOf("⭐ Poor", "⭐⭐ Fair", "⭐⭐⭐ Good", "⭐⭐⭐⭐ Very Good", "⭐⭐⭐⭐⭐ Excellent")
         var selectedRating = 2
@@ -171,6 +291,7 @@ class TtsFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        stopWordHighlight()
         audioPlayer.stop()
         _binding = null
     }

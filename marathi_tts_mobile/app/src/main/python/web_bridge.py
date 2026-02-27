@@ -104,7 +104,7 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
     try:
         log.info("HTTP GET %s", url)
         t_req = time.time()
-        resp = requests.get(url, headers=_HEADERS, timeout=20, verify=False)
+        resp = requests.get(url, headers=_HEADERS, timeout=20, verify=True)
         resp.raise_for_status()
         log.info("HTTP %d | %.2fs | encoding=%s | content_len=%d",
                  resp.status_code, time.time() - t_req,

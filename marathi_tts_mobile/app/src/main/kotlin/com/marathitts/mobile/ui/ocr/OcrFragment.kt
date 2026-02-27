@@ -13,6 +13,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.marathitts.mobile.R
 import com.marathitts.mobile.databinding.FragmentOcrBinding
 import java.io.File
 
@@ -75,11 +77,20 @@ class OcrFragment : Fragment() {
                 ?: Toast.makeText(context, "Select an image first", Toast.LENGTH_SHORT).show()
         }
 
+        binding.sendToTtsBtn.setOnClickListener {
+            val text = binding.extractedText.text.toString()
+            if (text.isNotBlank()) {
+                val bundle = Bundle().apply { putString("tts_text", text) }
+                findNavController().navigate(R.id.ttsFragment, bundle)
+            }
+        }
+
         binding.clearBtn.setOnClickListener {
             selectedImagePath = null
             binding.imagePreview.setImageDrawable(null)
             binding.extractedText.text?.clear()
             binding.extractBtn.isEnabled = false
+            binding.sendToTtsBtn.isEnabled = false
             binding.statusText.text = "Select an image to begin"
         }
 
@@ -87,7 +98,10 @@ class OcrFragment : Fragment() {
             binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
             binding.extractBtn.isEnabled = !state.isLoading && selectedImagePath != null
             binding.statusText.text = state.status
-            if (state.text != null) binding.extractedText.setText(state.text)
+            if (state.text != null) {
+                binding.extractedText.setText(state.text)
+                binding.sendToTtsBtn.isEnabled = state.text.isNotBlank()
+            }
         }
     }
 

@@ -10,12 +10,16 @@ bundles a complete Python 3.11 runtime inside the APK.
 
 | Tab | Feature |
 |-----|---------|
-| 🔊 **TTS** | Convert Marathi text to speech. Control speed, pitch, volume, emotion, verse mode. |
+| 🔊 **TTS** | Convert Marathi text to speech. Multi-engine: Auto / gTTS / System TTS / Sherpa AI. |
+| 🕉️ **Stotra** | Browse 15+ stotras, verse-mode TTS with Sanskrit phonetics. |
+| 🔤 **Phonetics** | Sanskrit + Marathi phonetic preprocessing (visarga, schwa, anusvara, conjuncts). |
+| 🗣️ **G2P** | Grapheme-to-phoneme engine for accurate pronunciation. |
 | 😊 **Emotion** | Detect dominant emotion with score breakdown. |
-| 📷 **OCR** | Extract Marathi text from camera photos or gallery images. |
+| 📷 **OCR** | Extract Marathi text from camera photos or gallery images (ML Kit + Tesseract). |
 | ✏️ **Correction** | AI-powered Marathi text spell/grammar correction. |
 | 📄 **PDF** | Extract text from PDF files. |
 | 🌐 **Web** | Fetch and clean Marathi text from any URL. |
+| 🔄 **Modi** | Convert Modi script to Devanagari. |
 
 ---
 

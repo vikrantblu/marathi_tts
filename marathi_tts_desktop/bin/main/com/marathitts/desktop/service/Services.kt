@@ -32,11 +32,15 @@ class TtsService(private val projectRoot: String? = null) {
         volume: Double = 1.0,
         emotion: String? = null,
         isVerse: Boolean = false,
+        language: String = "mr",
+        engine: String = "auto",
+        gender: String = "female",
         outputPath: String? = null
     ): Task<Map<String, Any?>> = object : Task<Map<String, Any?>>() {
         override fun call(): Map<String, Any?> {
             val args = mutableListOf("--text", text, "--speed", speed.toString(),
-                "--pitch", pitch.toString(), "--volume", volume.toString())
+                "--pitch", pitch.toString(), "--volume", volume.toString(),
+                "--lang", language, "--engine", engine, "--gender", gender)
             if (emotion != null) args += listOf("--emotion", emotion)
             if (isVerse) args += "--verse"
             val stotraDir = findStotraDir()

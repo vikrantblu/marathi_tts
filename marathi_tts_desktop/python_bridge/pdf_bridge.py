@@ -68,6 +68,7 @@ def _extract_pymupdf(pdf_bytes: bytes) -> tuple:
     import fitz  # type: ignore
     log.debug("PyMuPDF: opening PDF (%d bytes)", len(pdf_bytes))
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    n_pages = len(doc)  # capture BEFORE close
     pages = []
     for i, page in enumerate(doc):
         t = page.get_text("text") or ""
@@ -75,7 +76,7 @@ def _extract_pymupdf(pdf_bytes: bytes) -> tuple:
             pages.append(t)
             log.debug("PyMuPDF page %d: %d chars", i + 1, len(t))
     doc.close()
-    return "\n\n".join(pages), len(doc)
+    return "\n\n".join(pages), n_pages
 
 
 def _extract_pypdf2(pdf_bytes: bytes) -> tuple:

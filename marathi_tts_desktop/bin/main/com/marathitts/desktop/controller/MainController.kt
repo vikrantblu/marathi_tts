@@ -34,6 +34,7 @@ class MainController : Initializable {
     @FXML lateinit var webFetchViewController: WebFetchController
     @FXML lateinit var sttViewController: SttController
     @FXML lateinit var modiViewController: ModiController
+    @FXML lateinit var stotraViewController: StotraController
 
     private val prefs = Preferences.userNodeForPackage(MainController::class.java)
 
@@ -58,6 +59,7 @@ class MainController : Initializable {
         webFetchViewController.projectRoot   = rootProvider
         sttViewController.projectRoot        = rootProvider
         modiViewController.projectRoot       = rootProvider
+        stotraViewController.projectRoot     = rootProvider
 
         // Wire "Send to TTS" callbacks for every tab that has this button.
         // Each callback populates the TTS text area and switches to the TTS tab.
@@ -71,6 +73,7 @@ class MainController : Initializable {
         pdfViewController.onSendToTts        = sendToTts
         sttViewController.onSendToTts        = sendToTts
         modiViewController.onSendToTts       = sendToTts
+        stotraViewController.onSendToTts     = sendToTts
 
         setStatus("Ready")
     }

@@ -6,6 +6,10 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <!-- Navigation drawer group labels -->
+    <string name="group_text_input">Text Input</string>
+    <string name="group_library">Scripts &amp; Library</string>
+
     <!-- Tab labels -->
     <string name="tab_tts">TTS</string>
     <string name="tab_emotion">Emotion</string>
@@ -23,6 +27,7 @@
     <string name="label_marathi_text">मराठी मजकूर</string>
     <string name="hint_marathi_text">येथे मराठी मजकूर टाइप करा…</string>
     <string name="label_voice_settings">Voice Settings</string>
+    <string name="label_voice_gender">आवाज (Voice)</string>
     <string name="label_speed">Speed</string>
     <string name="label_pitch">Pitch</string>
     <string name="label_volume">Volume</string>
@@ -73,6 +78,13 @@
     <string name="label_mode">Conversion Mode</string>
     <string name="label_input">Input</string>
     <string name="label_output">Output</string>
+
+    <!-- Book Reader screen -->
+    <string name="tab_book_reader">Book Reader</string>
+    <string name="btn_capture_spread">📷 Two Pages</string>
+    <string name="btn_capture_single">📷 One Page</string>
+    <string name="btn_read_aloud">📖 Read Aloud</string>
+    <string name="book_reader_hint">Capture a book page to begin</string>
 
     <!-- Shared -->
     <string name="btn_format">🔤 Format</string>

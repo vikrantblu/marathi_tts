@@ -11,11 +11,17 @@ via subprocess calls to bundled Python bridge scripts — **no server, no Django
 | Feature | Description |
 |--------|-------------|
 | 🔊 **Text to Speech** | Convert Marathi Devanagari text to audio (MP3). Speed, pitch, volume, emotion, verse mode controls. |
+| �️ **Verse / Stotra Mode** | Shloka-aware preprocessing with visarga sandhi, danda→pause, verse numbering removal. |
+| 📚 **Stotra Library** | Pre-recorded audio catalog for 10+ stotras with fingerprint-based matching. |
+| 🔤 **Sanskrit Phonetics** | Visarga sandhi, echoing visarga, halant expansion, conjunct aids (ज्ञ→द्न्य). |
+| 🔤 **Marathi Phonetics** | Schwa deletion, anusvara cleanup, visarga word lexicon, English vowel fallback. |
+| 🗣️ **G2P Engine** | Grapheme-to-phoneme processing for correct conjunct and anusvara pronunciation. |
 | 😊 **Emotion Analysis** | Detect the dominant emotion in a Marathi text with score breakdown chart. |
 | 📷 **Image OCR** | Extract Marathi text from JPG/PNG/BMP images using Tesseract. |
 | ✏️ **AI Text Correction** | Auto-correct Marathi spelling/grammar using the trained `marathi-correction-model`. |
 | 📄 **PDF Extract** | Pull Marathi text from PDF files (PyMuPDF → PyPDF2 → OCR fallback). |
 | 🌐 **Web Fetch** | Fetch and clean Marathi text from any URL. |
+| 🔄 **Modi Script** | Convert Modi script to Devanagari. |
 
 ---
 

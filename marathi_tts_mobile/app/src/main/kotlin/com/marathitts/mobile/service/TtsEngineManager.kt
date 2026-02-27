@@ -45,6 +45,9 @@ class TtsEngineManager(private val context: Context) {
         )
         val LANGUAGE_CODES = listOf("mr", "hi", "sa", "en")
 
+        val GENDER_NAMES = listOf("स्त्री (Female)", "पुरुष (Male)")
+        val GENDER_CODES = listOf("female", "male")
+
         const val ENGINE_AUTO = 0
         const val ENGINE_GTTS = 1
         const val ENGINE_SYSTEM = 2
@@ -80,6 +83,7 @@ class TtsEngineManager(private val context: Context) {
         text: String,
         engineIndex: Int,
         langCode: String = "mr",
+        gender: String = "female",
         speed: Float = 1.0f,
         pitch: Float = 1.0f,
         volume: Float = 1.0f,
@@ -99,7 +103,7 @@ class TtsEngineManager(private val context: Context) {
                 val result = when (engine) {
                     ENGINE_SHERPA -> trySherpa(text, langCode, speed, pitch, volume, isVerse)
                     ENGINE_SYSTEM -> trySystemTts(text, langCode, speed, pitch)
-                    ENGINE_GTTS -> tryGtts(text, speed, pitch, volume, emotion, isVerse)
+                    ENGINE_GTTS -> tryGtts(text, langCode, gender, speed, pitch, volume, emotion, isVerse)
                     else -> null
                 }
                 if (result != null && result.optBoolean("success", false)) {
@@ -164,12 +168,14 @@ class TtsEngineManager(private val context: Context) {
     // ── gTTS (via Python bridge) ─────────────────────────────────────────────
 
     private suspend fun tryGtts(
-        text: String, speed: Float, pitch: Float, volume: Float,
+        text: String, langCode: String, gender: String, speed: Float, pitch: Float, volume: Float,
         emotion: String?, isVerse: Boolean
     ): JSONObject = withContext(Dispatchers.IO) {
         PythonBridge.init(context)
         val kwargs = mutableMapOf<String, Any?>(
             "text" to text,
+            "language" to langCode,
+            "gender" to gender,
             "speed" to speed.toDouble(),
             "pitch" to pitch.toDouble(),
             "volume" to volume.toDouble(),

@@ -77,6 +77,19 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"/>
 
+        <!-- Voice Gender selector -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/label_voice_gender"
+            android:textAppearance="?attr/textAppearanceLabelLarge"
+            android:layout_marginBottom="4dp"/>
+        <Spinner
+            android:id="@+id/gender_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+
         <!-- Voice settings -->
         <TextView
             android:layout_width="match_parent"

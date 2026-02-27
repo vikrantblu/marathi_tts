@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import com.marathitts.mobile.databinding.ActivityMainBinding
 
@@ -23,7 +24,18 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Drawer toggle (hamburger icon) — wires drawer open/close to ActionBar
+        // Register ALL fragments as top-level destinations so drawer opens from each
+        val appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.ttsFragment, R.id.emotionFragment, R.id.ocrFragment,
+                R.id.correctionFragment, R.id.pdfFragment, R.id.webFetchFragment,
+                R.id.sttFragment, R.id.modiFragment, R.id.stotraFragment
+            ),
+            binding.drawerLayout
+        )
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration)
+
+        // Drawer toggle (hamburger icon)
         val toggle = ActionBarDrawerToggle(
             this,
             binding.drawerLayout,
@@ -35,7 +47,6 @@ class MainActivity : AppCompatActivity() {
         toggle.syncState()
 
         // Wire NavigationView items to Navigation Component
-        // NavigationUI supports unlimited items (no 5-item limit like BottomNavigationView)
         NavigationUI.setupWithNavController(binding.navView, navController)
     }
 }

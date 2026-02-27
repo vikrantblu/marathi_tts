@@ -39,6 +39,9 @@ class TtsController : Initializable {
     @FXML lateinit var speedLabel: Label
     @FXML lateinit var pitchLabel: Label
     @FXML lateinit var volumeLabel: Label
+    @FXML lateinit var languageCombo: ComboBox<String>
+    @FXML lateinit var engineCombo: ComboBox<String>
+    @FXML lateinit var genderCombo: ComboBox<String>
     @FXML lateinit var emotionCombo: ComboBox<String>
     @FXML lateinit var verseModeCheck: CheckBox
     @FXML lateinit var generateBtn: Button
@@ -84,9 +87,26 @@ class TtsController : Initializable {
             "auto (detect)", "neutral", "happy", "sad", "angry",
             "fearful", "surprised", "disgusted", "calm", "excited"
         )
+        val LANGUAGES = listOf("मराठी (Marathi)", "हिंदी (Hindi)", "संस्कृत (Sanskrit)", "English")
+        val LANGUAGE_CODES = mapOf(
+            "मराठी (Marathi)" to "mr", "हिंदी (Hindi)" to "hi",
+            "संस्कृत (Sanskrit)" to "sa", "English" to "en"
+        )
+        val ENGINES = listOf("Auto (best available)", "Google TTS", "System TTS")
+        val ENGINE_CODES = mapOf(
+            "Auto (best available)" to "auto", "Google TTS" to "google", "System TTS" to "system"
+        )
+        val GENDERS = listOf("स्त्री (Female)", "पुरुष (Male)")
+        val GENDER_CODES = mapOf("स्त्री (Female)" to "female", "पुरुष (Male)" to "male")
     }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
+        languageCombo.items.addAll(LANGUAGES)
+        languageCombo.selectionModel.selectFirst()
+        engineCombo.items.addAll(ENGINES)
+        engineCombo.selectionModel.selectFirst()
+        genderCombo.items.addAll(GENDERS)
+        genderCombo.selectionModel.selectFirst()
         emotionCombo.items.addAll(EMOTIONS)
         emotionCombo.selectionModel.selectFirst()
 
@@ -164,13 +184,19 @@ class TtsController : Initializable {
     }
 
     private fun runTtsGeneration(text: String, emotion: String?) {
+        val langCode = LANGUAGE_CODES[languageCombo.value] ?: "mr"
+        val engineCode = ENGINE_CODES[engineCombo.value] ?: "auto"
+        val genderCode = GENDER_CODES[genderCombo.value] ?: "female"
         val task = TtsService(projectRoot?.invoke()).generateAudio(
             text = text,
             speed = speedSlider.value,
             pitch = pitchSlider.value,
             volume = volumeSlider.value,
             emotion = emotion,
-            isVerse = verseModeCheck.isSelected
+            isVerse = verseModeCheck.isSelected,
+            language = langCode,
+            engine = engineCode,
+            gender = genderCode
         )
         task.setOnSucceeded {
             val result = task.value
@@ -282,7 +308,7 @@ class TtsController : Initializable {
         detectedEmotionLabel.text = ""
     }
 
-    /** Simulate word-by-word highlighting by cycling through words in the TextArea. */
+    /** Word-by-word highlighting synced to audio duration. */
     private fun startWordHighlight() {
         stopWordHighlight()
         val text = textArea.text
@@ -292,6 +318,14 @@ class TtsController : Initializable {
         var wordIndex = 0
         var charOffset = 0
 
+        // Try to get audio duration for accurate per-word timing
+        val audioDuration = player.durationMs
+        val msPerWord = if (audioDuration > 0 && words.size > 1) {
+            (audioDuration / words.size).toLong().coerceIn(100L, 2000L)
+        } else {
+            300L // fallback
+        }
+
         wordHighlightTimer = Timer(true)
         wordHighlightTimer?.scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
@@ -299,6 +333,21 @@ class TtsController : Initializable {
                     cancel()
                     Platform.runLater { textArea.deselect() }
                     return
+                }
+                // Sync word index to actual audio position when possible
+                val currentMs = player.currentTimeMs
+                val totalMs = player.durationMs
+                if (totalMs > 0 && currentMs > 0) {
+                    val expectedIdx = ((currentMs / totalMs) * words.size).toInt()
+                    if (expectedIdx > wordIndex) {
+                        // Jump ahead to sync
+                        wordIndex = expectedIdx.coerceAtMost(words.size - 1)
+                        charOffset = 0
+                        for (i in 0 until wordIndex) {
+                            val pos = text.indexOf(words[i], charOffset)
+                            if (pos >= 0) charOffset = pos + words[i].length
+                        }
+                    }
                 }
                 val word = words[wordIndex]
                 val start = text.indexOf(word, charOffset)
@@ -309,7 +358,13 @@ class TtsController : Initializable {
                 }
                 wordIndex++
             }
-        }, 0L, 300L)  // Approximate 300ms per word — adjust for actual audio duration
+        }, 0L, msPerWord)
+
+        // Also register end-of-media callback to clear highlighting
+        player.setOnEndOfMedia {
+            stopWordHighlight()
+            Platform.runLater { stopBtn.isDisable = true; setStatus("Finished") }
+        }
     }
 
     private fun stopWordHighlight() {

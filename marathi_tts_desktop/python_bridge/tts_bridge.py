@@ -57,6 +57,20 @@ os.makedirs(_OUTPUT_DIR, exist_ok=True)
 log.info("TTS Bridge initialised | bridge_dir=%s | output_dir=%s",
          _BRIDGE_DIR, _OUTPUT_DIR)
 
+# -- Phonetic engine --------------------------------------------------------
+try:
+    from tts.utils.phonetic.marathi_phonetics import (
+        apply_sanskrit_phonetics,
+        apply_marathi_phonetics,
+        preprocess_stotra_text as _phonetic_stotra,
+    )
+    log.info("Phonetic engine (marathi_phonetics) loaded OK")
+except ImportError as _e:
+    log.warning("marathi_phonetics not available (%s) — using fallback", _e)
+    def apply_sanskrit_phonetics(t): return t
+    def apply_marathi_phonetics(t): return t
+    _phonetic_stotra = None
+
 
 # ---------------------------------------------------------------------------
 # G2P Engine (lazy singleton)
@@ -234,6 +248,9 @@ def _normalize_marathi(text: str) -> str:
 def _preprocess_stotra_text(text: str) -> str:
     """Apply pronunciation and pause rules for stotra/shloka Sanskrit-Marathi text.
 
+    If the full phonetic module is available, delegates to it.
+    Otherwise falls back to the inline rules below.
+
     Sanskrit has strict phonetic rules that gTTS (a Marathi conversational model)
     cannot handle natively.  This function rewrites the text so that gTTS produces
     approximately correct pronunciation.
@@ -241,11 +258,17 @@ def _preprocess_stotra_text(text: str) -> str:
     1.  STRUCTURAL cleanup (hyphens, verse numbers, dandas → punctuation)
     2.  TERMINAL HALANT expansion (म् → म, न् → न, etc.)
     3.  VISARGA context-dependent expansion (ः → हा / ह / स / श)
-    4.  ANUSVARA context-dependent nasal hint
-    5.  CONJUNCT pronunciation hints for gTTS
-    6.  OM / special symbols
-    7.  Final punctuation & whitespace cleanup
+    4.  Echoing terminal visarga (-iḥ → -ihi, -uḥ → -uhu)
+    5.  ANUSVARA context-dependent nasal hint
+    6.  CONJUNCT pronunciation hints for gTTS
+    7.  OM / special symbols
+    8.  Final punctuation & whitespace cleanup
     """
+    # Use the full phonetic module if available
+    if _phonetic_stotra is not None:
+        return _phonetic_stotra(text)
+
+    # --- Fallback: inline rules (kept for environments without the module) ---
     import re
     r = text
 
@@ -314,7 +337,7 @@ def _preprocess_stotra_text(text: str) -> str:
 
 
 def _generate_verse_audio(text: str, speed: float, pitch: float, volume: float,
-                          output_path: str) -> dict:
+                          output_path: str, language: str = "mr") -> dict:
     """Generate TTS audio with verse/shloka treatment — no ffmpeg required.
 
     1.  Preprocesses the stotra text (pronunciation + pause punctuation)
@@ -346,7 +369,7 @@ def _generate_verse_audio(text: str, speed: float, pitch: float, volume: float,
 
     t0 = time.time()
     try:
-        gTTS(text=preprocessed, lang="mr", slow=use_slow, lang_check=False).save(raw)
+        gTTS(text=preprocessed, lang=language, slow=use_slow, lang_check=False).save(raw)
     except Exception as exc:
         log.error("[Verse] gTTS failed: %s", exc)
         try: os.unlink(raw)
@@ -386,13 +409,22 @@ def generate_tts(text: str,
                  volume: float = 1.0,
                  output_path: str = None,
                  emotion: str = None,
-                 is_verse: bool = False) -> dict:
+                 is_verse: bool = False,
+                 language: str = "mr",
+                 engine: str = "auto",
+                 gender: str = "female") -> dict:
     """Generate Marathi TTS audio. Returns {success, audio_path} or {success:False, error}."""
     t0 = time.time()
     log.info("=== generate_tts START | text_len=%d speed=%.2f pitch=%.2f "
-             "volume=%.2f emotion=%s verse=%s ===",
-             len(text), speed, pitch, volume, emotion, is_verse)
+             "volume=%.2f emotion=%s verse=%s lang=%s engine=%s gender=%s ===",
+             len(text), speed, pitch, volume, emotion, is_verse, language, engine, gender)
     log.debug("Input text preview: %.200s", text)
+
+    # Apply gender-based pitch shift: gTTS is female by default.
+    # Male voice = pitch down ~4 semitones (factor ~0.79)
+    if gender == 'male':
+        pitch = pitch * 0.79 if abs(pitch - 1.0) > 0.01 else 0.79
+        log.info("[Gender] Male voice: adjusted pitch to %.2f", pitch)
 
     if not text or not text.strip():
         log.error("Empty input text")
@@ -450,7 +482,7 @@ def generate_tts(text: str,
     # 2a: Verse/shloka mode — segment-by-segment with pauses
     if is_verse:
         try:
-            result = _generate_verse_audio(text, speed, pitch, volume, output_path)
+            result = _generate_verse_audio(text, speed, pitch, volume, output_path, language)
             if result.get("success"):
                 result["elapsed_sec"] = round(time.time() - t0, 2)
                 log.info("[Stage 2a] Verse audio SUCCESS (%.2fs)", result["elapsed_sec"])
@@ -463,13 +495,14 @@ def generate_tts(text: str,
     # 2b: Normal gTTS (with G2P)
     try:
         normalized = _normalize_marathi(text)
+        normalized = apply_marathi_phonetics(normalized)  # Marathi phonetic rules
         normalized = _apply_g2p(normalized)
         fd, raw = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
         os.close(fd)
         log.info("[Stage 2b] Calling gTTS | text_len=%d slow=%s", len(normalized), speed < 0.75)
         t_gtts = time.time()
         from gtts import gTTS  # type: ignore
-        gTTS(text=normalized, lang="mr", slow=(speed < 0.75), lang_check=False).save(raw)
+        gTTS(text=normalized, lang=language, slow=(speed < 0.75), lang_check=False).save(raw)
         log.info("[Stage 2] gTTS saved in %.2fs", time.time() - t_gtts)
 
         needs_fx = abs(speed-1.0)>0.05 or abs(pitch-1.0)>0.05 or abs(volume-1.0)>0.05
@@ -492,7 +525,7 @@ def generate_tts(text: str,
     log.info("[Stage 3] Bare gTTS fallback")
     try:
         from gtts import gTTS  # type: ignore
-        gTTS(text=text, lang="mr", slow=False, lang_check=False).save(output_path)
+        gTTS(text=text, lang=language, slow=False, lang_check=False).save(output_path)
         elapsed = time.time() - t0
         log.info("[Stage 3] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
         return {"success": True, "audio_path": output_path, "engine": "gtts_bare",
@@ -512,6 +545,12 @@ def main():
     parser.add_argument("--volume", type=float, default=1.0)
     parser.add_argument("--output", default=None)
     parser.add_argument("--emotion", default=None)
+    parser.add_argument("--lang",    default="mr",
+                        help="Language code: mr, hi, sa, en")
+    parser.add_argument("--engine",  default="auto",
+                        help="TTS engine: auto, google, system")
+    parser.add_argument("--gender",  default="female",
+                        help="Voice gender: female, male")
     parser.add_argument("--verse",  action="store_true")
     parser.add_argument("--stotra-dir", default=None,
                         help="Directory containing stotra_catalog.json + audio files")
@@ -526,7 +565,8 @@ def main():
         print(json.dumps({"success": False, "error": "No --text or --text-file provided"}))
         sys.exit(1)
     result = generate_tts(text, args.speed, args.pitch, args.volume,
-                          args.output, args.emotion, args.verse)
+                          args.output, args.emotion, args.verse,
+                          args.lang, args.engine, args.gender)
     print(json.dumps(result, ensure_ascii=False))
 
 

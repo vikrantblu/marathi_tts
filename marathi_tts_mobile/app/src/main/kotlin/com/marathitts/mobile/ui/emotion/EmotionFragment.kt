@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.marathitts.mobile.R
 import com.marathitts.mobile.databinding.FragmentEmotionBinding
 
 class EmotionFragment : Fragment() {
@@ -36,6 +38,19 @@ class EmotionFragment : Fragment() {
         binding.clearBtn.setOnClickListener {
             binding.textInput.text?.clear()
             binding.resultCard.visibility = View.GONE
+            binding.sendToTtsBtn.isEnabled = false
+        }
+
+        binding.sendToTtsBtn.setOnClickListener {
+            val text = binding.textInput.text.toString()
+            if (text.isNotBlank()) {
+                val emotion = viewModel.state.value?.emotion
+                val bundle = Bundle().apply {
+                    putString("tts_text", text)
+                    if (emotion != null) putString("tts_emotion", emotion)
+                }
+                findNavController().navigate(R.id.ttsFragment, bundle)
+            }
         }
 
         viewModel.state.observe(viewLifecycleOwner) { state ->
@@ -45,6 +60,7 @@ class EmotionFragment : Fragment() {
 
             if (state.emotion != null) {
                 binding.resultCard.visibility = View.VISIBLE
+                binding.sendToTtsBtn.isEnabled = true
                 binding.emotionLabel.text = state.emotion.replaceFirstChar { it.uppercase() }
                 val color = emotionColors[state.emotion.lowercase()] ?: "#808080"
                 binding.emotionColorStrip.setBackgroundColor(android.graphics.Color.parseColor(color))
