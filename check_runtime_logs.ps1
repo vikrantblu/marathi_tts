@@ -1,0 +1,1 @@
+& "C:\Users\vikra\AppData\Local\Android\Sdk\platform-tools\adb.exe" logcat -d -t 1200 --pid=$(& "C:\Users\vikra\AppData\Local\Android\Sdk\platform-tools\adb.exe" shell pidof com.marathitts.mobile) 2>&1 | Select-String -Pattern "extraction|bridge|python|error|exception|failed|PDF|OCR|TTS|WARN|ERROR" -CaseSensitive:$false | Select-Object -Last 80

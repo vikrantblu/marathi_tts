@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.marathitts.desktop.controller.CorrectionController"
+            stylesheets="@../css/style.css">
+    <center>
+        <SplitPane dividerPositions="0.5">
+
+            <!-- ── Left: Input ─────────────────────────────────────── -->
+            <VBox spacing="0" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
+
+                <Label text="चुकीचा मजकूर" styleClass="tab-title"/>
+                <Label text="Paste or type uncorrected Marathi text — MT5 model will fix it"
+                       styleClass="tab-subtitle"/>
+                <Region prefHeight="10"/>
+
+                <TextArea fx:id="inputArea" wrapText="true" VBox.vgrow="ALWAYS"
+                          promptText="येथे चुकीचा मजकूर टाइप करा…"
+                          styleClass="marathi-text-area"/>
+
+                <Region prefHeight="10"/>
+
+                <!-- Action row -->
+                <HBox spacing="8">
+                    <Button fx:id="correctBtn" text="✏️  Correct Text"
+                            onAction="#onCorrect" styleClass="btn-primary"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button fx:id="formatBtn" text="🔤  Format"
+                            onAction="#onFormat" styleClass="btn-secondary"
+                            prefWidth="100"/>
+                    <Button text="✕" onAction="#onClear" styleClass="btn-ghost" prefWidth="36"/>
+                </HBox>
+
+                <Region prefHeight="8"/>
+                <ProgressBar fx:id="progressBar" maxWidth="Infinity" prefHeight="4" visible="false"/>
+                <Region prefHeight="4"/>
+                <Label fx:id="statusLabel" text="Ready" wrapText="true" styleClass="status-text"/>
+            </VBox>
+
+            <!-- ── Right: Output ───────────────────────────────────── -->
+            <VBox spacing="0" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
+
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="सुधारित मजकूर" styleClass="tab-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="methodLabel" styleClass="method-label"/>
+                </HBox>
+                <Label text="Review and edit the output, then send to TTS or submit a correction suggestion"
+                       styleClass="tab-subtitle"/>
+                <Region prefHeight="10"/>
+
+                <TextArea fx:id="outputArea" wrapText="true" editable="true"
+                          VBox.vgrow="ALWAYS" styleClass="marathi-text-area"/>
+
+                <Region prefHeight="10"/>
+                <HBox spacing="8">
+                    <Button fx:id="sendToTtsBtn" text="🔊  Send to TTS"
+                            onAction="#onSendToTts" styleClass="btn-success"
+                            disable="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button fx:id="suggestBtn" text="💡  Suggest Correction"
+                            onAction="#onSuggestCorrection" styleClass="btn-outline"
+                            disable="true" prefWidth="180"/>
+                </HBox>
+            </VBox>
+
+        </SplitPane>
+    </center>
+</BorderPane>

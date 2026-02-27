@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface">
+
+    <!-- ── List screen (visible by default) ── -->
+    <LinearLayout
+        android:id="@+id/list_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <!-- Search bar -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="8dp"
+            app:startIconDrawable="@android:drawable/ic_menu_search"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/search_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="स्तोत्र शोधा / Search stotras…"
+                android:inputType="text"
+                android:imeOptions="actionSearch"
+                android:maxLines="1"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Filter chips row -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginTop="4dp"
+            android:paddingHorizontal="8dp">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/filter_chips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="false">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="सर्व"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:checked="true"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_ganesh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="गणेश"
+                    style="@style/Widget.Material3.Chip.Filter"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_vishnu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="विष्णु"
+                    style="@style/Widget.Material3.Chip.Filter"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_shiv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="शिव"
+                    style="@style/Widget.Material3.Chip.Filter"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_devi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="देवी"
+                    style="@style/Widget.Material3.Chip.Filter"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_hanuman"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="हनुमान"
+                    style="@style/Widget.Material3.Chip.Filter"/>
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_ram"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="राम"
+                    style="@style/Widget.Material3.Chip.Filter"/>
+
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- Stotra count -->
+        <TextView
+            android:id="@+id/stotra_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="4dp"
+            android:textSize="12sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            tools:text="15 stotras"/>
+
+        <!-- List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/stotra_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp"
+            tools:listitem="@layout/item_stotra"/>
+    </LinearLayout>
+
+    <!-- ── Detail screen (hidden by default) ── -->
+    <ScrollView
+        android:id="@+id/detail_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Back button + title row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageButton
+                    android:id="@+id/back_btn"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@android:drawable/ic_menu_revert"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back"/>
+
+                <TextView
+                    android:id="@+id/detail_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="श्री गणपती अथर्वशीर्ष"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/detail_title_en"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:layout_marginStart="48dp"
+                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="Shri Ganapati Atharvashirsha"/>
+
+            <TextView
+                android:id="@+id/detail_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="13sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:fontFamily="sans-serif-light"
+                tools:text="One of the most revered Upanishads…"/>
+
+            <!-- Action buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/play_tts_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="▶ Play (TTS)"
+                    app:icon="@android:drawable/ic_btn_speak_now"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/stop_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="■ Stop"
+                    android:visibility="gone"
+                    style="@style/Widget.Material3.Button.OutlinedButton"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/send_to_tts_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Send to TTS"
+                    style="@style/Widget.Material3.Button.OutlinedButton"/>
+            </LinearLayout>
+
+            <!-- Status -->
+            <TextView
+                android:id="@+id/detail_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textSize="12sp"
+                android:textColor="?attr/colorPrimary"
+                android:visibility="gone"
+                tools:text="Generating audio…"/>
+
+            <!-- Stotra text -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp">
+
+                <TextView
+                    android:id="@+id/detail_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textSize="16sp"
+                    android:lineSpacingMultiplier="1.5"
+                    android:fontFamily="serif"
+                    android:textColor="?attr/colorOnSurface"
+                    tools:text="ॐ नमस्ते गणपतये ।\nत्वमेव प्रत्यक्षं तत्त्वमसि…"/>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

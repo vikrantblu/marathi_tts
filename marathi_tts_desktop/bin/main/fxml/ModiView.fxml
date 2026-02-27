@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.marathitts.desktop.controller.ModiController"
+            stylesheets="@../css/style.css">
+
+    <center>
+        <SplitPane orientation="HORIZONTAL" dividerPositions="0.50">
+
+            <!-- Left: Input -->
+            <VBox spacing="0" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
+
+                <Label text="Script Converter" styleClass="tab-title"/>
+                <Label text="Convert between Modi, Devanagari, IAST and Brahmi scripts"
+                       styleClass="tab-subtitle"/>
+                <Region prefHeight="16"/>
+
+                <!-- Mode selector -->
+                <VBox styleClass="section-card" spacing="10">
+                    <Label text="Conversion Mode" styleClass="section-label"/>
+                    <ComboBox fx:id="modeCombo" maxWidth="Infinity"/>
+                    <Label fx:id="modeDescLabel" text="" styleClass="hint-label" wrapText="true"/>
+                </VBox>
+
+                <Region prefHeight="12"/>
+
+                <!-- Input area -->
+                <Label text="Input Text" styleClass="section-label"/>
+                <Region prefHeight="6"/>
+                <TextArea fx:id="inputArea" wrapText="true" prefRowCount="16"
+                          promptText="Paste or type script text here…"
+                          VBox.vgrow="ALWAYS" styleClass="marathi-text-area"/>
+
+                <Region prefHeight="8"/>
+                <HBox alignment="CENTER_RIGHT" spacing="8">
+                    <Label fx:id="charCountLabel" text="0 chars" styleClass="char-count"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Clear" onAction="#onClear" styleClass="btn-ghost"/>
+                </HBox>
+            </VBox>
+
+            <!-- Right: Output -->
+            <VBox spacing="0" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
+
+                <Label text="Converted Output" styleClass="section-label"/>
+                <Region prefHeight="8"/>
+
+                <TextArea fx:id="outputArea" wrapText="true" prefRowCount="20"
+                          promptText="Converted text will appear here…"
+                          VBox.vgrow="ALWAYS" styleClass="marathi-text-area" editable="false"/>
+
+                <Region prefHeight="16"/>
+
+                <Button fx:id="convertBtn" text="⇄ Convert" maxWidth="Infinity"
+                        onAction="#onConvert" styleClass="btn-primary"/>
+
+                <Region prefHeight="12"/>
+                <HBox spacing="8">
+                    <Button fx:id="sendToTtsBtn" text="→ Send to TTS" onAction="#onSendToTts"
+                            styleClass="btn-success" disable="true"/>
+                </HBox>
+
+                <Region VBox.vgrow="ALWAYS"/>
+                <ProgressBar fx:id="progressBar" maxWidth="Infinity" visible="false"/>
+                <Label fx:id="statusLabel" text="Ready" styleClass="status-text" wrapText="true"/>
+            </VBox>
+
+        </SplitPane>
+    </center>
+</BorderPane>

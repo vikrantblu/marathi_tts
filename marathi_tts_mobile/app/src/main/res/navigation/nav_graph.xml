@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/ttsFragment">
+
+    <fragment
+        android:id="@+id/ttsFragment"
+        android:name="com.marathitts.mobile.ui.tts.TtsFragment"
+        android:label="@string/tab_tts"/>
+
+    <fragment
+        android:id="@+id/emotionFragment"
+        android:name="com.marathitts.mobile.ui.emotion.EmotionFragment"
+        android:label="@string/tab_emotion"/>
+
+    <fragment
+        android:id="@+id/ocrFragment"
+        android:name="com.marathitts.mobile.ui.ocr.OcrFragment"
+        android:label="@string/tab_ocr"/>
+
+    <fragment
+        android:id="@+id/correctionFragment"
+        android:name="com.marathitts.mobile.ui.correction.CorrectionFragment"
+        android:label="@string/tab_correction"/>
+
+    <fragment
+        android:id="@+id/pdfFragment"
+        android:name="com.marathitts.mobile.ui.pdf.PdfFragment"
+        android:label="@string/tab_pdf"/>
+
+    <fragment
+        android:id="@+id/webFetchFragment"
+        android:name="com.marathitts.mobile.ui.web.WebFetchFragment"
+        android:label="@string/tab_web"/>
+
+    <fragment
+        android:id="@+id/sttFragment"
+        android:name="com.marathitts.mobile.ui.stt.SttFragment"
+        android:label="@string/tab_stt"/>
+
+    <fragment
+        android:id="@+id/modiFragment"
+        android:name="com.marathitts.mobile.ui.modi.ModiFragment"
+        android:label="@string/tab_modi"/>
+
+    <fragment
+        android:id="@+id/stotraFragment"
+        android:name="com.marathitts.mobile.ui.stotra.StotraFragment"
+        android:label="@string/tab_stotra"/>
+
+</navigation>

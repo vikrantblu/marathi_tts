@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/modi_title"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/modi_hint"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- ── Mode selection card ─────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_mode"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/modeSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/modeHintText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:text=""/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Input card ──────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_input"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
+
+                    <TextView
+                        android:id="@+id/inputCharCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 chars"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant"/>
+                </LinearLayout>
+
+                <EditText
+                    android:id="@+id/inputText"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:gravity="top|start"
+                    android:hint="Enter text to convert…"
+                    android:inputType="textMultiLine"
+                    android:background="@null"
+                    android:textSize="17sp"
+                    android:padding="4dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Convert button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/convertBtn"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/btn_convert"
+            android:textSize="16sp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- ── Output card ──────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_output"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
+
+                    <TextView
+                        android:id="@+id/outputCharCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant"/>
+                </LinearLayout>
+
+                <EditText
+                    android:id="@+id/outputText"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:gravity="top|start"
+                    android:hint="Converted text will appear here…"
+                    android:inputType="textMultiLine"
+                    android:background="@null"
+                    android:textSize="17sp"
+                    android:padding="4dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Action bar ─────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/clearBtn"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_clear"/>
+
+            <android.widget.Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sendToTtsBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_send_to_tts"
+                android:enabled="false"/>
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ready"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+</ScrollView>

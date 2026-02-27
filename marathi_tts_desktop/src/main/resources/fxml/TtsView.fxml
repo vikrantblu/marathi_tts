@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Rectangle?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.marathitts.desktop.controller.TtsController"
+            stylesheets="@../css/style.css">
+
+    <center>
+        <SplitPane orientation="HORIZONTAL" dividerPositions="0.58">
+
+            <!-- ── Left: Text input ──────────────────────────────────── -->
+            <VBox spacing="0" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
+
+                <Label text="मराठी मजकूर" styleClass="tab-title"/>
+                <Label text="Type or paste Marathi text — the full TTS pipeline will process it"
+                       styleClass="tab-subtitle"/>
+                <Region prefHeight="12"/>
+
+                <TextArea fx:id="textArea" wrapText="true" prefRowCount="18"
+                          promptText="येथे मराठी मजकूर टाइप करा किंवा पेस्ट करा…"
+                          VBox.vgrow="ALWAYS" styleClass="marathi-text-area"/>
+
+                <Region prefHeight="8"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label fx:id="characterCountLabel" text="0 chars" styleClass="char-count"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="Clear" onAction="#onClearText" styleClass="btn-ghost"/>
+                </HBox>
+
+                <Region prefHeight="10"/>
+                <!-- Emotion result badge (filled after auto-detect) -->
+                <HBox alignment="CENTER_LEFT" spacing="10" fx:id="emotionResultBar">
+                    <Rectangle fx:id="emotionBadge" width="14" height="14"
+                               arcWidth="14" arcHeight="14" fill="#757575"/>
+                    <Label fx:id="detectedEmotionLabel" text="" styleClass="hint-label"/>
+                </HBox>
+            </VBox>
+
+            <!-- ── Right: Controls ───────────────────────────────────── -->
+            <VBox spacing="0" styleClass="card-panel" minWidth="300">
+                <padding><Insets topRightBottomLeft="20"/></padding>
+
+                <Label text="Voice Settings" styleClass="section-label"/>
+                <Region prefHeight="12"/>
+
+                <!-- Speed -->
+                <VBox styleClass="section-card" spacing="6">
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Speed" prefWidth="55"/>
+                        <Slider fx:id="speedSlider" min="0.5" max="2.0" value="1.0"
+                                showTickLabels="false" HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="speedLabel" text="1.0×" styleClass="value-label" minWidth="42"/>
+                    </HBox>
+                    <!-- Pitch -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Pitch" prefWidth="55"/>
+                        <Slider fx:id="pitchSlider" min="0.5" max="2.0" value="1.0"
+                                showTickLabels="false" HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="pitchLabel" text="1.0" styleClass="value-label" minWidth="42"/>
+                    </HBox>
+                    <!-- Volume -->
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label text="Volume" prefWidth="55"/>
+                        <Slider fx:id="volumeSlider" min="0.1" max="2.0" value="1.0"
+                                showTickLabels="false" HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="volumeLabel" text="100%" styleClass="value-label" minWidth="42"/>
+                    </HBox>
+                </VBox>
+
+                <Region prefHeight="10"/>
+
+                <!-- Emotion + options -->
+                <VBox styleClass="section-card" spacing="8">
+                    <Label text="Speech Mode" styleClass="section-label"/>
+                    <HBox spacing="8" alignment="CENTER_LEFT">
+                        <Label text="Emotion" prefWidth="60"/>
+                        <ComboBox fx:id="emotionCombo" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    </HBox>
+                    <CheckBox fx:id="autoDetectCheck" text="Auto-detect emotion from text"/>
+                    <CheckBox fx:id="verseModeCheck" text="Verse / Shloka mode (॥)"/>
+                </VBox>
+
+                <Region prefHeight="12"/>
+
+                <!-- Generate -->
+                <Button fx:id="generateBtn" text="🔊  Generate Audio" maxWidth="Infinity"
+                        onAction="#onGenerate" styleClass="btn-primary"/>
+
+                <Region prefHeight="10"/>
+
+                <!-- Audio controls -->
+                <HBox fx:id="audioControlBar" spacing="8" alignment="CENTER" visible="false">
+                    <Button fx:id="playBtn" text="▶ Play" onAction="#onPlay"
+                            styleClass="btn-success" disable="true" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button fx:id="stopBtn" text="⏹" onAction="#onStop"
+                            styleClass="btn-secondary" disable="true" prefWidth="44"/>
+                    <Button fx:id="saveAudioBtn" text="💾" onAction="#onSaveAudio"
+                            styleClass="btn-secondary" disable="true" prefWidth="44"/>
+                    <Button fx:id="feedbackBtn" text="⭐" onAction="#onFeedback"
+                            styleClass="btn-secondary" disable="true" prefWidth="44"/>
+                </HBox>
+
+                <Region prefHeight="8"/>
+                <Label fx:id="engineLabel" text="" styleClass="method-label"/>
+
+                <Region VBox.vgrow="ALWAYS"/>
+
+                <ProgressBar fx:id="progressBar" maxWidth="Infinity" prefHeight="4" visible="false"/>
+                <Region prefHeight="4"/>
+                <Label fx:id="statusLabel" text="Ready" wrapText="true" styleClass="status-text"/>
+            </VBox>
+
+        </SplitPane>
+    </center>
+</BorderPane>

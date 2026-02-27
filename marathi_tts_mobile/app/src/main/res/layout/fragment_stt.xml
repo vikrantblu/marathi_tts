@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/stt_title"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorPrimary"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/stt_hint"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- ── Browse + Transcribe Card ──────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Audio File"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/audioFileLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_file_selected"
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:layout_marginBottom="10dp"
+                    android:ellipsize="middle"
+                    android:singleLine="true"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/browseAudioBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/btn_transcribe_file"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_marginEnd="8dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/transcribeBtn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Transcribe"
+                        android:enabled="false"/>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Mic + Language Card ────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Live Recording"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:layout_marginBottom="10dp"/>
+
+                <Spinner
+                    android:id="@+id/languageSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/recordBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="@string/btn_record"
+                    android:textSize="16sp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Output Card ────────────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/label_transcript"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
+
+                    <TextView
+                        android:id="@+id/engineLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorPrimary"/>
+                </LinearLayout>
+
+                <EditText
+                    android:id="@+id/transcriptText"
+                    android:layout_width="match_parent"
+                    android:layout_height="160dp"
+                    android:gravity="top|start"
+                    android:hint="Transcript will appear here…"
+                    android:inputType="textMultiLine"
+                    android:background="@null"
+                    android:textSize="17sp"
+                    android:padding="4dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/segmentsLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_segments"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:visibility="gone"
+                    android:layout_marginBottom="4dp"/>
+
+                <EditText
+                    android:id="@+id/segmentsText"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine"
+                    android:background="@null"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    android:layout_marginBottom="8dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Action Bar ─────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/clearBtn"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_clear"/>
+
+            <android.widget.Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sendToTtsBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_send_to_tts"
+                android:enabled="false"/>
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ready"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+</ScrollView>

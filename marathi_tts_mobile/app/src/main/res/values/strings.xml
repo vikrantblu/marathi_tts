@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">मराठी TTS</string>
+
+    <!-- Navigation drawer content descriptions -->
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Tab labels -->
+    <string name="tab_tts">TTS</string>
+    <string name="tab_emotion">Emotion</string>
+    <string name="tab_ocr">OCR</string>
+    <string name="tab_correction">Correction</string>
+    <string name="tab_pdf">PDF</string>
+    <string name="tab_web">Web</string>
+    <string name="tab_stt">Speech</string>
+    <string name="tab_modi">Script</string>
+    <string name="tab_stotra">Stotra</string>
+
+    <!-- TTS screen -->
+    <string name="label_tts_engine">TTS Engine</string>
+    <string name="label_language">Language</string>
+    <string name="label_marathi_text">मराठी मजकूर</string>
+    <string name="hint_marathi_text">येथे मराठी मजकूर टाइप करा…</string>
+    <string name="label_voice_settings">Voice Settings</string>
+    <string name="label_speed">Speed</string>
+    <string name="label_pitch">Pitch</string>
+    <string name="label_volume">Volume</string>
+    <string name="label_emotion">Emotion</string>
+    <string name="verse_mode">Verse / Shloka mode (॥)</string>
+    <string name="btn_generate">🔊 Generate Audio</string>
+    <string name="btn_save">💾 Save</string>
+    <string name="btn_clear">Clear</string>
+
+    <!-- Emotion screen -->
+    <string name="label_enter_text">Input Text</string>
+    <string name="btn_analyze">🔍 Analyse Emotion</string>
+
+    <!-- OCR screen -->
+    <string name="btn_browse_image">📂 Browse Image</string>
+    <string name="btn_camera">📷 Camera</string>
+    <string name="btn_extract">📝 Extract</string>
+    <string name="label_extracted_text">Extracted Text</string>
+    <string name="ocr_hint">Select an image to begin</string>
+
+    <!-- Correction screen -->
+    <string name="hint_uncorrected_text">येथे चुकीचा मजकूर टाइप करा…</string>
+    <string name="btn_correct">✏️ Correct Text</string>
+
+    <!-- PDF screen -->
+    <string name="btn_browse_pdf">📂 Browse PDF</string>
+    <string name="no_file_selected">No file selected</string>
+    <string name="pdf_hint">Select a PDF to begin</string>
+
+    <!-- Web fetch screen -->
+    <string name="hint_url">https://marathi-website.com/…</string>
+    <string name="btn_fetch">🌐 Fetch</string>
+    <string name="web_hint">Enter a URL and tap Fetch</string>
+
+    <!-- STT screen -->
+    <string name="stt_title">Speech to Text</string>
+    <string name="stt_hint">Tap the microphone to record Marathi speech</string>
+    <string name="btn_record">🎙 Record</string>
+    <string name="btn_transcribe_file">📂 Transcribe File</string>
+    <string name="btn_send_to_tts">🔊 Send to TTS</string>
+    <string name="label_transcript">Transcript</string>
+    <string name="label_segments">Segments</string>
+
+    <!-- Modi / Script Converter screen -->
+    <string name="modi_title">Script Converter</string>
+    <string name="modi_hint">Enter text to convert between scripts</string>
+    <string name="btn_convert">🔄 Convert</string>
+    <string name="label_mode">Conversion Mode</string>
+    <string name="label_input">Input</string>
+    <string name="label_output">Output</string>
+
+    <!-- Shared -->
+    <string name="btn_format">🔤 Format</string>
+    <string name="btn_suggest">💡 Suggest</string>
+    <string name="btn_feedback">⭐ Rate</string>
+</resources>

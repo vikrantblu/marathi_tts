@@ -1,0 +1,130 @@
+{
+  "_comment": "Stotra Library Catalog — maps known stotras to pre-recorded audio files.",
+  "_usage": [
+    "Place .mp3 audio files in this directory alongside this JSON file.",
+    "Each stotra entry has: name, audio_file, fingerprints (first 60 Devanagari chars),",
+    "language, meter, deity, and source.",
+    "The TTS bridge matches user input against fingerprints and plays pre-recorded audio",
+    "instead of generating flat gTTS output. This is the ONLY way to get authentic",
+    "chanting — standard TTS cannot reproduce Vedic swaras, ragas, or chandas."
+  ],
+  "_how_to_add": [
+    "1. Record or obtain high-quality chanting audio (.mp3 format)",
+    "2. Place the file in this directory (e.g., ram_raksha_stotra.mp3)",
+    "3. Add an entry below with fingerprints — run:",
+    "   python -c \"import re; t=open('your_text.txt','r',encoding='utf-8').read(); print(re.sub(r'[^\\u0900-\\u097F]','',t)[:60])\"",
+    "4. Restart the app. The stotra will be served from the library."
+  ],
+  "stotras": [
+    {
+      "name": "श्रीरामरक्षास्तोत्र (Ram Raksha Stotra)",
+      "audio_file": "ram_raksha_stotra.mp3",
+      "language": "sa",
+      "meter": "अनुष्टुप् (Anushtubh)",
+      "deity": "श्रीराम",
+      "source": "बुधकौशिक ऋषि",
+      "fingerprints": [
+        "श्रीगणेशायनमःअस्यश्रीरामरक्षास्तोत्रमन्त्रस्यबुधकौशिकऋषिःश्रीसीतारामचं"
+      ]
+    },
+    {
+      "name": "श्रीगणेश अथर्वशीर्ष (Ganapati Atharvashirsha)",
+      "audio_file": "ganapati_atharvashirsha.mp3",
+      "language": "sa",
+      "meter": "Mixed",
+      "deity": "श्रीगणेश",
+      "source": "अथर्ववेद",
+      "fingerprints": [
+        "ॐनमस्तेगणपतयेत्वमेवप्रत्यक्षंतत्वमसित्वमेवकेवलंकर्तासित्वमेवकेवलं"
+      ]
+    },
+    {
+      "name": "श्री विष्णु सहस्रनाम (Vishnu Sahasranama)",
+      "audio_file": "vishnu_sahasranama.mp3",
+      "language": "sa",
+      "meter": "अनुष्टुप् (Anushtubh)",
+      "deity": "श्रीविष्णु",
+      "source": "महाभारत अनुशासन पर्व",
+      "fingerprints": [
+        "शुक्लाम्बरधरंविष्णुंशशिवर्णंचतुर्भुजंप्रसन्नवदनंध्यायेत्सर्वविघ्नो"
+      ]
+    },
+    {
+      "name": "श्री हनुमान चालीसा (Hanuman Chalisa)",
+      "audio_file": "hanuman_chalisa.mp3",
+      "language": "hi",
+      "meter": "चौपाई + दोहा",
+      "deity": "श्री हनुमान",
+      "source": "तुलसीदास",
+      "fingerprints": [
+        "श्रीगुरुचरनसरोजरजनिजमनमुकुरुसुधारिबरनऊंरघुबरबिमलजसुजोदायकुफलचा"
+      ]
+    },
+    {
+      "name": "मारुतिस्तोत्र (Maruti Stotra)",
+      "audio_file": "maruti_stotra.mp3",
+      "language": "mr",
+      "meter": "Mixed",
+      "deity": "मारुती",
+      "source": "समर्थ रामदास",
+      "fingerprints": [
+        "भीमरूपीमहारुद्राभक्तिप्रियामारुतीपालनकर्तासामर्थ्यवानकपिवर"
+      ]
+    },
+    {
+      "name": "नवग्रह स्तोत्र (Navagraha Stotra)",
+      "audio_file": "navagraha_stotra.mp3",
+      "language": "sa",
+      "meter": "अनुष्टुप्",
+      "deity": "नवग्रह",
+      "source": "व्यास",
+      "fingerprints": [
+        "जपाकुसुमसंकाशंकाश्यपेयंमहाद्युतिंतमोरिंसर्वपापघ्नंप्रणतोस्मिदि"
+      ]
+    },
+    {
+      "name": "श्री गणपती अथर्वशीर्ष (Marathi)",
+      "audio_file": "ganapati_atharvashirsha_mr.mp3",
+      "language": "mr",
+      "meter": "Mixed",
+      "deity": "श्रीगणेश",
+      "source": "अथर्ववेद (मराठी पाठ)",
+      "fingerprints": [
+        "ॐनमस्तेगणपतयेत्वमेवप्रत्यक्षंतत्त्वमसित्वमेवकेवलंकर्तासित्वमेवके"
+      ]
+    },
+    {
+      "name": "श्रीमद्भगवद्गीता अध्याय १२ (Gita Ch.12 - Bhakti Yoga)",
+      "audio_file": "gita_chapter12.mp3",
+      "language": "sa",
+      "meter": "अनुष्टुप्",
+      "deity": "श्रीकृष्ण",
+      "source": "महाभारत भीष्मपर्व",
+      "fingerprints": [
+        "अर्जुनउवाचएवंसततयुक्तायेभक्तास्त्वांपर्युपासतेयेचाप्यक्षरमव्यक्तं"
+      ]
+    },
+    {
+      "name": "मनाचे श्लोक (Manache Shlok)",
+      "audio_file": "manache_shlok.mp3",
+      "language": "mr",
+      "meter": "ओवी",
+      "deity": "श्रीराम",
+      "source": "समर्थ रामदास",
+      "fingerprints": [
+        "गणाधीशजोईशसर्वांगुणांचाहोतासेदूतविघ्नघातकींचाहरतीमहासंकटेनरकच्छ"
+      ]
+    },
+    {
+      "name": "श्रीमहालक्ष्मी अष्टक (Mahalakshmi Ashtakam)",
+      "audio_file": "mahalakshmi_ashtakam.mp3",
+      "language": "sa",
+      "meter": "अनुष्टुप्",
+      "deity": "श्रीमहालक्ष्मी",
+      "source": "पद्मपुराण",
+      "fingerprints": [
+        "नमस्तेस्तुमहामायेश्रीपीठेसुरपूजितेशंखचक्रगदाहस्तेमहालक्ष्मीनमो"
+      ]
+    }
+  ]
+}
