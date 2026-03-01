@@ -1,129 +1,203 @@
 {
-  "_comment": "Stotra Library Catalog — maps known stotras to pre-recorded audio files.",
+  "_comment": "Stotra Library Catalog — maps known stotras to text files and optional pre-recorded audio.",
   "_usage": [
-    "Place .mp3 audio files in this directory alongside this JSON file.",
-    "Each stotra entry has: name, audio_file, fingerprints (first 60 Devanagari chars),",
+    "Each stotra has: name, text_file (required), audio_file (optional), fingerprints,",
     "language, meter, deity, and source.",
+    "The text_file maps to a .txt file in this directory (Devanagari UTF-8).",
     "The TTS bridge matches user input against fingerprints and plays pre-recorded audio",
-    "instead of generating flat gTTS output. This is the ONLY way to get authentic",
-    "chanting — standard TTS cannot reproduce Vedic swaras, ragas, or chandas."
-  ],
-  "_how_to_add": [
-    "1. Record or obtain high-quality chanting audio (.mp3 format)",
-    "2. Place the file in this directory (e.g., ram_raksha_stotra.mp3)",
-    "3. Add an entry below with fingerprints — run:",
-    "   python -c \"import re; t=open('your_text.txt','r',encoding='utf-8').read(); print(re.sub(r'[^\\u0900-\\u097F]','',t)[:60])\"",
-    "4. Restart the app. The stotra will be served from the library."
+    "if audio_file exists, otherwise generates TTS using verse mode + edge-tts/gTTS."
   ],
   "stotras": [
     {
       "name": "श्रीरामरक्षास्तोत्र (Ram Raksha Stotra)",
+      "text_file": "ram_raksha.txt",
       "audio_file": "ram_raksha_stotra.mp3",
       "language": "sa",
       "meter": "अनुष्टुप् (Anushtubh)",
-      "deity": "श्रीराम",
+      "deity": "राम",
       "source": "बुधकौशिक ऋषि",
       "fingerprints": [
-        "श्रीगणेशायनमःअस्यश्रीरामरक्षास्तोत्रमन्त्रस्यबुधकौशिकऋषिःश्रीसीतारामचं"
+        "॥श्रीरामरक्षास्तोत्रम्॥ॐअस्यश्रीरामरक्षास्तोत्रमन्त्रस्य।बुध"
       ]
     },
     {
-      "name": "श्रीगणेश अथर्वशीर्ष (Ganapati Atharvashirsha)",
+      "name": "श्रीगणपती अथर्वशीर्ष (Ganapati Atharvashirsha)",
+      "text_file": "ganesh_atharvashirsha.txt",
       "audio_file": "ganapati_atharvashirsha.mp3",
       "language": "sa",
       "meter": "Mixed",
-      "deity": "श्रीगणेश",
+      "deity": "गणेश",
       "source": "अथर्ववेद",
       "fingerprints": [
-        "ॐनमस्तेगणपतयेत्वमेवप्रत्यक्षंतत्वमसित्वमेवकेवलंकर्तासित्वमेवकेवलं"
+        "॥श्रीगणपतीअथर्वशीर्ष॥ॐनमस्तेगणपतये॥त्वमेवप्रत्यक्षंतत्त्वमसि"
       ]
     },
     {
       "name": "श्री विष्णु सहस्रनाम (Vishnu Sahasranama)",
+      "text_file": "vishnu_sahasranama.txt",
       "audio_file": "vishnu_sahasranama.mp3",
       "language": "sa",
       "meter": "अनुष्टुप् (Anushtubh)",
-      "deity": "श्रीविष्णु",
+      "deity": "विष्णु",
       "source": "महाभारत अनुशासन पर्व",
       "fingerprints": [
-        "शुक्लाम्बरधरंविष्णुंशशिवर्णंचतुर्भुजंप्रसन्नवदनंध्यायेत्सर्वविघ्नो"
+        "॥श्रीविष्णुसहस्रनामस्तोत्रम्॥॥श्रीमहाभारतेअनुशासनपर्वणि॥शुक्"
       ]
     },
     {
       "name": "श्री हनुमान चालीसा (Hanuman Chalisa)",
+      "text_file": "hanuman_chalisa.txt",
       "audio_file": "hanuman_chalisa.mp3",
       "language": "hi",
       "meter": "चौपाई + दोहा",
-      "deity": "श्री हनुमान",
+      "deity": "हनुमान",
       "source": "तुलसीदास",
       "fingerprints": [
-        "श्रीगुरुचरनसरोजरजनिजमनमुकुरुसुधारिबरनऊंरघुबरबिमलजसुजोदायकुफलचा"
+        "॥श्रीहनुमानचालीसा॥॥दोहा॥श्रीगुरुचरनसरोजरजनिजमनुमुकुरुसुधारि।"
       ]
     },
     {
       "name": "मारुतिस्तोत्र (Maruti Stotra)",
+      "text_file": "maruti_stotra.txt",
       "audio_file": "maruti_stotra.mp3",
       "language": "mr",
       "meter": "Mixed",
-      "deity": "मारुती",
+      "deity": "हनुमान",
       "source": "समर्थ रामदास",
       "fingerprints": [
-        "भीमरूपीमहारुद्राभक्तिप्रियामारुतीपालनकर्तासामर्थ्यवानकपिवर"
+        "॥श्रीमारुतीस्तोत्र॥॥रचनासमर्थरामदासस्वामी॥भीमरूपीमहारुद्रावज"
       ]
     },
     {
       "name": "नवग्रह स्तोत्र (Navagraha Stotra)",
+      "text_file": "navagraha_stotra.txt",
       "audio_file": "navagraha_stotra.mp3",
       "language": "sa",
       "meter": "अनुष्टुप्",
       "deity": "नवग्रह",
       "source": "व्यास",
       "fingerprints": [
-        "जपाकुसुमसंकाशंकाश्यपेयंमहाद्युतिंतमोरिंसर्वपापघ्नंप्रणतोस्मिदि"
-      ]
-    },
-    {
-      "name": "श्री गणपती अथर्वशीर्ष (Marathi)",
-      "audio_file": "ganapati_atharvashirsha_mr.mp3",
-      "language": "mr",
-      "meter": "Mixed",
-      "deity": "श्रीगणेश",
-      "source": "अथर्ववेद (मराठी पाठ)",
-      "fingerprints": [
-        "ॐनमस्तेगणपतयेत्वमेवप्रत्यक्षंतत्त्वमसित्वमेवकेवलंकर्तासित्वमेवके"
+        "॥श्रीनवग्रहस्तोत्रम्॥जपाकुसुमसंकाशंकाश्यपेयंमहद्युतिम्।तमोऽर"
       ]
     },
     {
       "name": "श्रीमद्भगवद्गीता अध्याय १२ (Gita Ch.12 - Bhakti Yoga)",
+      "text_file": "bhagavad_gita_12.txt",
       "audio_file": "gita_chapter12.mp3",
       "language": "sa",
       "meter": "अनुष्टुप्",
-      "deity": "श्रीकृष्ण",
+      "deity": "कृष्ण",
       "source": "महाभारत भीष्मपर्व",
       "fingerprints": [
-        "अर्जुनउवाचएवंसततयुक्तायेभक्तास्त्वांपर्युपासतेयेचाप्यक्षरमव्यक्तं"
+        "॥श्रीमद्भगवद्गीताअध्याय१२॥॥भक्तियोगः॥अर्जुनउवाच।एवंसततयुक्ता"
       ]
     },
     {
       "name": "मनाचे श्लोक (Manache Shlok)",
+      "text_file": "manache_shlok.txt",
       "audio_file": "manache_shlok.mp3",
       "language": "mr",
       "meter": "ओवी",
-      "deity": "श्रीराम",
+      "deity": "राम",
       "source": "समर्थ रामदास",
       "fingerprints": [
-        "गणाधीशजोईशसर्वांगुणांचाहोतासेदूतविघ्नघातकींचाहरतीमहासंकटेनरकच्छ"
+        "॥श्रीमनाचेश्लोक॥॥रचनाकारसमर्थरामदासस्वामी॥गणाधीशजोईशसर्वांगु"
       ]
     },
     {
       "name": "श्रीमहालक्ष्मी अष्टक (Mahalakshmi Ashtakam)",
+      "text_file": "lakshmi_ashtakam.txt",
       "audio_file": "mahalakshmi_ashtakam.mp3",
       "language": "sa",
       "meter": "अनुष्टुप्",
-      "deity": "श्रीमहालक्ष्मी",
+      "deity": "देवी",
       "source": "पद्मपुराण",
       "fingerprints": [
-        "नमस्तेस्तुमहामायेश्रीपीठेसुरपूजितेशंखचक्रगदाहस्तेमहालक्ष्मीनमो"
+        "॥श्रीलक्ष्म्यष्टकम्॥नमस्तेऽस्तुमहामायेश्रीपीठेसुरपूजिते।शङ्ख"
+      ]
+    },
+    {
+      "name": "श्री देवी कवचम् (Devi Kavacham)",
+      "text_file": "devi_kavach.txt",
+      "audio_file": null,
+      "language": "sa",
+      "meter": "अनुष्टुप्",
+      "deity": "देवी",
+      "source": "मार्कण्डेय पुराण / दुर्गा सप्तशती",
+      "fingerprints": [
+        "॥श्रीदेवीकवचम्॥ॐअस्यश्रीचण्डीकवचस्यब्रह्माऋषिः।अनुष्टुप्छन्द"
+      ]
+    },
+    {
+      "name": "श्री गजानन विजय ग्रंथ (Gajanan Pothi)",
+      "text_file": "gajanan_pothi.txt",
+      "audio_file": null,
+      "language": "mr",
+      "meter": "ओवी",
+      "deity": "गणेश",
+      "source": "दासगणू महाराज",
+      "fingerprints": [
+        "॥श्रीगजाननविजयग्रंथपोथी॥॥रचनाकारदासगणूमहाराज॥॥अध्याय१अवतरण॥ज"
+      ]
+    },
+    {
+      "name": "श्री घोरकष्टोधरण स्तोत्रम् (Ghorkashtodharan Stotra)",
+      "text_file": "ghorkashtodharan_stotra.txt",
+      "audio_file": null,
+      "language": "sa",
+      "meter": "Mixed",
+      "deity": "विष्णु",
+      "source": "नारसिंह पुराण",
+      "fingerprints": [
+        "॥श्रीघोरकष्टोधरणस्तोत्रम्॥ॐनमोभगवतेवासुदेवाय।ॐनमोभगवतेनारसिं"
+      ]
+    },
+    {
+      "name": "श्री कृष्णाष्टकम् (Krishna Ashtakam)",
+      "text_file": "krishna_ashtakam.txt",
+      "audio_file": null,
+      "language": "sa",
+      "meter": "अनुष्टुप्",
+      "deity": "कृष्ण",
+      "source": "शंकराचार्य",
+      "fingerprints": [
+        "॥श्रीकृष्णाष्टकम्॥वसुदेवसुतंदेवंकंसचाणूरमर्दनम्।देवकीपरमानन्"
+      ]
+    },
+    {
+      "name": "श्री सरस्वती स्तोत्रम् (Saraswati Stotram)",
+      "text_file": "saraswati_stotram.txt",
+      "audio_file": null,
+      "language": "sa",
+      "meter": "Mixed",
+      "deity": "देवी",
+      "source": "पद्मपुराण",
+      "fingerprints": [
+        "॥श्रीसरस्वतीस्तोत्रम्॥याकुन्देन्दुतुषारहारधवलायाशुभ्रवस्त्रा"
+      ]
+    },
+    {
+      "name": "श्री शिव ताण्डव स्तोत्रम् (Shiv Tandav Stotram)",
+      "text_file": "shiv_tandav.txt",
+      "audio_file": null,
+      "language": "sa",
+      "meter": "Mixed",
+      "deity": "शिव",
+      "source": "रावण",
+      "fingerprints": [
+        "॥श्रीशिवताण्डवस्तोत्रम्॥जटाटवीगलज्जलप्रवाहपावितस्थलेगलेऽवलम्"
+      ]
+    },
+    {
+      "name": "श्रीगणपती अथर्वशीर्ष - मराठी (Ganapati Atharvashirsha Marathi)",
+      "text_file": "ganesh_atharvashirsha.txt",
+      "audio_file": "ganapati_atharvashirsha_mr.mp3",
+      "language": "mr",
+      "meter": "Mixed",
+      "deity": "गणेश",
+      "source": "अथर्ववेद (मराठी पाठ)",
+      "fingerprints": [
+        "॥श्रीगणपतीअथर्वशीर्ष॥ॐनमस्तेगणपतये॥त्वमेवप्रत्यक्षंतत्त्वमसि"
       ]
     }
   ]

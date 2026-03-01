@@ -4,122 +4,472 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="?android:attr/colorBackground">
 
-    <!-- Image preview -->
-    <ImageView
-        android:id="@+id/image_preview"
-        android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:scaleType="centerInside"
-        android:background="#f0f0f0"
-        android:contentDescription="Book page preview"
-        android:layout_marginBottom="8dp"/>
-
-    <!-- Capture buttons — large for elderly users -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="4dp">
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/capture_spread_btn"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:textSize="14sp"
-            android:text="@string/btn_capture_spread"
-            android:layout_marginEnd="4dp"/>
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/capture_single_btn"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:textSize="14sp"
-            android:text="@string/btn_capture_single"
-            android:layout_marginEnd="4dp"/>
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/browse_btn"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:textSize="14sp"
-            android:text="@string/btn_browse_image"/>
-    </LinearLayout>
-
-    <!-- Page info -->
-    <TextView
-        android:id="@+id/page_info"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?attr/textAppearanceLabelMedium"
-        android:layout_marginBottom="4dp"
-        android:visibility="gone"/>
-
-    <!-- Extracted text (scrollable, takes remaining space) -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/label_extracted_text"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:layout_marginBottom="4dp"/>
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginBottom="8dp">
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/extracted_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="200dp"
-                android:inputType="textMultiLine"
-                android:gravity="top"
-                android:textSize="16sp"
-                android:fontFamily="sans-serif"/>
-        </com.google.android.material.textfield.TextInputLayout>
-    </ScrollView>
-
-    <!-- Action buttons -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="4dp">
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/read_aloud_btn"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_weight="1"
-            android:textSize="15sp"
-            android:text="@string/btn_read_aloud"
-            android:enabled="false"
-            android:layout_marginEnd="8dp"/>
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/clear_btn"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="56dp"
-            android:text="@string/btn_clear"/>
-    </LinearLayout>
-
-    <ProgressBar
+    <!-- ── Progress indicator ──────────────────────────────────── -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/progress_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"/>
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:trackCornerRadius="2dp"/>
 
+    <!-- ── Capture Card (collapsible — tap to toggle) ──────────── -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/image_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="0dp"
+        app:cardCornerRadius="16dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:strokeWidth="1dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="6dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- Image preview with empty-state placeholder -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:layout_marginBottom="10dp">
+
+                <ImageView
+                    android:id="@+id/image_preview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerInside"
+                    android:background="@drawable/placeholder_book"
+                    android:contentDescription="Book page preview"/>
+
+                <!-- Empty-state overlay (hidden once image loads) -->
+                <LinearLayout
+                    android:id="@+id/empty_state_overlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_photo_camera_24"
+                        app:tint="?attr/colorOutline"
+                        android:importantForAccessibility="no"
+                        android:layout_marginBottom="6dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Capture or browse a book page"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="?attr/colorOutline"/>
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- Capture action buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/capture_spread_btn"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_capture_spread"
+                    android:textSize="11sp"
+                    app:icon="@drawable/ic_photo_camera_24"
+                    app:iconSize="16dp"
+                    app:iconPadding="2dp"
+                    app:cornerRadius="12dp"
+                    android:layout_marginEnd="4dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/capture_single_btn"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_capture_single"
+                    android:textSize="11sp"
+                    app:icon="@drawable/ic_photo_camera_24"
+                    app:iconSize="16dp"
+                    app:iconPadding="2dp"
+                    app:cornerRadius="12dp"
+                    android:layout_marginEnd="4dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/browse_btn"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_browse_image"
+                    android:textSize="11sp"
+                    app:icon="@drawable/ic_folder_open_24"
+                    app:iconSize="16dp"
+                    app:iconPadding="2dp"
+                    app:cornerRadius="12dp"/>
+            </LinearLayout>
+
+            <!-- View Photo (shown after capture) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/view_photo_btn"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="View captured photo"
+                android:textSize="12sp"
+                app:icon="@drawable/ic_visibility_24"
+                app:iconSize="16dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="4dp"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ── Status line ─────────────────────────────────────────── -->
     <TextView
         android:id="@+id/status_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/book_reader_hint"
-        android:textAppearance="?attr/textAppearanceLabelMedium"/>
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="2dp"/>
+
+    <!-- ── Reading Area Card (fills remaining space) ───────────── -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:cardElevation="0dp"
+        app:cardCornerRadius="16dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:strokeWidth="1dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="6dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- Inline font toolbar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:background="?attr/colorSurfaceContainerLow">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/font_decrease_btn"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:text="A&#x2212;"
+                    android:textSize="13sp"
+                    android:contentDescription="Decrease font"/>
+
+                <TextView
+                    android:id="@+id/font_size_label"
+                    android:layout_width="28dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="18"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/font_increase_btn"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:text="A+"
+                    android:textSize="13sp"
+                    android:contentDescription="Increase font"/>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tts_settings_toggle_btn"
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    app:icon="@drawable/ic_settings_24"
+                    app:iconSize="20dp"
+                    app:iconTint="?attr/colorOnSurfaceVariant"
+                    android:contentDescription="TTS Settings"/>
+            </LinearLayout>
+
+            <!-- Thin divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/colorOutlineVariant"/>
+
+            <!-- Reading text -->
+            <ScrollView
+                android:id="@+id/reading_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/reading_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="14dp"
+                    android:textSize="18sp"
+                    android:lineSpacingExtra="6dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textIsSelectable="true"
+                    android:fontFamily="sans-serif"
+                    android:hint="@string/book_reader_hint"/>
+            </ScrollView>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ── TTS Settings Panel (collapsible, below reading) ───── -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/tts_settings_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="0dp"
+        app:cardCornerRadius="16dp"
+        app:strokeColor="?attr/colorOutlineVariant"
+        app:strokeWidth="1dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Voice Settings"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="?attr/colorPrimary"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Engine row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:text="Engine"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"/>
+
+                <Spinner
+                    android:id="@+id/tts_engine_spinner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+            </LinearLayout>
+
+            <!-- Speed row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:text="Speed"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"/>
+
+                <SeekBar
+                    android:id="@+id/tts_speed_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="15"
+                    android:progress="5"/>
+
+                <TextView
+                    android:id="@+id/tts_speed_label"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="1.0&#x00D7;"
+                    android:textAppearance="?attr/textAppearanceLabelSmall"/>
+            </LinearLayout>
+
+            <!-- Pitch row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="56dp"
+                    android:layout_height="wrap_content"
+                    android:text="Pitch"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"/>
+
+                <SeekBar
+                    android:id="@+id/tts_pitch_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="15"
+                    android:progress="5"/>
+
+                <TextView
+                    android:id="@+id/tts_pitch_label"
+                    android:layout_width="40dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="1.0&#x00D7;"
+                    android:textAppearance="?attr/textAppearanceLabelSmall"/>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ── Player Bar (shown when text available) ──────────────── -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/player_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="2dp"
+        app:cardCornerRadius="16dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="6dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/prev_sentence_btn"
+                    style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    app:icon="@drawable/ic_skip_previous_24"
+                    app:iconSize="22dp"
+                    android:contentDescription="Previous sentence"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/play_pause_btn"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="@string/btn_read_aloud"
+                    app:icon="@drawable/ic_play_arrow_24"
+                    app:iconSize="20dp"
+                    app:cornerRadius="22dp"
+                    android:layout_marginHorizontal="6dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/next_sentence_btn"
+                    style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    app:icon="@drawable/ic_skip_next_24"
+                    app:iconSize="22dp"
+                    android:contentDescription="Next sentence"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/stop_reading_btn"
+                    style="@style/Widget.Material3.Button.IconButton.Outlined"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    app:icon="@drawable/ic_stop_24"
+                    app:iconSize="22dp"
+                    android:contentDescription="Stop reading"
+                    android:layout_marginStart="4dp"/>
+            </LinearLayout>
+
+            <!-- Sentence progress -->
+            <TextView
+                android:id="@+id/sentence_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceLabelSmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:gravity="center"
+                android:visibility="gone"
+                android:paddingBottom="6dp"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- ── Bottom action row ──────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingBottom="8dp"
+        android:paddingTop="2dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/clear_btn"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:text="@string/btn_clear"
+            android:textSize="13sp"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/next_page_btn"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:text="@string/btn_next_page"
+            android:textSize="13sp"
+            app:icon="@drawable/ic_navigate_next_24"
+            app:iconSize="18dp"
+            app:iconGravity="end"
+            app:cornerRadius="19dp"
+            android:enabled="false"/>
+    </LinearLayout>
+
 </LinearLayout>

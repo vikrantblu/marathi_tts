@@ -144,7 +144,7 @@ class SttFragment : Fragment() {
         speechRecognizer?.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(p: Bundle?) {
                 binding.statusText.text = "Listening…"
-                binding.recordBtn.text = "⏹ Stop"
+                binding.recordBtn.text = "Stop"
             }
             override fun onPartialResults(partial: Bundle?) {
                 val results = partial?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)

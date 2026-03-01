@@ -49,6 +49,7 @@ chaquopy {
         pip {
             // Pure-Python packages (safe for Chaquopy cross-compile)
             install("gtts==2.5.0")
+            install("edge-tts==6.1.9")         // Microsoft neural voices (ManoharNeural male / AarohiNeural female)
             install("requests==2.31.0")
             install("beautifulsoup4==4.12.2")
             install("PyPDF2==3.0.1")
@@ -106,6 +107,16 @@ dependencies {
     // ML Kit Text Recognition — Devanagari (Marathi, Hindi)
     // Used for native PDF OCR via PdfRenderer on image-based PDFs
     implementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
+
+    // CameraX — custom camera with book alignment overlay
+    val cameraxVersion = "1.3.1"
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+
+    // ExifInterface — reads JPEG rotation tags so captured photos are upright
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

@@ -13,8 +13,8 @@
         <SplitPane orientation="HORIZONTAL" dividerPositions="0.45">
 
             <!-- Input pane -->
-            <VBox spacing="8" styleClass="panel">
-                <padding><Insets topRightBottomLeft="12"/></padding>
+            <VBox spacing="10" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
                 <Label text="Input Text" styleClass="section-label"/>
                 <TextArea fx:id="textArea" wrapText="true" VBox.vgrow="ALWAYS"
                           promptText="येथे मराठी मजकूर टाइप करा…"
@@ -30,8 +30,8 @@
             </VBox>
 
             <!-- Result pane -->
-            <VBox fx:id="resultPane" spacing="12" styleClass="panel" visible="false">
-                <padding><Insets topRightBottomLeft="12"/></padding>
+            <VBox fx:id="resultPane" spacing="12" styleClass="card-panel" visible="false">
+                <padding><Insets topRightBottomLeft="20"/></padding>
                 <Label text="Emotion Result" styleClass="section-label"/>
 
                 <HBox spacing="12" alignment="CENTER_LEFT">

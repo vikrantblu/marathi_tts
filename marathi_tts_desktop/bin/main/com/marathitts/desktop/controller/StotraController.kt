@@ -116,18 +116,15 @@ class StotraController : Initializable {
             val arr = tree["stotras"] ?: return
             var idx = 0
             for (obj in arr) {
-                val audioFile = obj["audio_file"]?.asText() ?: ""
-                // Derive text file name from audio file: foo.mp3 → foo.txt
-                val textFileName = (obj["text_file"]?.asText()
-                    ?: audioFile.replace(".mp3", ".txt"))
-                    .replace("ganapati_atharvashirsha", "ganesh_atharvashirsha")
-                    .replace("gita_chapter12", "bhagavad_gita_12")
-                    .replace("mahalakshmi_ashtakam", "lakshmi_ashtakam")
-                    .replace("ganapati_atharvashirsha_mr", "ganesh_atharvashirsha")
+                val audioFile = obj["audio_file"]?.let {
+                    if (it.isNull) null else it.asText().ifEmpty { null }
+                }
+                val textFileName = obj["text_file"]?.asText()
+                    ?: audioFile?.replace(".mp3", ".txt")
                 catalog.add(StotraEntry(
                     id = idx,
                     name = obj["name"]?.asText() ?: "Stotra $idx",
-                    audioFile = audioFile,
+                    audioFile = audioFile ?: "",
                     textFile = textFileName,
                     language = obj["language"]?.asText() ?: "sa",
                     meter = obj["meter"]?.asText() ?: "",
@@ -186,23 +183,11 @@ class StotraController : Initializable {
 
         // Load text from .txt file
         val stotrasDir = findStotrasDir()
-        if (stotrasDir != null && entry.textFile != null) {
-            val textFile = File(stotrasDir, entry.textFile!!)
+        if (stotrasDir != null && !entry.textFile.isNullOrEmpty()) {
+            val textFile = File(stotrasDir, entry.textFile)
             if (textFile.exists()) {
                 stotraTextArea.text = textFile.readText(StandardCharsets.UTF_8)
                 return
-            }
-            // Try alternate names
-            val altNames = listOf(
-                entry.textFile!!,
-                entry.audioFile.replace(".mp3", ".txt")
-            )
-            for (alt in altNames) {
-                val f = File(stotrasDir, alt)
-                if (f.exists()) {
-                    stotraTextArea.text = f.readText(StandardCharsets.UTF_8)
-                    return
-                }
             }
         }
         stotraTextArea.text = "(Stotra text not available — add ${entry.textFile ?: "text file"} to stotras/ directory)"

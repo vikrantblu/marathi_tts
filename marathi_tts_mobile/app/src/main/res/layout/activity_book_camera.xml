@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Full-screen camera UI (status bar + nav bar hidden by Activity).
+     Phase 1: Live CameraX preview + overlay guide + floating controls.
+     Phase 2: Perspective-crop editor. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- ══════════════════════════════════
+         PHASE 1 — Camera preview
+         ══════════════════════════════════ -->
+    <FrameLayout
+        android:id="@+id/cameraContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- CameraX live preview - full screen -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <!-- Book-alignment overlay drawn on top of preview -->
+        <com.marathitts.mobile.ui.bookreader.BookCameraOverlayView
+            android:id="@+id/overlayView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <!-- ────────────────────────────────────────────
+             TOP-LEFT floating controls (back + mode info + toggle)
+             Slim semi-transparent bar so it barely intrudes on the view
+             ──────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_gravity="top"
+            android:background="#88000000"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <ImageButton
+                android:id="@+id/backBtn"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Back"
+                android:tint="#FFFFFF"/>
+
+            <TextView
+                android:id="@+id/modeLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Two-Page Spread"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:gravity="center"/>
+
+            <Button
+                android:id="@+id/modeToggleBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Switch Mode"
+                android:textSize="11sp"
+                android:backgroundTint="#4400BCD4"
+                android:textColor="#FFFFFF"
+                style="@style/Widget.MaterialComponents.Button.TextButton"/>
+        </LinearLayout>
+
+        <!-- ────────────────────────────────────────────
+             RIGHT EDGE: shutter panel
+             In landscape spread mode this sits to the right of both pages.
+             In portrait (single page) it sits at the right edge, still reachable.
+             ──────────────────────────────────────────── -->
+        <LinearLayout
+            android:id="@+id/shutterPanel"
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:background="#88000000"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <!-- Shutter ring + button -->
+            <FrameLayout
+                android:layout_width="68dp"
+                android:layout_height="68dp">
+
+                <View
+                    android:layout_width="68dp"
+                    android:layout_height="68dp"
+                    android:background="@drawable/shutter_ring"/>
+
+                <ImageButton
+                    android:id="@+id/shutterButton"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/shutter_button_bg"
+                    android:contentDescription="Capture photo"
+                    android:src="@android:drawable/ic_menu_camera"/>
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Tap"
+                android:textColor="#AAFFFFFF"
+                android:textSize="11sp"
+                android:gravity="center"/>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- ══════════════════════════════════
+         PHASE 2 — Perspective crop editor
+         ══════════════════════════════════ -->
+    <FrameLayout
+        android:id="@+id/cropContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <com.marathitts.mobile.ui.bookreader.PerspectiveCropView
+            android:id="@+id/cropView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <!-- Slim top instruction -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_gravity="top"
+            android:background="#CC000000"
+            android:text="Drag corners to align with book edges • then tap Confirm"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"/>
+
+        <!-- RIGHT-SIDE button panel (matches camera shutter position) -->
+        <LinearLayout
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:background="#CC000000"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp">
+
+            <Button
+                android:id="@+id/confirmBtn"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="✓"
+                android:textSize="22sp"
+                android:backgroundTint="#4CAF50"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="16dp"
+                style="@style/Widget.MaterialComponents.Button"/>
+
+            <Button
+                android:id="@+id/retakeBtn"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:text="↩"
+                android:textSize="22sp"
+                android:backgroundTint="#FF5722"
+                android:textColor="#FFFFFF"
+                style="@style/Widget.MaterialComponents.Button"/>
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</FrameLayout>

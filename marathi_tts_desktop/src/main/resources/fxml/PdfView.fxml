@@ -7,8 +7,8 @@
             fx:controller="com.marathitts.desktop.controller.PdfController"
             stylesheets="@../css/style.css">
     <center>
-        <VBox spacing="10" styleClass="panel">
-            <padding><Insets topRightBottomLeft="14"/></padding>
+        <VBox spacing="12" styleClass="card-panel">
+            <padding><Insets topRightBottomLeft="20"/></padding>
             <Label text="PDF Text Extraction" styleClass="section-label"/>
 
             <HBox spacing="8" alignment="CENTER_LEFT">

@@ -115,7 +115,7 @@ class StotraFragment : Fragment() {
 
         // Loading state
         binding.playTtsBtn.isEnabled = !state.isGenerating
-        binding.playTtsBtn.text = if (state.isGenerating) "Generating…" else "▶ Play (TTS)"
+        binding.playTtsBtn.text = if (state.isGenerating) "Generating…" else "Play (TTS)"
 
         // Auto-play when audio path arrives
         if (state.audioPath != null && !audioPlayer.isPlaying) {

@@ -11,8 +11,8 @@
         <SplitPane dividerPositions="0.45">
 
             <!-- Image pane -->
-            <VBox spacing="8" styleClass="panel">
-                <padding><Insets topRightBottomLeft="12"/></padding>
+            <VBox spacing="10" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
                 <Label text="Input Image" styleClass="section-label"/>
                 <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
                     <ImageView fx:id="imageView" fitWidth="400" fitHeight="400" preserveRatio="true"/>
@@ -30,8 +30,8 @@
             </VBox>
 
             <!-- Text result pane -->
-            <VBox spacing="8" styleClass="panel">
-                <padding><Insets topRightBottomLeft="12"/></padding>
+            <VBox spacing="10" styleClass="card-panel">
+                <padding><Insets topRightBottomLeft="20"/></padding>
                 <Label text="Extracted Text" styleClass="section-label"/>
                 <TextArea fx:id="extractedTextArea" wrapText="true" editable="true"
                           VBox.vgrow="ALWAYS" styleClass="marathi-text-area"/>

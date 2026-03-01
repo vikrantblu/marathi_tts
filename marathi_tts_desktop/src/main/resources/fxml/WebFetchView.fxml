@@ -21,8 +21,8 @@
         </VBox>
     </top>
     <center>
-        <VBox spacing="8" styleClass="panel">
-            <padding><Insets topRightBottomLeft="12"/></padding>
+        <VBox spacing="10" styleClass="card-panel">
+            <padding><Insets topRightBottomLeft="20"/></padding>
             <TextArea fx:id="textArea" wrapText="true" editable="true"
                       VBox.vgrow="ALWAYS" styleClass="marathi-text-area"
                       promptText="Fetched Marathi text will appear here…"/>

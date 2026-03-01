@@ -30,8 +30,8 @@ A full-featured, open-source **Marathi Text-to-Speech** ecosystem spanning three
 | 9 | **Image OCR** (Devanagari) | ✅ | ✅ | ✅ |
 | 10 | **PDF extraction** (PyMuPDF → PyPDF2 → OCR) | ✅ | ✅ | ✅ |
 | 11 | **Web scraping** (URL → Marathi text) | ✅ | ✅ | ✅ |
-| 12 | **Speech-to-Text** (Whisper) | ✅ | ✅ | ✅ |
-| 13 | **Modi → Devanagari** script conversion | ✅ | ✅ | ✅ |
+| 12 | **Speech-to-Text** (Whisper / Android SpeechRecognizer) | ✅ API | ✅ Tab | ✅ Tab |
+| 13 | **Script conversion** (Modi / IAST / Brahmi ↔ Devanagari) | ✅ | ✅ | ✅ |
 | 14 | **Multi-engine TTS** (gTTS / System / Sherpa AI) | Partial | Partial | ✅ |
 | 15 | **Prosody engine** (natural pauses) | ✅ | Partial | — |
 | 16 | **Grammar engine** (90+ spelling fixes, sandhi, vibhakti) | ✅ | ✅ | ✅ |
@@ -42,6 +42,8 @@ A full-featured, open-source **Marathi Text-to-Speech** ecosystem spanning three
 | 21 | **Custom voice model** (VITS / XTTS v2) | ✅ | — | — |
 | 22 | **User system / feedback** | ✅ | — | — |
 | 23 | **Theme support** (Material3 DayNight) | — | — | ✅ |
+| 24 | **Book Reader** (CameraX + perspective crop + sentence TTS) | — | — | ✅ |
+| 25 | **Stotra Library** (full text + API) | ✅ API | ✅ Tab | ✅ Tab |
 
 ---
 

@@ -37,6 +37,7 @@ class OcrFragment : Fragment() {
             cameraPhotoFile?.let { file ->
                 selectedImagePath = file.absolutePath
                 binding.imagePreview.setImageURI(Uri.fromFile(file))
+                binding.emptyStateOverlay.visibility = View.GONE
                 binding.extractBtn.isEnabled = true
                 binding.statusText.text = "Photo captured"
             }
@@ -88,6 +89,7 @@ class OcrFragment : Fragment() {
         binding.clearBtn.setOnClickListener {
             selectedImagePath = null
             binding.imagePreview.setImageDrawable(null)
+            binding.emptyStateOverlay.visibility = View.VISIBLE
             binding.extractedText.text?.clear()
             binding.extractBtn.isEnabled = false
             binding.sendToTtsBtn.isEnabled = false
@@ -123,6 +125,7 @@ class OcrFragment : Fragment() {
         }
         selectedImagePath = cacheFile.absolutePath
         binding.imagePreview.setImageURI(uri)
+        binding.emptyStateOverlay.visibility = View.GONE
         binding.extractBtn.isEnabled = true
         binding.statusText.text = "Image selected"
     }

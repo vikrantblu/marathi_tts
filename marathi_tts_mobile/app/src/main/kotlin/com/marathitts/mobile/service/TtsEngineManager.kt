@@ -102,7 +102,7 @@ class TtsEngineManager(private val context: Context) {
             try {
                 val result = when (engine) {
                     ENGINE_SHERPA -> trySherpa(text, langCode, speed, pitch, volume, isVerse)
-                    ENGINE_SYSTEM -> trySystemTts(text, langCode, speed, pitch)
+                    ENGINE_SYSTEM -> trySystemTts(text, langCode, gender, speed, pitch)
                     ENGINE_GTTS -> tryGtts(text, langCode, gender, speed, pitch, volume, emotion, isVerse)
                     else -> null
                 }
@@ -140,7 +140,7 @@ class TtsEngineManager(private val context: Context) {
     // ── System TTS ───────────────────────────────────────────────────────────
 
     private suspend fun trySystemTts(
-        text: String, langCode: String, speed: Float, pitch: Float
+        text: String, langCode: String, gender: String, speed: Float, pitch: Float
     ): JSONObject = withContext(Dispatchers.IO) {
         val engine = getSystemTts()
         if (!engine.isLanguageAvailable(langCode)) {
@@ -154,6 +154,7 @@ class TtsEngineManager(private val context: Context) {
         val path = engine.synthesize(
             text = text,
             langCode = langCode,
+            gender = gender,
             speed = speed,
             pitch = pitch,
             outputFile = outFile

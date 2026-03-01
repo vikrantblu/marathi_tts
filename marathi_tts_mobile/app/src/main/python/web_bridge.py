@@ -45,6 +45,87 @@ _HEADERS = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Special site handlers — for JS-heavy sites that embed content in <script>
+# ---------------------------------------------------------------------------
+
+def _try_abhyaskosh(html: str, url: str) -> str:
+    """Extract Jnaneshwari / Gita content from abhyaskosh.org.
+
+    This site renders content via JavaScript from inline JSON variables
+    (adhyayStr, shlokaStr, oviStr).  BeautifulSoup cannot see the rendered
+    DOM, so we parse the JSON directly from the HTML source.
+    """
+    import json as _json
+
+    lines = []
+
+    # Extract chapter metadata
+    m = re.search(r'var\s+adhyayStr\s*=\s*(\{.*?\});', html, re.DOTALL)
+    if m:
+        try:
+            data = _json.loads(m.group(1))
+            entries = data.get('data', [])
+            if entries:
+                e = entries[0]
+                intro = e.get('introduction', '')
+                subject = e.get('subject', '')
+                if intro:
+                    lines.append(intro)
+                if subject:
+                    lines.append(subject)
+        except (ValueError, KeyError):
+            pass
+
+    # Extract Ovis (Jnaneshwari verses) — primary content
+    m = re.search(r'var\s+oviStr\s*=\s*(\{.*?\})\s*;', html, re.DOTALL)
+    if m:
+        try:
+            data = _json.loads(m.group(1))
+            for ovi in data.get('data', []):
+                text = ovi.get('text', '').strip()
+                if text:
+                    lines.append(text)
+        except (ValueError, KeyError):
+            pass
+
+    # Extract Shlokas (Gita verses embedded with chapter)
+    m = re.search(r'var\s+shlokaStr\s*=\s*(\{.*?\})\s*;', html, re.DOTALL)
+    if m:
+        raw_json = m.group(1)
+        raw_json = re.sub(r',\s*([}\]])', r'\1', raw_json)
+        try:
+            data = _json.loads(raw_json)
+            for shloka in data.get('data', []):
+                text = shloka.get('text', '').strip()
+                if text:
+                    lines.append(text)
+        except (ValueError, KeyError):
+            pass
+
+    # Extract chapter conclusion
+    try:
+        m2 = re.search(r'var\s+adhyayStr\s*=\s*(\{.*?\});', html, re.DOTALL)
+        if m2:
+            data = _json.loads(m2.group(1))
+            entries = data.get('data', [])
+            if entries:
+                conclusion = entries[0].get('conclusion', '')
+                if conclusion:
+                    lines.append(conclusion)
+    except Exception:
+        pass
+
+    result = '\n'.join(lines)
+    log.info("[abhyaskosh] Extracted %d lines, %d chars", len(lines), len(result))
+    return result
+
+
+def _is_abhyaskosh_url(url: str) -> bool:
+    """Check if URL belongs to abhyaskosh.org."""
+    return 'abhyaskosh.org' in url.lower()
+
+
 def _clean_text(raw: str) -> str:
     """Clean extracted web text. Falls back to simple regex if web util unavailable."""
     try:
@@ -116,6 +197,28 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
         else:
             resp.encoding = resp.apparent_encoding or "utf-8"
             html = resp.text
+
+        # ── Special site handlers (JS-heavy sites) ────────────────────
+        if _is_abhyaskosh_url(url):
+            special_text = _try_abhyaskosh(html, url)
+            if special_text and len(special_text) > 50:
+                log.info("[Special] abhyaskosh.org handler extracted %d chars", len(special_text))
+                try:
+                    from bs4 import BeautifulSoup as _BS
+                    _soup = _BS(html, "html.parser")
+                    _title_tag = _soup.find("title")
+                    title = _title_tag.get_text(strip=True) if _title_tag else ""
+                except Exception:
+                    title = ""
+                cleaned_text = _clean_text(special_text)
+                if title:
+                    cleaned_text = f"{title}\n\n{cleaned_text}"
+                return {
+                    "success": True, "text": cleaned_text, "title": title,
+                    "image_texts_count": 0,
+                    "char_count": len(cleaned_text),
+                    "elapsed_sec": round(time.time() - t0, 2),
+                }
 
         soup = BeautifulSoup(html, "html.parser")
 

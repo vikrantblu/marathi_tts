@@ -9,8 +9,8 @@
            stylesheets="@../css/style.css">
 
     <!-- Left: Stotra list with search + deity filter -->
-    <VBox spacing="10" styleClass="panel-card">
-        <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+    <VBox spacing="10" styleClass="card-panel">
+        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
         <Label text="📿 स्तोत्र संग्रह" styleClass="section-label"/>
 
@@ -36,8 +36,8 @@
     </VBox>
 
     <!-- Right: Stotra detail view -->
-    <VBox spacing="10" styleClass="panel-card">
-        <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+    <VBox spacing="10" styleClass="card-panel">
+        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
         <Label fx:id="stotraTitle" text="Select a stotra…" styleClass="section-label"
                wrapText="true"/>

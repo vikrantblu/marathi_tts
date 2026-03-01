@@ -20,7 +20,8 @@ bundles a complete Python 3.11 runtime inside the APK.
 | 📄 **PDF** | Extract text from PDF files. |
 | 🌐 **Web** | Fetch and clean Marathi text from any URL. |
 | 🔄 **Modi** | Convert Modi script to Devanagari. |
-
+| 🎤 **Speech-to-Text** | Record via Android SpeechRecognizer or upload an audio file; language selection: Marathi / Hindi / English / Auto-detect. Result can be sent to TTS. |
+| 📖 **Book Reader** | Capture open-book photos with CameraX (CONTINUOUS_PICTURE AF, MAXIMIZE_QUALITY). Interactive perspective-correction crop (4 corner handles). Dual-page spread or single-page mode. ML Kit / Tesseract OCR on de-warped image. Sentence-by-sentence TTS playback with soft-yellow sentence highlight and a persistent foreground notification (Stop button). Append mode to accumulate multi-page text. |
 ---
 
 ## Prerequisites
@@ -101,15 +102,26 @@ marathi_tts_mobile/
         ├── kotlin/com/marathitts/mobile/
         │   ├── MainActivity.kt
         │   ├── service/
-        │   │   ├── PythonBridge.kt   # Chaquopy wrapper
+        │   │   ├── PythonBridge.kt     # Chaquopy wrapper
         │   │   └── AudioPlayerService.kt
         │   └── ui/
-        │       ├── tts/   TtsFragment + TtsViewModel
-        │       ├── emotion/   EmotionFragment + EmotionViewModel
-        │       ├── ocr/   OcrFragment + OcrViewModel
-        │       ├── correction/   CorrectionFragment + CorrectionViewModel
-        │       ├── pdf/   PdfFragment + PdfViewModel
-        │       └── web/   WebFetchFragment + WebFetchViewModel
+        │       ├── tts/      TtsFragment + TtsViewModel
+        │       ├── emotion/  EmotionFragment + EmotionViewModel
+        │       ├── ocr/      OcrFragment + OcrViewModel
+        │       ├── correction/  CorrectionFragment + CorrectionViewModel
+        │       ├── pdf/      PdfFragment + PdfViewModel
+        │       ├── web/      WebFetchFragment + WebFetchViewModel
+        │       ├── stt/      SttFragment + SttViewModel
+        │       ├── stotra/   StotraFragment + StotraViewModel + StotraAdapter
+        │       ├── modi/     ModiFragment + ModiViewModel
+        │       └── bookreader/
+        │           ├── BookReaderFragment.kt     # Main UI: OCR + sentence TTS
+        │           ├── BookReaderViewModel.kt    # State mgmt + AudioPlayerService
+        │           ├── BookCameraActivity.kt     # CameraX capture + PerspectiveCropView
+        │           ├── BookCameraOverlayView.kt   # Alignment guide overlay
+        │           ├── BookReaderForegroundService.kt  # Persistent notification
+        │           ├── PageEdgeDetector.kt       # Book-spine / page edge detection
+        │           └── PerspectiveCropView.kt    # 4-corner drag handles for de-warp
         └── res/
             ├── layout/              # Material 3 XML layouts
             ├── navigation/nav_graph.xml
@@ -154,9 +166,11 @@ The layouts reference `android:fontFamily="@font/noto_sans_devanagari"` for prop
 | Permission | Why |
 |-----------|-----|
 | `INTERNET` | Web URL fetching |
-| `CAMERA` | (optional) Take a photo for OCR |
-| `READ_MEDIA_IMAGES` | Select gallery images for OCR |
+| `CAMERA` | Book Reader camera capture + (optional) OCR photo |
+| `RECORD_AUDIO` | Speech-to-Text microphone recording |
+| `READ_MEDIA_IMAGES` | Select gallery images for OCR / Book Reader |
 | `READ_EXTERNAL_STORAGE` | Legacy storage access (≤ Android 12) |
+| `FOREGROUND_SERVICE` | Book Reader foreground service (persistent notification) |
 
 ---
 

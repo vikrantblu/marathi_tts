@@ -14,12 +14,28 @@
     <!-- Speech recognition / audio recording -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <!-- Foreground service + wake lock for background TTS reading -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
         android:theme="@style/Theme.MarathiTts"
         android:supportsRtl="true">
+
+        <!-- CameraX guided capture + perspective crop for Book Reader -->
+        <activity
+            android:name=".ui.bookreader.BookCameraActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MarathiTts"/>
+
+        <!-- Foreground service: keeps TTS reading alive when screen is off -->
+        <service
+            android:name=".ui.bookreader.BookReaderForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback"/>
 
         <activity
             android:name=".MainActivity"

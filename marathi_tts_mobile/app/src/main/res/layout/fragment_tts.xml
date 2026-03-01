@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground"
+    android:clipToPadding="false">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -9,108 +12,148 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Text input -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/label_marathi_text"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
-            android:layout_marginBottom="8dp"/>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/text_input"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_marathi_text"
-                android:minLines="5"
-                android:maxLines="12"
-                android:inputType="textMultiLine"
-                android:textSize="16sp"
-                android:fontFamily="sans-serif"
-                android:gravity="top"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <TextView
-            android:id="@+id/char_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0 chars"
-            android:textAppearance="?attr/textAppearanceLabelSmall"
-            android:layout_gravity="end"
-            android:layout_marginTop="4dp"/>
-
-        <!-- TTS Engine selector -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/label_tts_engine"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="4dp"/>
-        <Spinner
-            android:id="@+id/engine_spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"/>
-        <TextView
-            android:id="@+id/engine_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceLabelSmall"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Language selector -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/label_language"
-            android:textAppearance="?attr/textAppearanceLabelLarge"
-            android:layout_marginBottom="4dp"/>
-        <Spinner
-            android:id="@+id/language_spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Voice Gender selector -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/label_voice_gender"
-            android:textAppearance="?attr/textAppearanceLabelLarge"
-            android:layout_marginBottom="4dp"/>
-        <Spinner
-            android:id="@+id/gender_spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Voice settings -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/label_voice_settings"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"/>
-
+        <!-- ── Text Input Card ─────────────────────────────────────── -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp"
+            android:layout_marginBottom="12dp">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="12dp">
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_marathi_text"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorPrimary"
+                    android:layout_marginBottom="8dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/text_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hint_marathi_text"
+                        android:minLines="5"
+                        android:maxLines="12"
+                        android:inputType="textMultiLine"
+                        android:textSize="16sp"
+                        android:fontFamily="sans-serif"
+                        android:gravity="top"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/char_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 chars"
+                    android:textAppearance="?attr/textAppearanceLabelSmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Engine & Voice Card ─────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_tts_engine"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorPrimary"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/engine_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:id="@+id/engine_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceLabelSmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:layout_marginBottom="12dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_language"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:layout_marginBottom="4dp"/>
+                <Spinner
+                    android:id="@+id/language_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_voice_gender"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:layout_marginBottom="4dp"/>
+                <Spinner
+                    android:id="@+id/gender_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Voice Settings Card ─────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_voice_settings"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textColor="?attr/colorPrimary"
+                    android:layout_marginBottom="12dp"/>
 
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="@string/label_speed"/>
+                    android:text="@string/label_speed"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"/>
                 <com.google.android.material.slider.Slider
                     android:id="@+id/speed_slider"
                     android:layout_width="match_parent"
@@ -121,7 +164,8 @@
                     android:stepSize="1"/>
 
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="@string/label_pitch"/>
+                    android:text="@string/label_pitch"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"/>
                 <com.google.android.material.slider.Slider
                     android:id="@+id/pitch_slider"
                     android:layout_width="match_parent"
@@ -132,7 +176,8 @@
                     android:stepSize="1"/>
 
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="@string/label_volume"/>
+                    android:text="@string/label_volume"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"/>
                 <com.google.android.material.slider.Slider
                     android:id="@+id/volume_slider"
                     android:layout_width="match_parent"
@@ -141,45 +186,61 @@
                     android:valueTo="20"
                     android:value="10"
                     android:stepSize="1"/>
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Emotion -->
-        <TextView
+        <!-- ── Emotion & Mode Card ─────────────────────────────────── -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/label_emotion"/>
-        <Spinner
-            android:id="@+id/emotion_spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="8dp"/>
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp"
+            android:layout_marginBottom="16dp">
 
-        <!-- Auto-detect emotion -->        
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/auto_detect_check"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Auto-detect emotion from text"
-            android:layout_marginBottom="4dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-        <!-- Verse mode -->
-        <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/verse_check"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/verse_mode"
-            android:layout_marginBottom="12dp"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_emotion"
+                    android:textAppearance="?attr/textAppearanceLabelLarge"
+                    android:layout_marginBottom="4dp"/>
+                <Spinner
+                    android:id="@+id/emotion_spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"/>
 
-        <!-- Buttons -->
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/auto_detect_check"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Auto-detect emotion from text"
+                    android:layout_marginBottom="4dp"/>
+
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/verse_check"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/verse_mode"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ── Generate Button ─────────────────────────────────────── -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/generate_btn"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:text="@string/btn_generate"
-            android:layout_marginBottom="8dp"/>
+            android:textSize="16sp"
+            app:cornerRadius="16dp"
+            android:layout_marginBottom="12dp"/>
 
         <!-- Audio controls (shown after generation) -->
         <LinearLayout
@@ -197,7 +258,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="▶"
+                android:text="Play"
+                app:icon="@drawable/ic_play_arrow_24"
+                app:iconSize="20dp"
                 android:layout_marginEnd="4dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -206,7 +269,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="⏹"
+                android:text="Stop"
+                app:icon="@drawable/ic_stop_24"
+                app:iconSize="20dp"
                 android:layout_marginEnd="4dp"/>
 
             <com.google.android.material.button.MaterialButton
@@ -246,11 +311,13 @@
             android:text="@string/btn_clear"
             android:layout_marginBottom="8dp"/>
 
-        <ProgressBar
+        <com.google.android.material.progressindicator.LinearProgressIndicator
             android:id="@+id/progress_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"/>
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:trackCornerRadius="2dp"/>
 
         <TextView
             android:id="@+id/status_text"
@@ -258,6 +325,7 @@
             android:layout_height="wrap_content"
             android:text="Ready"
             android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginTop="4dp"/>
 
     </LinearLayout>

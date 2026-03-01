@@ -33,61 +33,62 @@
     <string name="label_volume">Volume</string>
     <string name="label_emotion">Emotion</string>
     <string name="verse_mode">Verse / Shloka mode (॥)</string>
-    <string name="btn_generate">🔊 Generate Audio</string>
-    <string name="btn_save">💾 Save</string>
+    <string name="btn_generate">Generate Audio</string>
+    <string name="btn_save">Save</string>
     <string name="btn_clear">Clear</string>
 
     <!-- Emotion screen -->
     <string name="label_enter_text">Input Text</string>
-    <string name="btn_analyze">🔍 Analyse Emotion</string>
+    <string name="btn_analyze">Analyse Emotion</string>
 
     <!-- OCR screen -->
-    <string name="btn_browse_image">📂 Browse Image</string>
-    <string name="btn_camera">📷 Camera</string>
-    <string name="btn_extract">📝 Extract</string>
+    <string name="btn_browse_image">Browse</string>
+    <string name="btn_camera">Camera</string>
+    <string name="btn_extract">Extract</string>
     <string name="label_extracted_text">Extracted Text</string>
     <string name="ocr_hint">Select an image to begin</string>
 
     <!-- Correction screen -->
     <string name="hint_uncorrected_text">येथे चुकीचा मजकूर टाइप करा…</string>
-    <string name="btn_correct">✏️ Correct Text</string>
+    <string name="btn_correct">Correct Text</string>
 
     <!-- PDF screen -->
-    <string name="btn_browse_pdf">📂 Browse PDF</string>
+    <string name="btn_browse_pdf">Browse PDF</string>
     <string name="no_file_selected">No file selected</string>
     <string name="pdf_hint">Select a PDF to begin</string>
 
     <!-- Web fetch screen -->
     <string name="hint_url">https://marathi-website.com/…</string>
-    <string name="btn_fetch">🌐 Fetch</string>
+    <string name="btn_fetch">Fetch</string>
     <string name="web_hint">Enter a URL and tap Fetch</string>
 
     <!-- STT screen -->
     <string name="stt_title">Speech to Text</string>
     <string name="stt_hint">Tap the microphone to record Marathi speech</string>
-    <string name="btn_record">🎙 Record</string>
-    <string name="btn_transcribe_file">📂 Transcribe File</string>
-    <string name="btn_send_to_tts">🔊 Send to TTS</string>
+    <string name="btn_record">Record</string>
+    <string name="btn_transcribe_file">Transcribe File</string>
+    <string name="btn_send_to_tts">Send to TTS</string>
     <string name="label_transcript">Transcript</string>
     <string name="label_segments">Segments</string>
 
     <!-- Modi / Script Converter screen -->
     <string name="modi_title">Script Converter</string>
     <string name="modi_hint">Enter text to convert between scripts</string>
-    <string name="btn_convert">🔄 Convert</string>
+    <string name="btn_convert">Convert</string>
     <string name="label_mode">Conversion Mode</string>
     <string name="label_input">Input</string>
     <string name="label_output">Output</string>
 
     <!-- Book Reader screen -->
     <string name="tab_book_reader">Book Reader</string>
-    <string name="btn_capture_spread">📷 Two Pages</string>
-    <string name="btn_capture_single">📷 One Page</string>
-    <string name="btn_read_aloud">📖 Read Aloud</string>
-    <string name="book_reader_hint">Capture a book page to begin</string>
+    <string name="btn_capture_spread">Two Pages</string>
+    <string name="btn_capture_single">One Page</string>
+    <string name="btn_read_aloud">Read Aloud</string>
+    <string name="btn_next_page">Next Page</string>
+    <string name="book_reader_hint">Capture a book page to begin reading…</string>
 
     <!-- Shared -->
-    <string name="btn_format">🔤 Format</string>
-    <string name="btn_suggest">💡 Suggest</string>
-    <string name="btn_feedback">⭐ Rate</string>
+    <string name="btn_format">Format</string>
+    <string name="btn_suggest">Suggest</string>
+    <string name="btn_feedback">Rate</string>
 </resources>

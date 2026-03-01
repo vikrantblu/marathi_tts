@@ -5,15 +5,15 @@
         android:checkableBehavior="single">
         <item
             android:id="@+id/ttsFragment"
-            android:icon="@android:drawable/ic_btn_speak_now"
+            android:icon="@drawable/ic_volume_up"
             android:title="@string/tab_tts"/>
         <item
             android:id="@+id/emotionFragment"
-            android:icon="@android:drawable/ic_menu_info_details"
+            android:icon="@drawable/ic_emotion"
             android:title="@string/tab_emotion"/>
         <item
             android:id="@+id/sttFragment"
-            android:icon="@android:drawable/ic_lock_silent_mode_off"
+            android:icon="@drawable/ic_mic"
             android:title="@string/tab_stt"/>
     </group>
 
@@ -23,23 +23,23 @@
                 android:checkableBehavior="single">
                 <item
                     android:id="@+id/ocrFragment"
-                    android:icon="@android:drawable/ic_menu_camera"
+                    android:icon="@drawable/ic_ocr"
                     android:title="@string/tab_ocr"/>
                 <item
                     android:id="@+id/pdfFragment"
-                    android:icon="@android:drawable/ic_menu_agenda"
+                    android:icon="@drawable/ic_pdf"
                     android:title="@string/tab_pdf"/>
                 <item
                     android:id="@+id/webFetchFragment"
-                    android:icon="@android:drawable/ic_menu_search"
+                    android:icon="@drawable/ic_web"
                     android:title="@string/tab_web"/>
                 <item
                     android:id="@+id/correctionFragment"
-                    android:icon="@android:drawable/ic_menu_edit"
+                    android:icon="@drawable/ic_spellcheck"
                     android:title="@string/tab_correction"/>
                 <item
                     android:id="@+id/bookReaderFragment"
-                    android:icon="@android:drawable/ic_menu_gallery"
+                    android:icon="@drawable/ic_book"
                     android:title="@string/tab_book_reader"/>
             </group>
         </menu>
@@ -51,11 +51,11 @@
                 android:checkableBehavior="single">
                 <item
                     android:id="@+id/modiFragment"
-                    android:icon="@android:drawable/ic_menu_sort_by_size"
+                    android:icon="@drawable/ic_translate"
                     android:title="@string/tab_modi"/>
                 <item
                     android:id="@+id/stotraFragment"
-                    android:icon="@android:drawable/ic_menu_my_calendar"
+                    android:icon="@drawable/ic_stotra"
                     android:title="@string/tab_stotra"/>
             </group>
         </menu>

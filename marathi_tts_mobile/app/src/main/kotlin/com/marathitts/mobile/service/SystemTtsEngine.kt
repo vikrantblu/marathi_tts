@@ -59,12 +59,14 @@ class SystemTtsEngine(context: Context) {
      * Synthesize [text] to a .wav file. Returns the file path, or throws on failure.
      *
      * @param langCode  one of "mr", "hi", "sa", "en"
+     * @param gender    "female" (default) or "male" — lowers pitch for male
      * @param speed     speech rate (1.0 = normal)
      * @param pitch     pitch multiplier (1.0 = normal)
      */
     suspend fun synthesize(
         text: String,
         langCode: String = "mr",
+        gender: String = "female",
         speed: Float = 1.0f,
         pitch: Float = 1.0f,
         outputFile: File
@@ -80,9 +82,13 @@ class SystemTtsEngine(context: Context) {
                 return@suspendCancellableCoroutine
             }
 
+        // Male voice: Android TTS has no built-in gender selection, so lower the
+        // pitch by ~12 % (same factor used in tts_bridge.py for gTTS male voice)
+        val effectivePitch = if (gender == "male") pitch * 0.79f else pitch
+
         engine.language = locale
         engine.setSpeechRate(speed)
-        engine.setPitch(pitch)
+        engine.setPitch(effectivePitch)
 
         val utteranceId = "tts_${System.currentTimeMillis()}"
 

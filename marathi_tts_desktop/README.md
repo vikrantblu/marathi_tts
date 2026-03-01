@@ -12,7 +12,7 @@ via subprocess calls to bundled Python bridge scripts — **no server, no Django
 |--------|-------------|
 | 🔊 **Text to Speech** | Convert Marathi Devanagari text to audio (MP3). Speed, pitch, volume, emotion, verse mode controls. |
 | �️ **Verse / Stotra Mode** | Shloka-aware preprocessing with visarga sandhi, danda→pause, verse numbering removal. |
-| 📚 **Stotra Library** | Pre-recorded audio catalog for 10+ stotras with fingerprint-based matching. |
+| 📚 **Stotra Library** | Browse the full stotra catalog: deity-based filter chips, live search by name, view complete stotra text with metadata (meter, language, source), send to TTS tab in verse mode for direct playback. |
 | 🔤 **Sanskrit Phonetics** | Visarga sandhi, echoing visarga, halant expansion, conjunct aids (ज्ञ→द्न्य). |
 | 🔤 **Marathi Phonetics** | Schwa deletion, anusvara cleanup, visarga word lexicon, English vowel fallback. |
 | 🗣️ **G2P Engine** | Grapheme-to-phoneme processing for correct conjunct and anusvara pronunciation. |
@@ -21,7 +21,8 @@ via subprocess calls to bundled Python bridge scripts — **no server, no Django
 | ✏️ **AI Text Correction** | Auto-correct Marathi spelling/grammar using the trained `marathi-correction-model`. |
 | 📄 **PDF Extract** | Pull Marathi text from PDF files (PyMuPDF → PyPDF2 → OCR fallback). |
 | 🌐 **Web Fetch** | Fetch and clean Marathi text from any URL. |
-| 🔄 **Modi Script** | Convert Modi script to Devanagari. |
+| 🔄 **Modi / IAST / Brahmi Script** | Convert Modi script, IAST, or Brahmi to Devanagari (and Devanagari → IAST). |
+| 🗣️ **Speech-to-Text** | Transcribe audio files (WAV/MP3/M4A/OGG/FLAC) or record from microphone. Language selection: Marathi, Hindi, Sanskrit, English. Displays full transcript + per-segment timestamps. Send result directly to TTS tab. |
 
 ---
 
@@ -92,6 +93,8 @@ marathi_tts_desktop/
 │   ├── correction_bridge.py
 │   ├── pdf_bridge.py
 │   ├── web_bridge.py
+│   ├── stt_bridge.py          # Whisper STT + microphone recording
+│   ├── script_converter_bridge.py  # Modi / IAST / Brahmi ↔ Devanagari
 │   └── setup_bridge.py       # One-time dependency installer
 └── src/main/
     ├── kotlin/com/marathitts/desktop/
@@ -103,7 +106,10 @@ marathi_tts_desktop/
     │   │   ├── OcrController.kt
     │   │   ├── CorrectionController.kt
     │   │   ├── PdfController.kt
-    │   │   └── WebFetchController.kt
+    │   │   ├── WebFetchController.kt
+    │   │   ├── SttController.kt
+    │   │   ├── ModiController.kt
+    │   │   └── StotraController.kt
     │   ├── service/
     │   │   ├── PythonBridge.kt           # Core subprocess runner
     │   │   └── Services.kt               # TTS/Emotion/OCR/… service wrappers
