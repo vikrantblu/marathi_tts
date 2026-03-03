@@ -92,15 +92,274 @@ SCHWA_PRESERVE_CLUSTERS: Set[str] = {
 
 # Words where schwa deletion is IRREGULAR (exceptions).
 # Key = written form, Value = phonemic form with correct schwa.
+# These entries also serve as a high-frequency bypass: words found here
+# skip rule-based schwa processing, preventing over-application.
 SCHWA_EXCEPTIONS: Dict[str, str] = {
-    'कमल': 'कमल',     # kamal (delete final)
+    # ── Original handful ─────────────────────────────────────────────
+    'कमल': 'कमल',     # kamal  (delete final)
     'नगर': 'नगर',     # nagar
     'समय': 'समय',     # samay
     'मनोहर': 'मनोहर', # manohar
     'दिवस': 'दिवस',   # divas
-    'सुंदर': 'सुंदर',   # sundar
+    'सुंदर': 'सुंदर',  # sundar
     'अमर': 'अमर',     # amar
     'प्रकार': 'प्रकार', # prakaar
+
+    # ── Verb forms ending in -तो (masculine singular present) ────────
+    # Schwa before -तो is deleted: बोल+तो → bolt-o, NOT bola-to
+    'बोलतो': 'बोलतो',     # speaks     (bol-to)
+    'करतो': 'करतो',       # does       (kar-to)
+    'सांगतो': 'सांगतो',   # tells      (saang-to)
+    'जातो': 'जातो',       # goes       (ja-to)
+    'येतो': 'येतो',       # comes      (ye-to)
+    'पाहतो': 'पाहतो',     # sees       (paa-h-to)
+    'घेतो': 'घेतो',       # takes      (ghe-to)
+    'देतो': 'देतो',       # gives      (de-to)
+    'खातो': 'खातो',       # eats       (kha-to)
+    'पितो': 'पितो',       # drinks     (pi-to)
+    'हसतो': 'हसतो',       # laughs     (has-to)
+    'रडतो': 'रडतो',       # cries      (rad-to)
+    'धावतो': 'धावतो',     # runs       (dhaav-to)
+    'खेळतो': 'खेळतो',     # plays      (kheL-to)
+    'वाचतो': 'वाचतो',     # reads      (vaach-to)
+    'लिहितो': 'लिहितो',   # writes     (lihi-to)
+    'मागतो': 'मागतो',     # asks/begs  (maag-to)
+    'काढतो': 'काढतो',     # takes out  (kaaDh-to)
+    'निघतो': 'निघतो',     # leaves     (nigh-to)
+    'बसतो': 'बसतो',       # sits       (bas-to)
+    'उठतो': 'उठतो',       # gets up    (uTh-to)
+    'झोपतो': 'झोपतो',     # sleeps     (jhop-to)
+    'कळतो': 'कळतो',       # understands(kaL-to)
+    'वळतो': 'वळतो',       # turns      (vaL-to)
+    'मिळतो': 'मिळतो',     # gets       (miL-to)
+    'चालतो': 'चालतो',     # walks/works(chaal-to)
+    'पडतो': 'पडतो',       # falls      (paD-to)
+    'उडतो': 'उडतो',       # flies      (uD-to)
+    'तुटतो': 'तुटतो',     # breaks     (tuT-to)
+    'फुटतो': 'फुटतो',     # bursts     (phuT-to)
+    'सुटतो': 'सुटतो',     # escapes    (suT-to)
+
+    # ── Verb forms ending in -ते (feminine singular present) ─────────
+    'बोलते': 'बोलते',
+    'करते': 'करते',
+    'सांगते': 'सांगते',
+    'जाते': 'जाते',
+    'येते': 'येते',
+    'पाहते': 'पाहते',
+    'घेते': 'घेते',
+    'देते': 'देते',
+    'खाते': 'खाते',
+    'हसते': 'हसते',
+    'धावते': 'धावते',
+    'खेळते': 'खेळते',
+    'वाचते': 'वाचते',
+    'लिहिते': 'लिहिते',
+    'चालते': 'चालते',
+    'पडते': 'पडते',
+    'मिळते': 'मिळते',
+
+    # ── Verb infinitives ending in -णे ───────────────────────────────
+    'बोलणे': 'बोलणे',
+    'करणे': 'करणे',
+    'सांगणे': 'सांगणे',
+    'जाणे': 'जाणे',
+    'येणे': 'येणे',
+    'पाहणे': 'पाहणे',
+    'घेणे': 'घेणे',
+    'देणे': 'देणे',
+    'खाणे': 'खाणे',
+    'पिणे': 'पिणे',
+    'हसणे': 'हसणे',
+    'रडणे': 'रडणे',
+    'धावणे': 'धावणे',
+    'खेळणे': 'खेळणे',
+    'वाचणे': 'वाचणे',
+    'लिहिणे': 'लिहिणे',
+    'मागणे': 'मागणे',
+    'शिकणे': 'शिकणे',
+    'शिकवणे': 'शिकवणे',
+    'दाखवणे': 'दाखवणे',
+    'सांभाळणे': 'सांभाळणे',
+    'ओळखणे': 'ओळखणे',
+    'समजणे': 'समजणे',
+    'विचारणे': 'विचारणे',
+    'विसरणे': 'विसरणे',
+    'समजावणे': 'समजावणे',
+
+    # ── -कर suffix compounds (agent nouns, demonyms) ─────────────────
+    # Last syllable schwa of stem is kept; only word-final schwa deleted
+    'शेतकरी': 'शेतकरी',   # farmer     (shet-ka-ri)
+    'पुणेकर': 'पुणेकर',   # Pune-dweller
+    'मुंबईकर': 'मुंबईकर', # Mumbai-dweller
+    'नागपूरकर': 'नागपूरकर',
+    'नाशिककर': 'नाशिककर',
+    'औरंगाबादकर': 'औरंगाबादकर',
+    'कोल्हापूरकर': 'कोल्हापूरकर',
+    'दिल्लीकर': 'दिल्लीकर',
+    'ग्रामकर': 'ग्रामकर',
+    'मजूर': 'मजूर',       # labourer
+    'सरकार': 'सरकार',     # government (sar-kaar)
+    'व्यापार': 'व्यापार', # trade
+
+    # ── Common adjectives ─────────────────────────────────────────────
+    'चांगला': 'चांगला',   # good (chaaNG-la)
+    'चांगली': 'चांगली',
+    'चांगले': 'चांगले',
+    'मोठा': 'मोठा',       # big
+    'मोठी': 'मोठी',
+    'मोठे': 'मोठे',
+    'छोटा': 'छोटा',       # small
+    'छोटी': 'छोटी',
+    'लहान': 'लहान',       # small/young
+    'जड': 'जड',           # heavy
+    'हलका': 'हलका',       # light
+    'कठीण': 'कठीण',       # difficult
+    'सोपा': 'सोपा',       # easy
+    'सोपी': 'सोपी',
+    'नवीन': 'नवीन',       # new
+    'जुना': 'जुना',       # old
+    'जुनी': 'जुनी',
+    'गरम': 'गरम',         # hot
+    'थंड': 'थंड',         # cold
+    'ओला': 'ओला',         # wet
+    'कोरडा': 'कोरडा',     # dry
+    'गोड': 'गोड',         # sweet
+    'कडू': 'कडू',         # bitter
+    'खारट': 'खारट',       # salty
+    'आंबट': 'आंबट',       # sour
+    'तिखट': 'तिखट',       # spicy
+    'खरा': 'खरा',         # true/real
+    'खोटा': 'खोटा',       # false
+    'श्रीमंत': 'श्रीमंत', # rich
+    'गरीब': 'गरीब',       # poor
+    'शहाणा': 'शहाणा',     # wise/clever
+
+    # ── Common nouns ──────────────────────────────────────────────────
+    'जीवन': 'जीवन',       # life
+    'मन': 'मन',           # mind/heart
+    'तन': 'तन',           # body
+    'धन': 'धन',           # wealth
+    'चरण': 'चरण',         # feet (respectful)
+    'भवन': 'भवन',         # building
+    'वचन': 'वचन',         # word/promise
+    'स्मरण': 'स्मरण',     # remembrance
+    'लक्षण': 'लक्षण',     # sign/symptom
+    'कारण': 'कारण',       # reason
+    'साधन': 'साधन',       # means/tool
+    'वर्तन': 'वर्तन',     # behaviour
+    'श्रवण': 'श्रवण',     # hearing
+    'दर्शन': 'दर्शन',     # vision/sight
+    'भजन': 'भजन',         # devotional song
+    'कीर्तन': 'कीर्तन',   # devotional singing
+    'पवन': 'पवन',         # wind
+    'नयन': 'नयन',         # eyes (Sanskrit)
+    'शरण': 'शरण',         # refuge
+    'घर': 'घर',           # house
+    'दुकान': 'दुकान',     # shop
+    'बाजार': 'बाजार',     # market
+    'शाळा': 'शाळा',       # school
+    'महाविद्यालय': 'महाविद्यालय', # college
+    'रुग्णालय': 'रुग्णालय', # hospital
+    'देश': 'देश',         # country
+    'गाव': 'गाव',         # village
+    'शहर': 'शहर',         # city
+    'रस्ता': 'रस्ता',     # road
+    'पाणी': 'पाणी',       # water
+    'अन्न': 'अन्न',       # food
+    'भात': 'भात',         # rice
+    'पोळी': 'पोळी',       # flatbread
+
+    # ── Place names ───────────────────────────────────────────────────
+    'पुणे': 'पुणे',
+    'मुंबई': 'मुंबई',
+    'नागपूर': 'नागपूर',
+    'औरंगाबाद': 'औरंगाबाद',
+    'नाशिक': 'नाशिक',
+    'कोल्हापूर': 'कोल्हापूर',
+    'सातारा': 'सातारा',
+    'सोलापूर': 'सोलापूर',
+    'ठाणे': 'ठाणे',
+    'पनवेल': 'पनवेल',
+    'महाराष्ट्र': 'महाराष्ट्र',
+    'भारत': 'भारत',
+    'पंढरपूर': 'पंढरपूर',   # pilgrim city
+    'अलंदी': 'अलंदी',       # Sant Dnyaneshwar's samadhi
+    'देहू': 'देहू',           # Sant Tukaram's village
+
+    # ── Common adverbs and particles ──────────────────────────────────
+    'आता': 'आता',         # now
+    'तेव्हा': 'तेव्हा',   # then
+    'नंतर': 'नंतर',       # later
+    'आधी': 'आधी',         # before
+    'मग': 'मग',           # then/after
+    'पण': 'पण',           # but
+    'म्हणून': 'म्हणून',   # therefore
+    'कारण': 'कारण',       # because/reason
+    'फक्त': 'फक्त',       # only
+    'अजून': 'अजून',       # still/yet
+    'नेहमी': 'नेहमी',     # always
+    'कधी': 'कधी',         # when/ever
+    'कोठे': 'कोठे',       # where
+    'कसे': 'कसे',         # how
+    'किती': 'किती',       # how much/many
+    'इथे': 'इथे',         # here
+    'तिथे': 'तिथे',       # there
+    'वर': 'वर',           # on/up
+    'खाली': 'खाली',       # down/below
+    'आत': 'आत',           # inside
+    'बाहेर': 'बाहेर',     # outside
+    'पुढे': 'पुढे',       # ahead
+    'मागे': 'मागे',       # behind
+    'जवळ': 'जवळ',         # near
+    'दूर': 'दूर',         # far
+    'लवकर': 'लवकर',       # soon/early
+    'उशिरा': 'उशिरा',     # late
+
+    # ── Postpositions (vibhakti) ──────────────────────────────────────
+    'बद्दल': 'बद्दल',     # about/regarding
+    'साठी': 'साठी',       # for
+    'मुळे': 'मुळे',       # because of  ← retroflex ळ
+    'शिवाय': 'शिवाय',     # without
+    'सारखा': 'सारखा',     # like/similar
+    'पेक्षा': 'पेक्षा',   # than
+    'प्रमाणे': 'प्रमाणे', # according to
+    'द्वारे': 'द्वारे',   # via/through
+
+    # ── Common person/relationship words ─────────────────────────────
+    'आई': 'आई',           # mother
+    'बाबा': 'बाबा',       # father
+    'दादा': 'दादा',       # elder brother
+    'ताई': 'ताई',         # elder sister
+    'भाऊ': 'भाऊ',         # brother
+    'आजी': 'आजी',         # grandmother
+    'आजोबा': 'आजोबा',     # grandfather
+    'काका': 'काका',       # uncle (father's brother)
+    'काकी': 'काकी',       # aunt
+    'मामा': 'मामा',       # maternal uncle
+    'मुलगा': 'मुलगा',     # son/boy
+    'मुलगी': 'मुलगी',     # daughter/girl
+    'मित्र': 'मित्र',     # friend (m)
+    'मैत्रीण': 'मैत्रीण', # friend (f)
+    'शिक्षक': 'शिक्षक',   # teacher (m)
+    'शिक्षिका': 'शिक्षिका', # teacher (f)
+
+    # ── Bhakti / spiritual vocabulary ────────────────────────────────
+    'विठोबा': 'विठोबा',
+    'माउली': 'माउली',     # mother (affectionate for Dnyaneshwar)
+    'पांडुरंग': 'पांडुरंग',
+    'वारकरी': 'वारकरी',
+    'वारी': 'वारी',
+    'भक्त': 'भक्त',
+    'संत': 'संत',
+    'पुजारी': 'पुजारी',
+    'देऊळ': 'देऊळ',       # temple (Marathi; retroflex ळ)
+    'मंदिर': 'मंदिर',     # temple (Sanskrit)
+    'उपवास': 'उपवास',     # fast
+    'प्रसाद': 'प्रसाद',   # blessed food
+    'तीर्थ': 'तीर्थ',     # pilgrimage / holy water
+    'यात्रा': 'यात्रा',   # pilgrimage
+    'अष्टमी': 'अष्टमी',   # eighth day
+    'एकादशी': 'एकादशी',   # eleventh day
 }
 
 

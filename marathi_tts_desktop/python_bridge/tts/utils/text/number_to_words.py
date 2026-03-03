@@ -176,8 +176,15 @@ def convert_time(text: str) -> str:
         elif minute == 15:
             parts.append('वाजून सव्वा')
         elif minute == 45:
-            parts.append('पावणे ' + number_to_marathi_words(hour + 1))
-            return ' '.join(parts[:1] + parts[-1:])  # skip hour word
+            # "पावणे" = quarter-to-next-hour. Skip current hour word.
+            next_hour = number_to_marathi_words(hour + 1)
+            pavne = 'पावणे ' + next_hour
+            if len(parts) > 1:
+                # Period text is parts[0], current hour is parts[1] — skip hour
+                return parts[0] + ' ' + pavne
+            else:
+                # No period text — just "पावणे <next_hour>"
+                return pavne
         else:
             parts.append('वाजून')
             parts.append(number_to_marathi_words(minute))

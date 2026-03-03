@@ -166,7 +166,7 @@ All located at `app/src/main/python/` (flat, not under `tts/`):
 
 | Script | Function |
 |--------|---------|
-| `tts_bridge.py` | Text → audio file path |
+| `tts_bridge.py` | Text → audio file path (includes `_generate_prosody_audio` for gTTS prosody and `_generate_edge_prosody` for edge-tts prosody) |
 | `emotion_bridge.py` | Text → emotion label + score |
 | `stt_bridge.py` | Audio → Marathi transcript |
 | `ocr_bridge.py` | Image path → text |
@@ -271,10 +271,10 @@ Input text
 
 Key modules (same in all three platforms):
 
-- `phonetic/sandhi_engine.py` — Sanskrit sandhi: avagraha, r-sandhi, anusvara+sibilant
+- `phonetic/sandhi_engine.py` — Sanskrit sandhi: avagraha, r-sandhi, visarga+voiced→r, anusvara+sibilant
 - `phonetic/metre_engine.py` — Verse metre detection (12-metre catalogue); sets pause timings
 - `phonetic/marathi_phonetics.py` — Language-mode phonetic preprocessors
-- `audio/prosody_engine.py` — Segment-level pause engine; calls MetreEngine for verse
+- `audio/prosody_engine.py` — Segment-level pause engine; calls MetreEngine for verse; emotion modifiers; pitch contour; Ovi pulse
 - `constants/g2p_constants.py` — Exception lexicon (Sanskrit, Old Marathi, Sant literature)
 
 ---
@@ -305,6 +305,8 @@ python test_all_platforms.py
 | Anusvara + श | संशय → सन्शय (palatal assimilation) |
 | Anusvara + ष | Anusvara before ष assimilated |
 | Visarga + vowel | र्-sandhi applied before voiced vowel |
+| Visarga + voiced consonant | पुनः दर्शनम् → पुनर् दर्शनम् |
+| Visarga + voiceless no change | दुःख visarga unchanged before voiceless |
 
 **Section B: Sanskrit phonetics**
 
@@ -336,6 +338,8 @@ python test_all_platforms.py
 | segment_text → is_verse | All segments in verse block have `is_verse=True` |
 | tts_rate propagated | Verse segments get `tts_rate < 1.0` from MetreEngine |
 | segment_text prose | Prose segments have `is_verse=False` |
+| Pitch contour applied | At least one verse segment has non-zero pitch_shift |
+| Emotion devotional slower | Devotional emotion → lower avg tts_rate than neutral |
 
 **Section E: Old Marathi phonetics**
 
@@ -413,6 +417,45 @@ so regressions are caught immediately.
 
 ---
 
+## TTS Streaming (Desktop) — FEAT-2
+
+**Trigger:** TtsController.dispatchGeneration() routes Marathi prose > STREAMING_THRESHOLD (250 chars), non-verse to runStreamingGeneration().
+
+**Algorithm:** splitSentences() splits at ।, ॥, ?, !, ., ; with 20-char minimum fragment merging → submit chunks to 3-thread streamingPool with Semaphore(3) → AtomicInteger progress counter → "Streaming: N of M ✓" status → AudioPlayerUtil.playQueue() chains sequential playback.
+
+**Concurrency:** 3-thread fixed pool (`tts-stream`) + Semaphore(3). Each chunk spawns a full PythonBridge subprocess.
+
+**Playback:** AudioPlayerUtil.playQueue(paths, onAllFinished) → recursive playQueueInternal() using setOnEndOfMedia to chain files. Live speed/volume control via JavaFX MediaPlayer.
+
+**Save:** onSaveAudio() concatenates chunk MP3 files via byte-level concatenation (MP3 frames are independently decodable).
+
+**Key classes:**
+- TtsController.splitSentences() — sentence-level chunking
+- TtsController.runStreamingGeneration() — chunked generation with progress
+- TtsController.dispatchGeneration() — threshold-based routing
+- AudioPlayerUtil.playQueue() — sequential multi-file playback
+
+---
+
+## Grammar Engine in Bridges — FEAT-3
+
+Both mobile and desktop `tts_bridge.py` now run `MarathiGrammarEngine` on prose text
+before passing to any TTS engine. The `_apply_grammar()` function is a lazy singleton
+(created once per process) with try/except protection — returns original text on failure.
+
+**When applied:** In `generate_tts()` after `_preprocess_prose_text()`, only for:
+- Prose text (not verse mode)
+- Language not Sanskrit (`sa`) or English (`en`)
+
+**What it does:** Spelling corrections, sandhi splits, vibhakti/agreement fixes, word
+order (SOV enforcement), punctuation restoration, repetition removal, comma insertion
+at clause boundaries. Pure rule-based, no ML dependencies.
+
+**Idempotency:** Safe to double-apply — web TTSEngine's `preprocess_marathi_text()` also
+runs grammar internally, but the second pass is a no-op on already-corrected text.
+
+---
+
 ## BookReader Camera Flow (Mobile)
 
 **Google Lens-like auto-save:** Point camera at book → tap shutter → auto-crop + perspective correct → return to reader. No manual crop step.
@@ -469,6 +512,197 @@ Web emotion_constants.py now has devotional + peaceful in all dicts.
 ## ZWNJ cha Fix (word-internal genitive suffix)
 
 gTTS lang=mr adds y-glide to word-internal -cha. Fix: ZWNJ after G2P in apply_marathi_phonetics() (synced all 3 platforms) and tts_bridge.py verse + Stage3b paths (mobile + desktop).
+
+---
+
+## Prosody-Segmented Generation (FEAT-1 + FEAT-8)
+
+Both mobile and desktop bridges now have two prosody functions that segment prose text
+at natural clause/sentence boundaries and generate per-segment TTS audio with calibrated
+silence pauses.
+
+### Functions
+
+| Function | Engine | Max segments | Pause source |
+|----------|--------|-------------|-------------|
+| `_generate_prosody_audio()` | gTTS | 25 | pydub silence |
+| `_generate_edge_prosody()` | edge-tts | 15 | pydub silence |
+
+### Fallback chain (mobile)
+
+1. `_generate_edge_prosody()` — prosody-segmented edge-tts (FEAT-8)
+2. `_generate_edge_tts()` — single-call edge-tts
+3. `_generate_prosody_audio()` — prosody-segmented gTTS (FEAT-1)
+4. Stage 1: single-call gTTS + pydub effects
+5. Stage 2: bare gTTS fallback
+
+### Fallback chain (desktop)
+
+1. Stage 0: stotra library (pre-recorded)
+2. Stage 1: TTSEngine (web app engine)
+3. `_generate_edge_prosody()` — prosody-segmented edge-tts (FEAT-8)
+4. `_generate_edge_tts()` — single-call edge-tts
+5. `_generate_prosody_audio()` — prosody-segmented gTTS (FEAT-1)
+6. Stage 3b: single-call gTTS + pydub effects
+7. Stage 4: bare gTTS fallback
+
+### Design
+
+- ProsodyEngine gets `speaking_rate=1.0` → natural pause calibration
+- User speed/pitch/volume: edge-tts uses native SSML params; gTTS uses pydub post-processing
+- Per-segment pitch_shift from ProsodyEngine emphasis (questions +0.05, exclamations -0.05) applied to edge-tts only
+- Verse text bypasses prosody (has its own segmentation path)
+- All prosody functions return `None` on failure → transparent fallthrough
+- Temp segment files cleaned up in `finally` block
+
+---
+
+## Gaṇa Pattern Matching + New Metres (FEAT-4 + FEAT-12)
+
+**`classify_syllable_weights(pada: str) -> str`** (module-level in `metre_engine.py`):
+Returns a string of `'L'`/`'G'` characters, one per syllable. Guru conditions: long
+vowel mātrā, anusvara/chandrabindu/visarga following syllable, saṃyoga (consonant
+cluster closing syllable). Laghu: short open syllable.
+
+**`MetreDefinition`** new fields:
+- `gana_pattern: str` — expected L/G weight string (empty = no pattern check)
+- `yati_syllables: List[int]` — syllable positions for caesura pauses (0-indexed)
+
+**Six new metres** added to `METRE_CATALOGUE`:
+
+| Metre | Syllables | Yati positions |
+|-------|-----------|---------------|
+| Sragdharā | 21 | [7, 14] |
+| Indravajra | 11 | [6] |
+| Upendravajra | 11 | [6] |
+| Rathoddhatā | 11 | [5] |
+| Upajati | 11 | [6] |
+| Vamshastha | 12 | [6] |
+
+Existing metres updated with `yati_syllables`: Shardula([12]), Vasanta-tilaka([8]),
+Mandakranta([4,10]), Malini([8]), Anushtubh([4]), Trishtubh([5]), Jagati([4,8]).
+
+`_match_syllabic_metre()` now accepts `lines` param; computes `actual_pattern` from
+first usable line and adds `gana_bonus * 0.20` to confidence when patterns overlap.
+New `_gana_match_score(observed, expected) -> float` returns proportion of matching positions.
+
+---
+
+## Yati Caesura Pauses (FEAT-6)
+
+**`_split_pada_at_yati(text, yati_positions) -> List[str]`** in `MarathiProsodyEngine`:
+Word-boundary approximation — accumulates `count_syllables()` per word, splits at the
+nearest word boundary once target syllable count is reached or exceeded. Returns `[text]`
+(unsplit) if split cannot be resolved. Never splits mid-word.
+
+**`_apply_yati_splits(segments, prosody) -> None`**:
+Iterates verse segments; splits each at all yati positions (in order); inserts a
+sub-segment with `pause_yati_ms` duration between parts; replaces `segments[:]` in-place.
+Triggered when `prosody.metre.yati_syllables` is non-empty.
+
+---
+
+## Abhanga Refrain Detection (FEAT-13)
+
+**`_detect_abhanga_refrain(segments) -> None`** in `MarathiProsodyEngine`:
+- Counts exact text repetitions across all verse segments
+- Counts rhyme suffix repetitions (last 2 Devanagari characters)
+- Marks segments with 2+ exact repeats OR 3+ rhyme matches: `emphasis = max(existing, 1.1)`,
+  `pitch_shift += 0.5`
+- Triggered when `metre.name == 'Abhanga'`
+
+---
+
+## Schwa Deletion Lexicon (FEAT-10)
+
+`SCHWA_EXCEPTIONS` in `g2p_constants.py` expanded from 8 to 220+ entries grouped as:
+- Verb forms ending in `-तो`, `-ते`, `-णे` (common present tense and infinitives)
+- `-कर` suffix compounds (demonyms: पुणेकर, मुंबईकर, शेतकरी)
+- Common adjectives, nouns, adverbs, postpositions
+- Maharashtra place names
+- Bhakti/devotional vocabulary (विठोबा, वारकरी, एकादशी, etc.)
+
+Words in this dict bypass rule-based schwa processing (identity map = gTTS handles correctly).
+
+---
+
+## Chandrabindu Nasalization (FEAT-15)
+
+`_generate_edge_prosody()` in **both** mobile and desktop `tts_bridge.py`:
+- For each segment, checks if `'\u0901'` (chandrabindu ँ) appears in the processed text
+- When present: applies `-25 pp` volume reduction (≈ -3 dB nasal softening):
+  ```python
+  seg_vol_str = f"{max(int((volume - 1.0) * 100) - 25, -50):+d}%"
+  ```
+- Otherwise: uses the flat `vol_str`
+- The per-segment volume string `sv` is passed as a default arg to the `_run_seg()` closure
+
+---
+
+## Marathi Morphological Analyzer (FEAT-33)
+
+**File:** `tts/utils/text/morphological_analyzer.py` — synced to all 3 platforms.
+
+**Class:** `MarathiMorphologicalAnalyzer`  
+**Singleton:** `get_analyzer()` module-level function
+
+### Design
+
+| Component | Web | Desktop | Mobile |
+|-----------|-----|---------|--------|
+| Rule-based suffix stripping (~70 rules) | ✅ | ✅ | ✅ |
+| Morfessor statistical model (`mr.model`) | ✅ | ✅ | ❌ (no APK bloat) |
+
+Desktop has `mr.model` copied to `python_bridge/tts/morph/morfessor/mr.model`.  
+Mobile gets rule-based only — Morfessor `ImportError` is caught and ignored silently.
+
+### Public API
+
+```python
+m = MarathiMorphologicalAnalyzer()
+m.stem('बोलतो')                   # → 'बोल'
+m.segment('रामाचा')               # → ['राम', 'चा']
+m.is_same_stem('बोलतो', 'बोलते') # → True
+m.morpheme_boundary_positions('बोलतो')  # → [5] (char index where suffix starts)
+m.is_morfessor_available()         # → True / False
+```
+
+### Integrations
+
+1. **`g2p_engine.py` explicit schwa mode** — `_apply_schwa_rules()` uses
+   `morpheme_boundary_positions()` to insert `ZWNJ` at stem/suffix boundaries,
+   preventing edge-tts from inserting y-glide between morpheme components.
+
+2. **`marathi_grammar.py` `remove_repetitions()`** — Pass 2 stem-aware deduplication:
+   consecutive words sharing the same stem (e.g., `बोलतो बोलते`) are collapsed to the
+   first occurrence. Uses `is_same_stem()` with minimum stem length ≥ 4 chars to avoid
+   false positives from short words.
+
+### Suffix categories covered
+
+Genitive clusters (`च्यांना`, `च्या`, `चा`, `ची`, `चे`), verbal inflections (`णे`, `तो`,
+`ते`, `तात`, `ला`, `ली`, `ले`), case markers (`ने`, `शी`, `त`), plural/honorific clusters
+(`ांना`, `ांनी`, `ांचा`), postpositions (`साठी`, `मध्ये`, `पासून`, `मुळे`, `बद्दल`),
+participles (`णारा`, `णारी`, `णारे`), abstract suffixes (`पणा`, `पण`), emphatics (`ही`, `च`).
+
+---
+
+## Test Coverage (FEAT-32)
+
+`test_all_platforms.py` gains three new check sections (run for all 3 platforms):
+
+| Section | Module | Checks |
+|---------|--------|--------|
+| I | `MarathiTextNormalizer` | Non-empty output, verse number strip, इ. expansion, empty input |
+| J | `MarathiGrammarEngine` | `process()` returns str, `remove_repetitions()` deduplicates, empty input |
+| K | `number_to_words` | `number_to_marathi_words(1)=एक`, `10=दहा`, `convert_time` 9:00 AM/12:45, ordinal, percentage |
+
+Sections **skip** (not fail) via `except ModuleNotFoundError` when optional `indicnlp`
+production dep is absent in the offline CI environment.
+
+`tts/utils/text/__init__.py` now has a `try/except ImportError` guard around
+`from .text_normalizer import MarathiTextNormalizer` — prevents package import failures
+when `indicnlp` is not installed (e.g. desktop/mobile build environments).
 
 ---
 

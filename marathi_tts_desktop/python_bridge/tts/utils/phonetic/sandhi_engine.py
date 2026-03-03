@@ -163,6 +163,22 @@ _ANUSVARA_SIBILANT_MAP: List[Tuple[str, str]] = [
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# Visarga + voiced consonant → r  (FEAT-5)
+# ══════════════════════════════════════════════════════════════════════════
+# When visarga is followed (across a word boundary) by a voiced consonant,
+# it becomes 'r' in Sanskrit recitation.
+# e.g., पुनः + दर्शनम् → पुनर्दर्शनम्
+#       मनः + गत     → मनर्गत
+#       अंतः + करण   → अंतर्करण
+# This is the second most impactful sandhi rule after visarga + vowel.
+#
+# Voiced consonants: the full list of Devanagari voiced stops & nasals
+# (ग, घ, ज, झ, ड, ढ, द, ध, ब, भ, and nasals ङ, ञ, ण, न, म)
+# Plus semivowels (य, र, ल, व) which are also voiced.
+_VOICED_CONSONANTS = 'गघजझडढदधबबभङञणनमयरलव'
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # Vowel junction clarification hints
 # ══════════════════════════════════════════════════════════════════════════
 # In Sanskrit running text, vowel sandhi has *already* been applied.
@@ -287,6 +303,7 @@ class SandhiEngine:
           2. Vedic accent stripping
           3. Avagraha expansion
           4. Visarga + vowel sandhi fix (most impactful)
+          4b. Visarga + voiced consonant → r  (FEAT-5)
           5. Anusvara + sibilant assimilation
           6. Word-level overrides (applied last to protect key words)
         """
@@ -297,6 +314,7 @@ class SandhiEngine:
         text = self._strip_vedic_accents(text)
         text = self.expand_avagraha(text)
         text = self.fix_visarga_vowel_sandhi(text)
+        text = self.fix_visarga_voiced_consonant(text)
         text = self.fix_anusvara_sibilant(text)
         text = self._apply_word_overrides(text)
 
@@ -375,7 +393,37 @@ class SandhiEngine:
 
         return text
 
-    # ── Step 4: Anusvara + sibilant assimilation ─────────────────────────
+    # ── Step 4b: Visarga + voiced consonant → r (FEAT-5) ─────────────────
+
+    def fix_visarga_voiced_consonant(self, text: str) -> str:
+        """Visarga before a voiced consonant becomes 'r' in Sanskrit recitation.
+
+        Examples:
+            पुनः दर्शनम्  → पुनर् दर्शनम्
+            मनः गत       → मनर् गत
+            अंतः करण     → (no change — क is voiceless)
+
+        Only applies across a word boundary (space after visarga).
+        Does NOT apply when the word already ends in a consonant cluster
+        that would make 'r' unnatural.
+
+        This is the second most impactful sandhi rule after visarga + vowel.
+        Common in stotras: नमः, दुःख, अंतः, पुनः before voiced words.
+        """
+        # Pattern: visarga + space + voiced consonant letter
+        # Replace: visarga → र् (repha form)
+        def _replace_voiced(m: re.Match) -> str:
+            consonant = m.group(1)
+            return 'र् ' + consonant
+
+        text = re.sub(
+            VISARGA + r'\s+([' + _VOICED_CONSONANTS + '])',
+            _replace_voiced,
+            text
+        )
+        return text
+
+    # ── Step 5: Anusvara + sibilant assimilation ─────────────────────────
 
     def fix_anusvara_sibilant(self, text: str) -> str:
         """Insert explicit nasal before sibilants where anusvara precedes them.

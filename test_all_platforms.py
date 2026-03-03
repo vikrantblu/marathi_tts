@@ -144,6 +144,18 @@ def run_tests_for_platform(label, sys_root):
          'ः' not in r or 'र' in r,
          f'Visarga not resolved: {repr(r)}')
 
+    # A6. FEAT-5: Visarga + voiced consonant → r  (पुनः दर्शनम् → पुनर् दर्शनम्)
+    r = se.process('पुनः दर्शनम्')
+    _chk(failures, 'Visarga+voiced consonant (FEAT-5)',
+         'ः' not in r and 'र्' in r,
+         f'Visarga not resolved to र्: {repr(r)}')
+
+    # A7. FEAT-5: Visarga + voiceless consonant should NOT change
+    r = se.process('दुःख')
+    _chk(failures, 'Visarga+voiceless (no change)',
+         'ः' in r or 'ख' in r,
+         f'Visarga wrongly changed before voiceless: {repr(r)}')
+
     # ══════════════════════════════════════════════════════════════════════
     # B. SANSKRIT PHONETICS
     # ══════════════════════════════════════════════════════════════════════
@@ -269,6 +281,25 @@ def run_tests_for_platform(label, sys_root):
     _chk(failures, 'ProsodyEngine: prose segments is_verse=False',
          all(not s.is_verse for s in prose_segs) and len(prose_segs) > 0,
          f'{sum(1 for s in prose_segs if s.is_verse)} verse segs in prose')
+
+    # D6. FEAT-11: Pitch contour applied — verse segments should have non-zero pitch_shift
+    # (wave contour sets alternating ±0.5; falling/rising also set non-zero)
+    _chk(failures, 'ProsodyEngine: pitch contour (FEAT-11)',
+         any(abs(s.pitch_shift) > 0.01 for s in segs),
+         f'All pitch_shift == 0 even though MetreDefinition has pitch_contour')
+
+    # D7. FEAT-9: Emotion-adaptive verse prosody (devotional → slower)
+    pe_devot = MarathiProsodyEngine(emotion='devotional')
+    segs_devot = pe_devot.segment_text(verse_para)
+    pe_neutral = MarathiProsodyEngine(emotion='neutral')
+    segs_neutral = pe_neutral.segment_text(verse_para)
+    # Devotional should have lower tts_rate than neutral for verse
+    if segs_devot and segs_neutral:
+        avg_rate_devot = sum(s.tts_rate for s in segs_devot) / len(segs_devot)
+        avg_rate_neutral = sum(s.tts_rate for s in segs_neutral) / len(segs_neutral)
+        _chk(failures, 'ProsodyEngine: devotional slower (FEAT-9)',
+             avg_rate_devot < avg_rate_neutral,
+             f'Devotional rate {avg_rate_devot:.3f} >= neutral {avg_rate_neutral:.3f}')
 
     # ══════════════════════════════════════════════════════════════════════
     # E. OLD MARATHI PHONETICS
@@ -397,6 +428,131 @@ def run_tests_for_platform(label, sys_root):
     _chk(failures, 'gTTS fix: empty input OK',
          r == '',
          f'Non-empty result for empty input: {repr(r)}')
+
+    # ══════════════════════════════════════════════════════════════════════
+    # I. TEXT NORMALIZER (MarathiTextNormalizer)
+    # ══════════════════════════════════════════════════════════════════════
+    try:
+        from tts.utils.text.text_normalizer import MarathiTextNormalizer
+        _tnorm = MarathiTextNormalizer()
+
+        # I1. normalize_text returns non-empty for ordinary Marathi text
+        r_i1 = _tnorm.normalize_text('आनंद')
+        _chk(failures, 'TextNormalizer: non-empty output',
+             bool(r_i1.strip()),
+             f'normalize_text returned empty for आनंद: {repr(r_i1)}')
+
+        # I2. Verse numbers stripped: ॥ 5 ॥  →  ॥
+        r_i2 = _tnorm.normalize_text('नमः शिवाय ॥ 5 ॥')
+        _chk(failures, 'TextNormalizer: verse number stripped',
+             '5' not in r_i2 and '॥' in r_i2,
+             f'Verse number not stripped: {repr(r_i2)}')
+
+        # I3. Context-aware abbreviation: इ. before number → इसवी सन
+        r_i3 = _tnorm.normalize_text('इ. 1947 मध्ये')
+        _chk(failures, 'TextNormalizer: इ. before year expanded',
+             'इसवी' in r_i3,
+             f'इ. not expanded: {repr(r_i3)}')
+
+        # I4. Empty string survives without crash
+        r_i4 = _tnorm.normalize_text('')
+        _chk(failures, 'TextNormalizer: empty input OK',
+             r_i4 == '',
+             f'Empty input gave non-empty: {repr(r_i4)}')
+
+    except ModuleNotFoundError as exc:
+        print(f'  [SKIP] TextNormalizer tests — optional dep missing: {exc}')
+    except Exception as exc:
+        _chk(failures, 'TextNormalizer: import / init', False,
+             f'Exception: {exc}')
+
+    # ══════════════════════════════════════════════════════════════════════
+    # J. GRAMMAR ENGINE (MarathiGrammarEngine)
+    # ══════════════════════════════════════════════════════════════════════
+    try:
+        from tts.utils.text.marathi_grammar import (
+            MarathiGrammarEngine, remove_repetitions
+        )
+        _gram = MarathiGrammarEngine()
+
+        # J1. process() returns non-empty for ordinary prose
+        r_j1 = _gram.process('आज हवामान चांगले आहे.')
+        _chk(failures, 'GrammarEngine: non-empty output',
+             bool(r_j1.strip()),
+             f'process() returned empty: {repr(r_j1)}')
+
+        # J2. process() output is a string (not crash / None)
+        r_j2 = _gram.process('राम जातो.')
+        _chk(failures, 'GrammarEngine: output is str',
+             isinstance(r_j2, str),
+             f'process() returned {type(r_j2)}')
+
+        # J3. remove_repetitions drops adjacent duplicate words
+        r_j3 = remove_repetitions('राम राम राम बोलला')
+        _chk(failures, 'GrammarEngine: repetition removed',
+             r_j3.count('राम') < 3,
+             f'Repetitions not removed: {repr(r_j3)}')
+
+        # J4. Empty string survives without crash
+        r_j4 = _gram.process('')
+        _chk(failures, 'GrammarEngine: empty input OK',
+             isinstance(r_j4, str),
+             f'process("") raised or returned non-str: {repr(r_j4)}')
+
+    except ModuleNotFoundError as exc:
+        print(f'  [SKIP] GrammarEngine tests — optional dep missing: {exc}')
+    except Exception as exc:
+        _chk(failures, 'GrammarEngine: import / init', False,
+             f'Exception: {exc}')
+
+    # ══════════════════════════════════════════════════════════════════════
+    # K. NUMBER-TO-WORDS  (number_to_words module)
+    # ══════════════════════════════════════════════════════════════════════
+    try:
+        from tts.utils.text.number_to_words import (
+            number_to_marathi_words, convert_time, convert_date,
+            convert_ordinal, convert_percentage
+        )
+
+        # K1. Basic cardinal: 1 → एक
+        _chk(failures, 'number_to_words: 1 = एक',
+             number_to_marathi_words(1) == 'एक',
+             f'Got: {repr(number_to_marathi_words(1))}')
+
+        # K2. Basic cardinal: 10 → दहा
+        _chk(failures, 'number_to_words: 10 = दहा',
+             number_to_marathi_words(10) == 'दहा',
+             f'Got: {repr(number_to_marathi_words(10))}')
+
+        # K3. convert_time: 9:00 AM contains सकाळचे and नऊ
+        r_k3 = convert_time('9:00 AM')
+        _chk(failures, 'number_to_words: 9:00 AM has नऊ',
+             'नऊ' in r_k3,
+             f'convert_time("9:00 AM") = {repr(r_k3)}')
+
+        # K4. convert_time: 12:45 contains पावणे (quarter-to)
+        r_k4 = convert_time('12:45')
+        _chk(failures, 'number_to_words: 12:45 has पावणे',
+             'पावणे' in r_k4,
+             f'convert_time("12:45") = {repr(r_k4)}')
+
+        # K5. convert_ordinal: "1ला" → contains "पहिला"
+        r_k5 = convert_ordinal('1ला')
+        _chk(failures, 'number_to_words: 1ला ordinal',
+             r_k5 and isinstance(r_k5, str) and len(r_k5) > 0,
+             f'convert_ordinal returned: {repr(r_k5)}')
+
+        # K6. convert_percentage: "50%" → contains "टक्के"
+        r_k6 = convert_percentage('50%')
+        _chk(failures, 'number_to_words: 50% has टक्के',
+             'टक्के' in r_k6,
+             f'convert_percentage("50%") = {repr(r_k6)}')
+
+    except ModuleNotFoundError as exc:
+        print(f'  [SKIP] number_to_words tests — optional dep missing: {exc}')
+    except Exception as exc:
+        _chk(failures, 'number_to_words: import / init', False,
+             f'Exception: {exc}')
 
     sys.path.remove(sys_root)
     return failures

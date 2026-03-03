@@ -57,6 +57,62 @@ os.environ.setdefault("MARATHI_TTS_STANDALONE", "1")
 _OUTPUT_DIR = os.path.join(_BRIDGE_DIR, "output")
 os.makedirs(_OUTPUT_DIR, exist_ok=True)
 
+# -- Temp file cleanup (BUG-27) --------------------------------------------
+# Delete stale audio files older than 24h and enforce 100 MB size cap.
+_CLEANUP_MAX_AGE_SEC = 24 * 3600   # 24 hours
+_CLEANUP_MAX_SIZE_MB = 100         # total cap in MB
+
+def _cleanup_output_dir():
+    """Remove stale temp audio files from output/ to prevent storage bloat."""
+    try:
+        now = time.time()
+        files = []
+        total_size = 0
+        for name in os.listdir(_OUTPUT_DIR):
+            fpath = os.path.join(_OUTPUT_DIR, name)
+            if not os.path.isfile(fpath):
+                continue
+            stat = os.stat(fpath)
+            age = now - stat.st_mtime
+            files.append((fpath, stat.st_mtime, stat.st_size))
+            total_size += stat.st_size
+
+            # Delete files older than max age
+            if age > _CLEANUP_MAX_AGE_SEC:
+                try:
+                    os.unlink(fpath)
+                    total_size -= stat.st_size
+                except OSError:
+                    pass
+
+        # If still over size cap, delete oldest first
+        if total_size > _CLEANUP_MAX_SIZE_MB * 1024 * 1024:
+            files.sort(key=lambda x: x[1])  # oldest first
+            for fpath, _, fsize in files:
+                if total_size <= _CLEANUP_MAX_SIZE_MB * 1024 * 1024:
+                    break
+                if os.path.exists(fpath):
+                    try:
+                        os.unlink(fpath)
+                        total_size -= fsize
+                    except OSError:
+                        pass
+    except Exception:
+        pass  # cleanup is best-effort, never crash the bridge
+
+_cleanup_output_dir()
+
+# -- Network pre-check (BUG-21) --------------------------------------------
+def _is_network_available(timeout: float = 3.0) -> bool:
+    """Quick connectivity check — can we reach Google DNS? Returns True/False.
+    Uses a 3-second timeout by default so the check itself is fast."""
+    try:
+        s = socket.create_connection(("8.8.8.8", 53), timeout=timeout)
+        s.close()
+        return True
+    except (socket.timeout, socket.error, OSError):
+        return False
+
 log.info("TTS Bridge initialised | bridge_dir=%s | output_dir=%s",
          _BRIDGE_DIR, _OUTPUT_DIR)
 
@@ -210,15 +266,171 @@ def _generate_edge_tts(text: str, language: str, gender: str,
 
 
 # ---------------------------------------------------------------------------
+# Prosody-segmented edge-tts (FEAT-8)
+# ---------------------------------------------------------------------------
+
+def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
+                           output_path):
+    """Generate edge-tts audio with prosody-segmented pauses.
+
+    Uses ProsodyEngine to determine natural pause points, generates
+    per-segment audio via edge-tts neural voice, and stitches with
+    calibrated pydub silence.  Only used for prose (not verse).
+
+    Edge-tts natively handles speed/pitch/volume via SSML, so no pydub
+    post-processing is needed for those parameters.
+
+    Returns result dict on success, None to fall through.
+    """
+    try:
+        from tts.utils.audio.prosody_engine import MarathiProsodyEngine
+        from pydub import AudioSegment as PydubSegment
+        import edge_tts
+        import asyncio
+    except ImportError as e:
+        log.info("[edge-prosody] Not available: %s", e)
+        return None
+
+    seg_files = []          # track temp files for cleanup in finally
+    try:
+        prosody = MarathiProsodyEngine(speaking_rate=1.0)
+        segments = prosody.segment_text(text)
+
+        if not segments or len(segments) < 2:
+            log.info("[edge-prosody] < 2 segments (%d), using single-call",
+                     len(segments) if segments else 0)
+            return None
+
+        # Stricter cap — each segment = 1 WebSocket connection
+        if len(segments) > 15:
+            log.info("[edge-prosody] %d segments exceeds cap (15)", len(segments))
+            return None
+
+        voice = _EDGE_VOICE_MAP.get((language, gender)) \
+            or _EDGE_VOICE_MAP.get((language, "female"))
+        if not voice:
+            return None
+
+        # Edge-tts native SSML parameters (applied per segment)
+        rate_str  = f"{int((speed  - 1.0) * 100):+d}%"
+        vol_str   = f"{int((volume - 1.0) * 100):+d}%"
+        base_pitch_hz = int((pitch - 1.0) * 100)
+
+        log.info("[edge-prosody] %d segments, voice=%s rate=%s",
+                 len(segments), voice, rate_str)
+
+        combined = PydubSegment.empty()
+        generated = 0
+
+        for i, seg in enumerate(segments):
+            seg_text = seg.text.strip()
+            if not seg_text:
+                continue
+
+            # Preprocess segment (same as single-call edge-tts prose path)
+            if language == "mr-old":
+                processed = apply_old_marathi_phonetics(seg_text)
+                processed = _apply_g2p(processed)
+            else:
+                processed = _apply_g2p(seg_text)
+
+            if not processed.strip():
+                continue
+
+            # Per-segment pitch adjustment from ProsodyEngine emphasis
+            seg_pitch_hz = base_pitch_hz + int(seg.pitch_shift * 100)
+            seg_pitch_str = f"{seg_pitch_hz:+d}Hz"
+
+            # Chandrabindu (ँ U+0901) → reduce volume ~3 dB for soft nasal
+            if '\u0901' in processed:
+                raw_vol = int((volume - 1.0) * 100)
+                seg_vol_str = f"{max(raw_vol - 25, -50):+d}%"
+            else:
+                seg_vol_str = vol_str
+
+            fd, seg_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
+            os.close(fd)
+            seg_files.append(seg_path)
+
+            async def _run_seg(p=processed, sp=seg_path, ps=seg_pitch_str,
+                               sv=seg_vol_str):
+                comm = edge_tts.Communicate(
+                    text=p, voice=voice,
+                    rate=rate_str, volume=sv, pitch=ps)
+                await comm.save(sp)
+
+            loop = asyncio.new_event_loop()
+            try:
+                loop.run_until_complete(_run_seg())
+            finally:
+                loop.close()
+
+            if not os.path.exists(seg_path) or os.path.getsize(seg_path) < 500:
+                continue
+
+            seg_audio = PydubSegment.from_mp3(seg_path)
+            combined += seg_audio
+            generated += 1
+
+            # Insert calibrated silence pause between segments
+            if seg.pause_after_ms > 0 and i < len(segments) - 1:
+                combined += PydubSegment.silent(duration=seg.pause_after_ms)
+
+            log.debug("[edge-prosody] Seg %d/%d OK (%d chars, pause=%dms)",
+                      i + 1, len(segments), len(processed), seg.pause_after_ms)
+
+        if generated < 2 or len(combined) < 500:
+            log.info("[edge-prosody] Too few segments (%d), falling through",
+                     generated)
+            return None
+
+        combined.export(output_path, format="mp3")
+
+        log.info("[edge-prosody] Combined %d segments -> %s (%.1fs audio)",
+                 generated, output_path, len(combined) / 1000)
+
+        return {
+            "success": True,
+            "audio_path": output_path,
+            "engine": "edge_tts_prosody",
+            "segments": generated,
+        }
+
+    except Exception as exc:
+        log.warning("[edge-prosody] Failed: %s", exc)
+        log.debug(traceback.format_exc())
+        return None
+
+    finally:
+        for f in seg_files:
+            try:
+                os.unlink(f)
+            except OSError:
+                pass
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
 def _apply_pitch_speed(src: str, speed: float, pitch: float, volume: float, dst: str) -> str:
-    """Apply speed/pitch/volume adjustments via pydub. Returns dst path."""
+    """Apply speed/pitch/volume adjustments via pydub. Returns dst path.
+
+    **Limitations (BUG-26):**
+    - pydub pitch shift uses frame-rate manipulation, NOT proper pitch shifting.
+      This causes slight duration change when pitch != 1.0.  Clamped to safe
+      range to avoid audio artifacts.
+    - Safe ranges:  speed ∈ [0.75, 1.25],  pitch ∈ [0.79, 1.26] (~-4 to +4 st)
+    - Will be superseded by edge-tts SSML <prosody rate/pitch> (FEAT-8) which
+      does native neural-quality pitch/speed without artifacts.
+    """
     try:
         from pydub import AudioSegment  # type: ignore
         import math
+        # Clamp to safe range (BUG-26)
+        speed = max(0.75, min(1.25, speed))
+        pitch = max(0.79, min(1.26, pitch))
         log.debug("pydub effects | speed=%.2f pitch=%.2f volume=%.2f", speed, pitch, volume)
         audio = AudioSegment.from_mp3(src)
 
@@ -422,6 +634,153 @@ def _preprocess_prose_text(text: str) -> str:
     r = _transliterate_english_words(r)
     return r
 
+def _apply_grammar(text: str) -> str:
+    """Apply MarathiGrammarEngine to clean/fix prose text.
+
+    Handles: OCR cleanup, spelling corrections, sandhi splits, vibhakti
+    agreement, word order, punctuation restoration, repetition removal.
+    Falls through gracefully to original text on any failure.
+    """
+    try:
+        from tts.utils.text.marathi_grammar import MarathiGrammarEngine  # type: ignore
+        if not hasattr(_apply_grammar, '_instance'):
+            _apply_grammar._instance = MarathiGrammarEngine()
+        result = _apply_grammar._instance.process(text)
+        if result and result.strip():
+            log.debug("[Grammar] Processed | %d -> %d chars", len(text), len(result))
+            return result
+        return text
+    except Exception as exc:
+        log.info("[Grammar] Not available or failed: %s", exc)
+        return text
+
+# ---------------------------------------------------------------------------
+# Prosody-segmented generation (FEAT-1)
+# ---------------------------------------------------------------------------
+
+def _generate_prosody_audio(text, speed, pitch, volume, output_path,
+                            language, gtts_language):
+    """Generate prose audio with natural prosody-segmented pauses.
+
+    Uses MarathiProsodyEngine to split text at clause/sentence boundaries,
+    generates audio per segment via gTTS, and stitches them with calibrated
+    silence gaps using pydub.
+
+    Returns result dict on success, None to fall through to normal generation.
+    Only used for prose (not verse).  The entire function is wrapped so that
+    ANY failure falls through gracefully to the existing single-call path.
+    """
+    try:
+        from tts.utils.audio.prosody_engine import MarathiProsodyEngine
+        from pydub import AudioSegment as PydubSegment
+        from gtts import gTTS
+    except ImportError as e:
+        log.info("[Prosody] Not available: %s", e)
+        return None
+
+    seg_files = []          # track temp files for cleanup in finally
+    try:
+        # Segment at natural pause points.  speaking_rate=1.0 so that pause
+        # durations are calibrated for normal speed; user speed/pitch are
+        # applied to the final combined audio via _apply_pitch_speed().
+        prosody = MarathiProsodyEngine(speaking_rate=1.0)
+        segments = prosody.segment_text(text)
+
+        if not segments or len(segments) < 2:
+            log.info("[Prosody] < 2 segments (%d), using normal flow",
+                     len(segments) if segments else 0)
+            return None
+
+        # Cap at 25 segments to keep API call count reasonable
+        if len(segments) > 25:
+            log.info("[Prosody] %d segments exceeds cap (25), using normal flow",
+                     len(segments))
+            return None
+
+        log.info("[Prosody] %d segments detected, generating per-segment audio",
+                 len(segments))
+
+        combined = PydubSegment.empty()
+        generated = 0
+
+        for i, seg in enumerate(segments):
+            seg_text = seg.text.strip()
+            if not seg_text:
+                continue
+
+            # Full preprocessing pipeline for each segment
+            processed = seg_text
+            if language == "sa":
+                processed = apply_sanskrit_phonetics(processed)
+            elif language == "mr-old":
+                processed = apply_old_marathi_phonetics(
+                    _normalize_marathi(processed))
+            else:
+                processed = _normalize_marathi(processed)
+                processed = apply_marathi_phonetics(processed)
+            processed = _apply_g2p(processed)
+            if gtts_language == 'mr':
+                processed = apply_gtts_mr_fixes(processed)
+
+            if not processed.strip():
+                continue
+
+            # Generate audio for this segment
+            fd, seg_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
+            os.close(fd)
+            seg_files.append(seg_path)
+
+            use_slow = seg.is_verse or seg.tts_rate < 0.95
+            gTTS(text=processed, lang=gtts_language, slow=use_slow,
+                 lang_check=False).save(seg_path)
+
+            seg_audio = PydubSegment.from_mp3(seg_path)
+            combined += seg_audio
+            generated += 1
+
+            # Insert calibrated silence pause between segments
+            if seg.pause_after_ms > 0 and i < len(segments) - 1:
+                combined += PydubSegment.silent(duration=seg.pause_after_ms)
+
+            log.debug("[Prosody] Seg %d/%d OK (%d chars, pause=%dms)",
+                      i + 1, len(segments), len(processed), seg.pause_after_ms)
+
+        if generated < 2 or len(combined) < 500:
+            log.info("[Prosody] Too few segments generated (%d), falling through",
+                     generated)
+            return None
+
+        # Export combined audio
+        combined.export(output_path, format="mp3")
+
+        # Apply user-requested pitch/speed/volume effects to final audio
+        needs_fx = (abs(speed - 1.0) > 0.05 or abs(pitch - 1.0) > 0.05
+                    or abs(volume - 1.0) > 0.05)
+        if needs_fx:
+            _apply_pitch_speed(output_path, speed, pitch, volume, output_path)
+
+        log.info("[Prosody] Combined %d segments -> %s (%.1fs audio)",
+                 generated, output_path, len(combined) / 1000)
+
+        return {
+            "success": True,
+            "audio_path": output_path,
+            "engine": "gtts_prosody",
+            "segments": generated,
+        }
+
+    except Exception as exc:
+        log.warning("[Prosody] Generation failed: %s", exc)
+        log.debug(traceback.format_exc())
+        return None
+
+    finally:
+        for f in seg_files:
+            try:
+                os.unlink(f)
+            except OSError:
+                pass
+
 
 # ---------------------------------------------------------------------------
 # Main API
@@ -447,14 +806,35 @@ def generate_tts(text: str,
     _gtts_lang_map = {"sa": "hi", "mr-old": "mr", "ne": "hi"}
     gtts_language = _gtts_lang_map.get(language, language)
 
+    # ── Network pre-check (BUG-21) ───────────────────────────────────────
+    # Both edge-tts and gTTS require internet.  Fail fast with a clear
+    # message instead of waiting 30 s for a socket timeout.
+    if not _is_network_available():
+        log.error("[Network] No internet connectivity — cannot reach TTS API")
+        return {"success": False,
+                "error": "No internet connection. Please check your network and try again.",
+                "error_code": "ERR_NO_NETWORK",
+                "stage": "network_check"}
+
     # ── Stage 0: edge-tts — real male/female neural voices (requires internet) ──
     # Tried first because it provides a genuine ManoharNeural male voice,
     # unlike gTTS which is always female and only pitch-shifted for male.
     if _edge_tts_available():
+        _edge_output = output_path if output_path else \
+            tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        # Try prosody-enhanced edge-tts first (FEAT-8) for prose
+        if not is_verse:
+            prosody_result = _generate_edge_prosody(
+                text, language, gender, speed, pitch, volume, _edge_output)
+            if prosody_result and prosody_result.get("success"):
+                prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
+                log.info("[Stage 0] edge-tts prosody SUCCESS (%d segments, %.2fs)",
+                         prosody_result.get("segments", 0),
+                         prosody_result["elapsed_sec"])
+                return prosody_result
+        # Single-call edge-tts (fallback)
         result = _generate_edge_tts(text, language, gender, speed, pitch, volume,
-                                    output_path if output_path else
-                                    tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR),
-                                    is_verse)
+                                    _edge_output, is_verse)
         if result.get("success"):
             log.info("[Stage 0] edge-tts SUCCESS")
             return result
@@ -468,7 +848,8 @@ def generate_tts(text: str,
 
     if not text or not text.strip():
         log.error("Empty input text")
-        return {"success": False, "error": "Empty text", "stage": "validation"}
+        return {"success": False, "error": "Empty text",
+                "error_code": "ERR_EMPTY_TEXT", "stage": "validation"}
 
     if output_path is None:
         fd, output_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
@@ -481,6 +862,15 @@ def generate_tts(text: str,
             log.info("[Prose] Preprocessed | orig=%d new=%d chars",
                      len(text), len(preprocessed_text))
         text = preprocessed_text
+
+    # ── Grammar engine (FEAT-3) — spelling, sandhi, vibhakti, punctuation ──
+    # Applied to Marathi prose only (not Sanskrit, not verse).
+    if not is_verse and language not in ("sa", "en"):
+        grammar_text = _apply_grammar(text)
+        if grammar_text != text:
+            log.info("[Grammar] Applied | orig=%d new=%d chars",
+                     len(text), len(grammar_text))
+        text = grammar_text
 
     # ── Verse / Shloka mode ──────────────────────────────────────────────
     if is_verse:
@@ -524,6 +914,20 @@ def generate_tts(text: str,
                         "engine": "gtts_verse", "elapsed_sec": round(elapsed, 2)}
         except Exception as exc:
             log.error("[Verse] Failed, falling back to normal: %s", exc)
+
+    # ── Prosody-segmented generation (FEAT-1) ────────────────────────────
+    # For prose text, use ProsodyEngine to split at natural clause/sentence
+    # boundaries, generate audio per segment, and stitch with calibrated
+    # silence pauses.  Falls through to single-call if unavailable.
+    if not is_verse:
+        prosody_result = _generate_prosody_audio(
+            text, speed, pitch, volume, output_path, language, gtts_language)
+        if prosody_result and prosody_result.get("success"):
+            prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
+            log.info("[Prosody] SUCCESS -> %s (%d segments, %.2fs)",
+                     output_path, prosody_result.get("segments", 0),
+                     prosody_result["elapsed_sec"])
+            return prosody_result
 
     # Stage 1: gTTS + pydub effects (primary engine on mobile)
     log.info("[Stage 1] gTTS + pydub effects, lang=%s", language)
@@ -575,7 +979,8 @@ def generate_tts(text: str,
                 "elapsed_sec": round(elapsed, 2)}
     except Exception as exc:
         log.error("[Stage 2] All TTS stages failed: %s\n%s", exc, traceback.format_exc())
-        return {"success": False, "error": str(exc), "stage": "all_failed"}
+        return {"success": False, "error": str(exc),
+                "error_code": "ERR_ALL_ENGINES_FAILED", "stage": "all_failed"}
 
 
 def main():

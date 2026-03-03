@@ -31,6 +31,21 @@ from tts.constants.grammar_constants import (
 
 logger = logging.getLogger('tts.grammar')
 
+# Lazy morphological analyzer singleton — used for stem-aware repetition detection
+# (imported with try/except so marathi_grammar remains usable on all 3 platforms)
+_morph_analyzer = None
+
+def _get_morph():
+    """Return the shared MarathiMorphologicalAnalyzer, or None on import failure."""
+    global _morph_analyzer
+    if _morph_analyzer is None:
+        try:
+            from tts.utils.text.morphological_analyzer import get_analyzer
+            _morph_analyzer = get_analyzer()
+        except Exception:  # ImportError, model failure, etc.
+            _morph_analyzer = False  # sentinel: tried and failed
+    return _morph_analyzer if _morph_analyzer is not False else None
+
 
 # All constants (SPELLING_CORRECTIONS, SPELLING_PATTERNS, SANDHI_SPLITS,
 # VIBHAKTI_FIXES, AGREEMENT_FIXES, WORD_ORDER_FIXES, SENTENCE_FINAL_VERBS,
@@ -184,13 +199,19 @@ def _words_until_next_verb(words: List[str], start: int) -> int:
 def remove_repetitions(text: str) -> str:
     """Remove accidentally repeated words/phrases (common in OCR & copy-paste).
 
+    Performs two passes:
+    1. Exact consecutive duplicate removal (space-split, no regex \\b).
+    2. Stem-aware near-duplicate removal — inflectional variants of the
+       same stem on consecutive positions (e.g., 'बोलतो बोलते') are
+       collapsed to the first occurrence.
+
     NOTE: Python's \\b is BROKEN for Devanagari — halant/matras are not \\w,
     so \\b fires inside syllables (e.g., between ं and त in संत). This caused
     false matches like 'श्रीसंत तुकोबारायांच्या' → 'श्रीसंतुकोबारायांच्या'.
 
     Fix: Use space-delimited word splitting instead of regex word boundaries.
     """
-    # Split into words and remove exact consecutive duplicates
+    # ── Pass 1: exact consecutive duplicate removal ──────────────────────
     words = text.split()
     if len(words) < 2:
         return text
@@ -210,6 +231,19 @@ def remove_repetitions(text: str) -> str:
             del cleaned[i + 2:i + 4]
         else:
             i += 1
+
+    # ── Pass 2: stem-aware near-duplicate removal ────────────────────────
+    # Detects consecutive pairs sharing the same morphological stem
+    # (e.g., 'बोलतो बोलते' → 'बोलतो') and keeps only the first occurrence.
+    morph = _get_morph()
+    if morph is not None and len(cleaned) >= 2:
+        deduped: List[str] = [cleaned[0]]
+        for w in cleaned[1:]:
+            if morph.is_same_stem(w, deduped[-1]):
+                logger.debug(f'Stem-dedup: removed {w!r} (same stem as {deduped[-1]!r})')
+                continue
+            deduped.append(w)
+        cleaned = deduped
 
     return ' '.join(cleaned)
 

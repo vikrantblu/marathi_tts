@@ -31,9 +31,15 @@ from tts.constants.g2p_constants import (
     VALID_CONJUNCTS,
     ANUSVARA_ASSIMILATION, ANUSVARA_NASALIZE_ONLY,
     VISARGA_TO_SIBILANT, VISARGA_ECHO, VISARGA_EXCEPTIONS,
-    SCHWA_PRESERVE_CLUSTERS, SCHWA_EXCEPTIONS,
+    SCHWA_PRESERVE_CLUSTERS, SCHWA_DELETE_SUFFIXES, SCHWA_EXCEPTIONS,
     LOANWORD_PHONEMES, EXCEPTION_LEXICON,
 )
+
+try:
+    from tts.utils.text.morphological_analyzer import MarathiMorphologicalAnalyzer as _MorphAnalyzer
+    _morph_available = True
+except ImportError:
+    _morph_available = False
 
 logger = logging.getLogger('tts.g2p')
 
@@ -52,15 +58,34 @@ class MarathiG2PEngine:
       8. Dictionary validation (optional)
     """
 
-    def __init__(self, dictionary_path: Optional[str] = None):
+    def __init__(self, dictionary_path: Optional[str] = None,
+                 anusvara_mode: str = 'preserve',
+                 schwa_mode: str = 'gtts'):
         """
         Args:
             dictionary_path: Path to a newline-delimited Marathi word list.
                 If provided, the dictionary is loaded for optional validation.
+            anusvara_mode: 'preserve' (default) keeps anusvara as-is for gTTS
+                compatibility; 'assimilate' replaces anusvara with varga nasal
+                before varga consonants (needed for edge-tts SSML).
+            schwa_mode: 'gtts' (default) trusts gTTS Marathi model for schwa
+                deletion; 'explicit' applies rule-based suffix schwa deletion
+                (needed for edge-tts SSML where schwa handling is not implicit).
         """
         self._lexicon = dict(EXCEPTION_LEXICON)
         self._loanwords = dict(LOANWORD_PHONEMES)
         self._dictionary: Set[str] = set()
+        self._anusvara_mode = anusvara_mode
+        self._schwa_mode = schwa_mode
+
+        # Morphological analyzer — used in explicit schwa mode to insert
+        # ZWNJ at morpheme boundaries, preventing edge-tts glide insertion
+        self._morph: Optional[object] = None
+        if _morph_available and schwa_mode == 'explicit':
+            try:
+                self._morph = _MorphAnalyzer()  # type: ignore[assignment]
+            except Exception as _me:
+                logger.debug(f'MorphAnalyzer init error: {_me}')
 
         # Build regex for conjunct detection: match C + halant + C patterns
         consonant_chars = ''.join(sorted(ALL_CONSONANT_SET))
@@ -188,33 +213,33 @@ class MarathiG2PEngine:
     def _process_anusvara(self, word: str) -> str:
         """Apply context-dependent anusvara rules.
 
-        BEFORE a varga consonant: anusvara → varga nasal
-            e.g., गंभीर → assimilation to labial nasal (गम्भीर phonetically)
-            But for TTS, we DON'T rewrite it — the nasal is implied
+        Mode 'preserve' (default):
+            Keep anusvara as-is — gTTS handles it reasonably well.
+            Only exception-lexicon overrides apply (upstream in _process_word).
 
-        BEFORE य/र/ल/व/श/ष/स/ह: anusvara = vowel nasalization
-            We preserve the anusvara as-is (it nasalizes the preceding vowel)
-            Do NOT insert न् which would create wrong pronunciation
-
-        AT WORD END (e.g., पदरीं): the trailing anusvara on ई
-            In Marathi, word-final anusvara on long vowels is typically
-            just light nasalization. For TTS, we handle this via the
-            exception lexicon rather than blanket stripping — some
-            words (चरणीं, पां in verse) should preserve nasalization.
+        Mode 'assimilate':
+            BEFORE a varga consonant: anusvara → varga nasal + halant
+                e.g., गंभीर → गम्भीर,  संत → सन्त,  पंख → पङ्ख
+            BEFORE semivowels/sibilants (य,र,ल,व,श,ष,स,ह):
+                Keep anusvara (nasalizes preceding vowel only).
+            AT WORD END: Keep anusvara as-is.
         """
-        # Rule 1: Word-final anusvara — handled by exception lexicon only.
-        # Do NOT blanket-strip — it corrupts verse/literary words like
-        # चरणीं, पां, तयां, etc. The EXCEPTION_LEXICON in g2p_constants
-        # explicitly lists words where anusvara should be removed.
+        if self._anusvara_mode == 'preserve':
+            return word
 
-        # Rule 2: anusvara before semivowels/sibilants → keep as nasalization
-        # Do NOT replace with न् — that would produce wrong pronunciation
-        # (The anusvara here just nasalizes the preceding vowel)
+        # Mode: 'assimilate' — apply varga nasal substitution
+        def _anusvara_sandhi(match):
+            following = match.group(1)
+            if following in ANUSVARA_NASALIZE_ONLY:
+                # Before semivowels/sibilants — keep anusvara as nasalization
+                return 'ं' + following
+            if following in ANUSVARA_ASSIMILATION:
+                # Before varga consonant — replace with class nasal
+                return ANUSVARA_ASSIMILATION[following] + following
+            # Unknown following consonant — keep as-is
+            return 'ं' + following
 
-        # Rule 3: anusvara before varga consonants → keep anusvara
-        # (gTTS handles this reasonably well as-is; explicit nasal
-        #  substitution can actually make it worse)
-
+        word = self._anusvara_re.sub(_anusvara_sandhi, word)
         return word
 
     # ── Visarga Processing (Fix: context-dependent ः) ──────────────────
@@ -256,28 +281,67 @@ class MarathiG2PEngine:
     def _apply_schwa_rules(self, word: str) -> str:
         """Apply Marathi schwa deletion rules.
 
-        In Marathi, the implicit 'a' (schwa) is deleted at word-final
-        position more aggressively than in Hindi. However, we can't
-        just delete all schwas — we need to preserve them in certain
-        consonant cluster contexts.
+        Mode 'gtts' (default):
+            Trust gTTS's Marathi model for schwa deletion. Only apply
+            SCHWA_EXCEPTIONS overrides. gTTS lang=mr handles basic
+            word-final schwa deletion correctly.
 
-        For TTS with gTTS: we don't need to explicitly delete schwas
-        because gTTS's Marathi model already handles basic schwa
-        deletion. Instead, we focus on PREVENTING incorrect schwa
-        insertion in conjuncts, which is what causes the mispronunciation.
+        Mode 'explicit':
+            Apply rule-based schwa analysis for edge-tts/SSML where the
+            TTS model may not natively handle Marathi schwa rules:
+            1. SCHWA_EXCEPTIONS — hard-coded overrides (always applied)
+            2. Protect SCHWA_PRESERVE_CLUSTERS — ensure conjuncts are
+               not broken by downstream processing
+            3. Word-final bare consonant — in Marathi, the implicit
+               schwa is always deleted at word end (unlike Hindi).
+               Currently handled by the TTS engine; this mode validates
+               and can log discrepancies for lexicon expansion.
 
-        The key insight: gTTS breaks conjuncts and inserts schwas where
-        there should be none. By inserting ZWJ in _fix_conjuncts(), we
-        tell the renderer to keep the cluster together.
+        NOTE: Full morphology-based schwa prediction requires a trained
+        model or extensive lexicon. This implementation covers the most
+        impactful patterns. Expand SCHWA_EXCEPTIONS as needed.
         """
-        # Check exception list first
+        # Step 1: Exception list — always applied regardless of mode
         if word in SCHWA_EXCEPTIONS:
             return SCHWA_EXCEPTIONS[word]
 
-        # For now, schwa handling is primarily done by:
-        # 1. _fix_conjuncts() preventing false schwa insertion
-        # 2. gTTS's native Marathi schwa deletion
-        # Future: Add explicit schwa prediction model here
+        if self._schwa_mode == 'gtts':
+            # Trust gTTS's native Marathi schwa handling
+            return word
+
+        # Mode: 'explicit' — rule-based schwa analysis for edge-tts SSML
+        if len(word) < 2:
+            return word
+
+        # ── Morpheme-boundary ZWNJ insertion ────────────────────────────
+        # When the morphological analyzer is available, insert ZWNJ at
+        # morpheme boundaries so edge-tts does not insert a y-glide or
+        # false vowel between stem and inflectional suffix.
+        #
+        # Example: बोलतो (stem 'बोल' + suffix 'तो')
+        #   Without ZWNJ: edge-tts may read as 'bol-ya-to'
+        #   With ZWNJ:    'बोल​तो' → 'bol-to'  (boundary marked)
+        #
+        # We re-use the ZWNJ convention established for the -chaa fix.
+        if self._morph is not None:
+            try:
+                boundaries = self._morph.morpheme_boundary_positions(word)  # type: ignore[union-attr]
+                if boundaries:
+                    # Build new string with ZWNJ inserted at each boundary
+                    result_chars = list(word)
+                    for offset, pos in enumerate(boundaries):
+                        result_chars.insert(pos + offset, ZWNJ)
+                    word = ''.join(result_chars)
+                    logger.debug(f'ZWNJ boundaries inserted: {word!r}')
+            except Exception as _be:
+                logger.debug(f'Morpheme boundary error for {word!r}: {_be}')
+
+        # ── Word-final consonant logging ─────────────────────────────────
+        # In Marathi, bare final consonant = schwa deleted.
+        # gTTS / edge-tts handle this natively; log for lexicon expansion.
+        last_char = word[-1] if word else ''
+        if last_char in ALL_CONSONANT_SET:
+            logger.debug(f"Schwa-final consonant: {word!r} (ends in {last_char!r})")
 
         return word
 

@@ -17,6 +17,8 @@ import java.util.ResourceBundle
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.Semaphore
 
 /**
  * Controller for the TTS tab.
@@ -65,8 +67,14 @@ class TtsController : Initializable {
         Thread(r, "tts-worker").also { it.isDaemon = true }
     }
     private var lastAudioPath: String? = null
+    /** Paths of all streaming chunk audio files (empty for single-call). */
+    private var streamChunkPaths: List<String> = emptyList()
     private val player = AudioPlayerUtil()
     private var wordHighlightTimer: Timer? = null
+    /** Pool for concurrent chunk generation (streaming). */
+    private val streamingPool = Executors.newFixedThreadPool(3) { r ->
+        Thread(r, "tts-stream").also { it.isDaemon = true }
+    }
 
     // Emotion → badge colour map (matches web/mobile)
     private val emotionColors = mapOf(
@@ -83,6 +91,9 @@ class TtsController : Initializable {
     )
 
     companion object {
+        /** Text longer than this (in chars) triggers streaming on Marathi prose. */
+        private const val STREAMING_THRESHOLD = 250
+
         val EMOTIONS = listOf(
             "auto (detect)", "neutral", "happy", "sad", "angry",
             "fearful", "surprised", "disgusted", "calm", "excited"
@@ -173,13 +184,138 @@ class TtsController : Initializable {
                     updateEmotionBadge(detectedEmotion)
                     detectedEmotionLabel.text = "Detected: $detectedEmotion"
                 }
-                runTtsGeneration(text, detectedEmotion)
+                dispatchGeneration(text, detectedEmotion)
             }
-            emotionTask.setOnFailed { runTtsGeneration(text, null) }
+            emotionTask.setOnFailed { dispatchGeneration(text, null) }
             executor.submit(emotionTask)
         } else {
             val emotion = if (emotionSelection == "auto (detect)") null else emotionSelection
+            dispatchGeneration(text, emotion)
+        }
+    }
+
+    /**
+     * Route to streaming or single-call based on text length.
+     * Long Marathi prose (>250 chars, non-verse) goes through streaming;
+     * everything else uses a single PythonBridge call.
+     */
+    private fun dispatchGeneration(text: String, emotion: String?) {
+        val langCode = LANGUAGE_CODES[languageCombo.value] ?: "mr"
+        val isVerse = verseModeCheck.isSelected
+        if (langCode == "mr" && !isVerse && text.length > STREAMING_THRESHOLD) {
+            runStreamingGeneration(text, emotion)
+        } else {
             runTtsGeneration(text, emotion)
+        }
+    }
+
+    /** Split Marathi text into sentence-level chunks at ।, ॥, and Latin punctuation. */
+    private fun splitSentences(text: String): List<String> {
+        val raw = text.split(Regex("""(?<=[।॥?!])\s*|(?<=[.;])\s+"""))
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+        if (raw.isEmpty()) return listOf(text)
+
+        // Merge very short fragments (< 20 chars) with next to avoid tiny audio
+        val merged = mutableListOf<String>()
+        val buf = StringBuilder()
+        for (s in raw) {
+            buf.append(if (buf.isEmpty()) s else " $s")
+            if (buf.length >= 20) {
+                merged += buf.toString()
+                buf.clear()
+            }
+        }
+        if (buf.isNotEmpty()) {
+            if (merged.isNotEmpty() && buf.length < 20) {
+                merged[merged.lastIndex] = merged.last() + " $buf"
+            } else {
+                merged += buf.toString()
+            }
+        }
+        return merged.ifEmpty { listOf(text) }
+    }
+
+    /**
+     * Streaming generation: split text into sentence chunks, generate
+     * audio for each chunk (up to 3 in parallel), then queue playback.
+     * Mirrors mobile TtsViewModel.generateAudioStreaming().
+     */
+    private fun runStreamingGeneration(text: String, emotion: String?) {
+        val sentences = splitSentences(text)
+        if (sentences.size <= 1) {
+            runTtsGeneration(text, emotion)
+            return
+        }
+
+        setStatus("Streaming: preparing ${sentences.size} chunks…", busy = true)
+
+        val langCode = LANGUAGE_CODES[languageCombo.value] ?: "mr"
+        val engineCode = ENGINE_CODES[engineCombo.value] ?: "auto"
+        val genderCode = GENDER_CODES[genderCombo.value] ?: "female"
+        val speed = speedSlider.value
+        val pitch = pitchSlider.value
+        val volume = volumeSlider.value
+        val root = projectRoot?.invoke()
+        val concurrencyLimit = Semaphore(3)
+        val completedCount = AtomicInteger(0)
+        val total = sentences.size
+
+        executor.submit {
+            try {
+                // Generate all chunks with limited concurrency
+                val futures = sentences.map { chunk ->
+                    streamingPool.submit<String?> {
+                        concurrencyLimit.acquire()
+                        try {
+                            val result = TtsService(root).generateAudio(
+                                text = chunk,
+                                speed = speed, pitch = pitch, volume = volume,
+                                emotion = emotion, isVerse = false,
+                                language = langCode, engine = engineCode,
+                                gender = genderCode
+                            ).let { task ->
+                                task.run()   // run synchronously in pool thread
+                                task.value
+                            }
+                            val done = completedCount.incrementAndGet()
+                            Platform.runLater {
+                                setStatus("Streaming: $done of $total \u2713", busy = true)
+                            }
+                            if (result["success"] == true)
+                                result["audio_path"] as? String
+                            else null
+                        } finally {
+                            concurrencyLimit.release()
+                        }
+                    }
+                }
+
+                // Collect results in order
+                val paths = futures.mapNotNull { it.get() }
+
+                if (paths.isEmpty()) {
+                    setStatus("Error: streaming failed — no chunks generated")
+                    Platform.runLater { generateBtn.isDisable = false }
+                    return@submit
+                }
+
+                streamChunkPaths = paths
+                lastAudioPath = paths.first()
+
+                Platform.runLater {
+                    engineLabel.text = "Engine: stream (${paths.size} chunks)"
+                    audioControlBar.isVisible = true
+                    playBtn.isDisable = false
+                    saveAudioBtn.isDisable = false
+                    feedbackBtn.isDisable = false
+                    generateBtn.isDisable = false
+                }
+                setStatus("All ${paths.size} chunks ready \u2713")
+            } catch (e: Exception) {
+                setStatus("Streaming error: ${e.message}")
+                Platform.runLater { generateBtn.isDisable = false }
+            }
         }
     }
 
@@ -187,6 +323,7 @@ class TtsController : Initializable {
         val langCode = LANGUAGE_CODES[languageCombo.value] ?: "mr"
         val engineCode = ENGINE_CODES[engineCombo.value] ?: "auto"
         val genderCode = GENDER_CODES[genderCombo.value] ?: "female"
+        streamChunkPaths = emptyList()   // reset streaming state
         val task = TtsService(projectRoot?.invoke()).generateAudio(
             text = text,
             speed = speedSlider.value,
@@ -239,13 +376,28 @@ class TtsController : Initializable {
 
     @FXML
     fun onPlay(@Suppress("UNUSED_PARAMETER") event: ActionEvent) {
-        lastAudioPath?.let {
+        if (streamChunkPaths.size > 1) {
+            // Streaming mode: play all chunks sequentially
             player.rate = speedSlider.value
             player.volume = volumeSlider.value.coerceAtMost(1.0)
-            player.play(it)
+            player.playQueue(streamChunkPaths) {
+                Platform.runLater {
+                    stopBtn.isDisable = true
+                    setStatus("Finished")
+                }
+            }
             stopBtn.isDisable = false
-            setStatus("Playing…")
+            setStatus("Playing ${streamChunkPaths.size} chunks…")
             startWordHighlight()
+        } else {
+            lastAudioPath?.let {
+                player.rate = speedSlider.value
+                player.volume = volumeSlider.value.coerceAtMost(1.0)
+                player.play(it)
+                stopBtn.isDisable = false
+                setStatus("Playing…")
+                startWordHighlight()
+            }
         }
     }
 
@@ -266,11 +418,21 @@ class TtsController : Initializable {
             initialFileName = "marathi_tts_output.mp3"
         }
         val dest = fc.showSaveDialog(textArea.scene.window) ?: return
-        java.nio.file.Files.copy(
-            java.nio.file.Path.of(lastAudioPath!!),
-            dest.toPath(),
-            java.nio.file.StandardCopyOption.REPLACE_EXISTING
-        )
+
+        if (streamChunkPaths.size > 1) {
+            // Concatenate all chunk MP3 files into one
+            dest.outputStream().use { out ->
+                for (p in streamChunkPaths) {
+                    java.io.File(p).inputStream().use { it.copyTo(out) }
+                }
+            }
+        } else {
+            java.nio.file.Files.copy(
+                java.nio.file.Path.of(lastAudioPath!!),
+                dest.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            )
+        }
         setStatus("Saved to ${dest.name}")
     }
 

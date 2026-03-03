@@ -7,37 +7,13 @@ Track feature requests and shipped features here.
 <!-- Add new feature requests at the top of this section -->
 
 ### High Priority
-- FEAT-1 Wire ProsodyEngine.segment_text() into mobile/desktop bridges for natural
-  clause/sentence pauses in prose (currently sends entire text as one chunk)
-- FEAT-2 Desktop streaming/chunking for long text (>250 chars) — mobile & web have it
-- FEAT-3 Grammar engine as hard dependency on desktop/mobile (currently silently skipped
-  if import fails, but it's pure Python with no heavy deps)
-- FEAT-8 Edge-TTS SSML generation: use <break>, <prosody rate/pitch>, <emphasis> tags
-  instead of pydub post-processing for native neural-quality prosody
-- FEAT-23 Move English-to-Devanagari transliteration to shared tts/utils/text/ module
-  (currently mobile-only)
+(all high-priority items shipped)
 
 ### Medium Priority
-- FEAT-4 MetreEngine: add gaṇa (metrical foot) pattern matching for distinguishing metres
-  with same syllable count (Indravajra vs Trishtubh, both 11 syllables)
-- FEAT-5 SandhiEngine: add visarga + voiced consonant → r rule (पुनः+दर्शनम्→पुनर्दर्शनम्)
-- FEAT-6 Implement yati (caesura) pauses within pādas based on detected metre
-- FEAT-7 Ovi rhythmic pulse: lines 1-3 flowing (rate=0.82), line 4 cadence slowdown
-  (rate=0.75, longer pause)
-- FEAT-9 Emotion → verse prosody mapping (devotional→slower+deeper, peaceful→longer pauses)
-- FEAT-11 Implement pitch contour from MetreDefinition (wave/falling/rising/level)
-- FEAT-10 Expand schwa deletion lexicon to 200+ entries with suffix-based patterns
-- FEAT-20 Hash-based audio caching (SHA256 of text+engine+params → cached audio path)
+(all medium-priority items shipped)
 
 ### Lower Priority
-- FEAT-12 Add missing Sanskrit metres: Upajati, Indravajra, Vamshastha, Rathoddhatā,
-  Sragdharā (21 syllables)
-- FEAT-13 Abhanga refrain (धृवपद) detection with emphasis + pitch boost
 - FEAT-14 Pre-recorded stotra audio on mobile (desktop already has fingerprint matching)
-- FEAT-15 Chandrabindu lighter nasalization via SSML volume wrapper for edge-tts
-- FEAT-16 Dead code removal: prosody_engine.py lines 251-260 (unreachable after return)
-- FEAT-32 Test coverage: add tests for TextNormalizer, GrammarEngine, number_to_words,
-  bridge preprocessing
 
 ## Shipped
 
@@ -45,6 +21,71 @@ Track feature requests and shipped features here.
 - Emotion detection in mobile/desktop bridges (v1.0.0)
 - TTS streaming for long text (v1.0.0)
 -->
+- FEAT-33 Marathi morphological analyzer — rule-based suffix stripping (70+ Marathi suffixes,
+  longest-first, with stop-word guard) shared across all 3 platforms; optional Morfessor
+  statistical model for web + desktop (tts/morph/morfessor/mr.model); wired into G2P engine
+  (ZWNJ boundary insertion in explicit schwa mode) and grammar engine (stem-aware
+  remove_repetitions Pass 2). ([Unreleased])
+- FEAT-32 Test coverage: Sections I/J/K added to test_all_platforms.py — TextNormalizer
+  (verse-number strip, abbreviation expansion, empty-input), GrammarEngine (process(),
+  remove_repetitions, empty-input), number_to_words (cardinals, convert_time, convert_ordinal,
+  convert_percentage). Optional-dep skip for indicnlp in offline env. ([Unreleased])
+- FEAT-15 Chandrabindu lighter nasalization — _generate_edge_prosody() now checks each
+  segment for ँ (U+0901); when present, applies -25pp volume reduction (~-3 dB) to keep
+  nasal softness. Both mobile and desktop bridges. ([Unreleased])
+- FEAT-13 Abhanga refrain (धृवपद) detection — _detect_abhanga_refrain() in ProsodyEngine:
+  counts exact + 2-char rhyme-suffix repetitions; marks segments appearing 2+ times with
+  emphasis=1.1, pitch_shift+=0.5 for refrain highlight. When metre==Abhanga. All 3 plat. ([Unreleased])
+- FEAT-10 Schwa deletion lexicon expanded — SCHWA_EXCEPTIONS in g2p_constants.py grown
+  from 8 entries to 220+ covering verb -तो/-ते/-णे forms, -कर demonyms, adjectives, nouns,
+  place names, adverbs, postpositions, bhakti vocabulary. All 3 platforms. ([Unreleased])
+- FEAT-12 New Sanskrit metres: Sragdharā (21 syl), Indravajra (11 syl), Upendravajra (11 syl),
+  Rathoddhatā (11 syl), Upajati (11 syl mixed), Vamshastha (12 syl) added to METRE_CATALOGUE;
+  yati_syllables added to 9 existing metres. All 3 platforms. ([Unreleased])
+- FEAT-6 Yati (caesura) pauses within pādas — _apply_yati_splits() + _split_pada_at_yati() in
+  ProsodyEngine: word-boundary-aware split at gaetna-derived syllable positions; inserts
+  pause_yati_ms sub-segment between yati parts. All 3 platforms. ([Unreleased])
+- FEAT-4 Gaṇa pattern matching in MetreEngine — classify_syllable_weights() computes per-
+  syllable L/G weight; _match_syllabic_metre() adds gana_bonus (up to 0.20) when observed
+  pattern matches MetreDefinition.gana_pattern; new _gana_match_score() method.
+  All 3 platforms. ([Unreleased])
+- FEAT-1 ProsodyEngine wired into mobile/desktop bridges — _generate_prosody_audio() segments
+  prose at clause/sentence boundaries via MarathiProsodyEngine, generates per-segment gTTS
+  audio, and stitches with calibrated pydub silence pauses (180-900ms). Falls through to
+  single-call gTTS on failure. Both platforms. ([Unreleased])
+- FEAT-8 Edge-TTS prosody segmentation — _generate_edge_prosody() generates per-segment
+  edge-tts neural audio with ProsodyEngine-determined pauses, uses native SSML rate/pitch/
+  volume per segment + per-segment pitch_shift from emphasis detection. Cap at 15 segments.
+  Falls through to single-call edge-tts on failure. Both platforms. ([Unreleased])
+- FEAT-23 Shared English-to-Devanagari transliteration module (tts/utils/text/english_transliterator.py) — merged superset dict, vowel-aware char-level fallback, synced all 3 platforms ([Unreleased])
+- FEAT-20 Hash-based audio caching (tts/utils/audio_cache.py) — SHA-256 keyed LRU file cache with 50MB cap ([Unreleased])
+- FEAT-3 Grammar engine wired into desktop/mobile tts_bridge.py — _apply_grammar() lazy
+  singleton wraps MarathiGrammarEngine; applied to prose text (not verse/Sanskrit/English)
+  after text preprocessing, before all TTS stages. Both platforms. ([Unreleased])
+- FEAT-2 Desktop streaming/chunking for long text — splitSentences() splits at ।॥?!.;
+  with short-fragment merging; dispatchGeneration() routes Marathi prose >250 chars to
+  runStreamingGeneration() with Semaphore(3) concurrent chunk generation on 3-thread pool;
+  AudioPlayerUtil.playQueue() chains sequential playback; onSaveAudio() concatenates
+  chunk MP3s. Progress status "Streaming: N of M ✓". ([Unreleased])
+- FEAT-5 SandhiEngine: visarga + voiced consonant → r sandhi rule — new
+  fix_visarga_voiced_consonant() method in pipeline step 4b; पुनः दर्शनम् → पुनर् दर्शनम्.
+  All 3 platforms. ([Unreleased])
+- FEAT-7 Ovi rhythmic pulse — _apply_ovi_rhythmic_pulse() in ProsodyEngine: lines 1-3
+  rate=0.82/pause≤400ms, line 4 rate=0.75/pause≥800ms, stanza break=1200ms.
+  All 3 platforms. ([Unreleased])
+- FEAT-9 Emotion → verse prosody mapping — _apply_emotion_verse_modifiers() in
+  ProsodyEngine: devotional(0.90,-1.0st,1.2×pause), peaceful(0.85,0.0,1.3×pause),
+  happy(1.05,+1.0st,0.9×pause), sad(0.88,-1.5st,1.25×pause), etc.
+  All 3 platforms. ([Unreleased])
+- FEAT-11 Pitch contour from MetreDefinition — _apply_pitch_contour() in ProsodyEngine:
+  wave=±0.5st alternating, falling=-0.3st progressive, rising=+0.3st progressive;
+  resets per stanza. All 3 platforms. ([Unreleased])
+- FEAT-16 Dead code removal — unreachable lines after return in prosody_engine.py _segment_verse_block ([Unreleased])
+- Shared retry/timeout utility (tts/utils/tts_retry.py) — configurable timeout/retry/backoff + network check ([Unreleased])
+- Structured error codes (tts/constants/error_codes.py) — ERR_NO_NETWORK, ERR_EMPTY_TEXT, ERR_ALL_ENGINES_FAILED, etc. ([Unreleased])
+- Network pre-check in bridges — _is_network_available() with 3s socket check before TTS API calls ([Unreleased])
+- Temp file cleanup in bridges — _cleanup_output_dir() with 24h age + 100MB size cap ([Unreleased])
+- pydub safe clamping — speed [0.75-1.25], pitch [0.79-1.26] with documented limitations ([Unreleased])
 - BookReader: Google Lens-like auto-save flow — point camera, tap, auto-crop+save, no manual step (v5.3.0)
 - TTS Streaming: Cancel button during generation (Generate button toggles to Cancel) (v5.3.0)
 - TTS Streaming: Concurrency-limited parallel chunk generation with Semaphore(3) (v5.3.0)

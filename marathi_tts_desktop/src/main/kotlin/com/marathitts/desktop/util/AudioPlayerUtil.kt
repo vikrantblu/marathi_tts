@@ -76,6 +76,35 @@ class AudioPlayerUtil {
         mediaPlayer?.setOnEndOfMedia(action)
     }
 
+    /**
+     * Play a queue of audio files sequentially.
+     * Each file plays to completion, then the next starts automatically.
+     * [onAllFinished] is called after the last file finishes.
+     */
+    fun playQueue(filePaths: List<String>, onAllFinished: (() -> Unit)? = null) {
+        if (filePaths.isEmpty()) { onAllFinished?.invoke(); return }
+        stop()
+        playQueueInternal(filePaths, 0, onAllFinished)
+    }
+
+    private fun playQueueInternal(paths: List<String>, index: Int, onAllFinished: (() -> Unit)?) {
+        if (index >= paths.size) {
+            onAllFinished?.invoke()
+            return
+        }
+        val uri = java.io.File(paths[index]).toURI().toString()
+        val media = Media(uri)
+        mediaPlayer = MediaPlayer(media).apply {
+            this.rate = this@AudioPlayerUtil.rate
+            this.volume = this@AudioPlayerUtil.volume
+            setOnEndOfMedia {
+                dispose()
+                playQueueInternal(paths, index + 1, onAllFinished)
+            }
+            play()
+        }
+    }
+
     val isPlaying: Boolean
         get() = mediaPlayer?.status == MediaPlayer.Status.PLAYING
 }

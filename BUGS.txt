@@ -6,37 +6,32 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 <!-- Add new bugs at the top of this section -->
 
-- BUG-18 [HIGH] G2P _process_anusvara() is a no-op — method documents anusvara assimilation
-  rules but body is just `return word`. Anusvara context-dependent processing is entirely
-  missing. Will be critical when switching from gTTS to edge-tts.
-
-- BUG-19 [HIGH] G2P _apply_schwa_rules() is essentially a no-op — only checks SCHWA_EXCEPTIONS
-  dict (small) and returns word unchanged. No rule-based schwa deletion for Marathi.
-
-- BUG-23 [HIGH] English-to-Devanagari transliteration (_ENGLISH_TO_DEVNAGARI, ~80 words +
-  char-level fallback) only exists in mobile tts_bridge.py. Desktop and Web send raw ASCII
-  English words to gTTS/edge-tts which mangles them.
-
-- BUG-25 [MEDIUM] No timeout or retry on gTTS/edge-tts HTTP calls. A single slow/hung request
-  blocks the entire TTS pipeline. Mobile streaming especially vulnerable.
-
-- BUG-27 [LOW] Mobile bridge has no temp file cleanup in output/ directory. Stale audio
-  files accumulate without age or size limit. Concern on storage-limited Android devices.
-
-- BUG-20 [LOW] No audio caching — repeated identical text fully re-generates audio via
-  gTTS/edge-tts API calls every time. Stotras read repeatedly pay full cost each time.
-
-- BUG-21 [LOW] No network connectivity pre-check before gTTS/edge-tts API calls. On mobile
-  (flaky network), long timeout before failure instead of immediate user-friendly error.
-
-- BUG-31 [LOW] Bridge error responses use free-text error messages with no structured error
-  codes. Kotlin/JavaFX callers must string-match to determine failure type.
-
-- BUG-33 [LOW] number_to_words.py convert_time() has edge case: X:45 without AM/PM produces
-  garbled output — includes current hour word before "पावणे" phrase due to fragile index slicing.
+(No open bugs at this time.)
 
 ## Fixed
 
+- ~~BUG-18 [HIGH] G2P _process_anusvara() was a no-op~~ (fixed [Unreleased] —
+  implemented with mode gating: preserve mode for gTTS compat, assimilate mode for edge-tts)
+- ~~BUG-19 [HIGH] G2P _apply_schwa_rules() was essentially a no-op~~ (fixed [Unreleased] —
+  implemented with gtts/explicit mode gating; explicit mode logs word-final consonants)
+- ~~BUG-23 [HIGH] English-to-Devanagari transliteration only in mobile~~ (fixed [Unreleased] —
+  created shared tts/utils/text/english_transliterator.py with merged superset dict in all 3 platforms)
+- ~~BUG-25 [MEDIUM] No timeout or retry on gTTS/edge-tts calls~~ (fixed [Unreleased] —
+  created shared tts/utils/tts_retry.py with configurable timeout/retry/backoff)
+- ~~BUG-27 [LOW] No temp file cleanup in bridge output/ directory~~ (fixed [Unreleased] —
+  added _cleanup_output_dir() to both mobile and desktop bridges: 24h age + 100MB size cap)
+- ~~BUG-20 [LOW] No audio caching for repeated text~~ (fixed [Unreleased] —
+  created shared tts/utils/audio_cache.py with SHA-256 keyed LRU cache, 50MB default cap)
+- ~~BUG-21 [LOW] No network pre-check before TTS API calls~~ (fixed [Unreleased] —
+  added _is_network_available() with 3s socket check to both bridges; fails fast with clear message)
+- ~~BUG-31 [LOW] No structured error codes in bridge responses~~ (fixed [Unreleased] —
+  created tts/constants/error_codes.py; added error_code field to all bridge error returns)
+- ~~BUG-33 [LOW] convert_time() :45 without AM/PM garbled~~ (fixed [Unreleased] —
+  replaced fragile index slicing with explicit period-aware construction)
+- ~~BUG-26 [LOW] pydub pitch/speed limitations undocumented~~ (fixed [Unreleased] —
+  added safe clamping [0.75-1.25] speed / [0.79-1.26] pitch + docstring + tts_features.md note)
+- ~~#16 [LOW] Dead code in prosody_engine.py lines 251-260~~ (fixed [Unreleased] —
+  removed unreachable code after return in _segment_verse_block, all 3 platforms)
 - ~~BUG-17 [CRITICAL] SPECIAL_CHARS ॥→। destroyed verse detection~~ (fixed [Unreleased] — removed
   ॥→। mapping from SPECIAL_CHARS in all 3 platforms; added explanatory comment)
 - ~~BUG-22 [HIGH] Duplicate abbreviation lists mobile vs text_constants~~ (fixed [Unreleased] —

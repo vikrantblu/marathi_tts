@@ -147,6 +147,96 @@ def count_maatras(pada: str) -> int:
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# FEAT-4: Syllable-weight (laghu/guru) classification for gaṇa matching
+# ══════════════════════════════════════════════════════════════════════════
+
+def classify_syllable_weights(pada: str) -> str:
+    """Return laghu (L) / guru (G) weight string for each syllable in the pāda.
+
+    Guru (heavy) conditions:
+      - Long vowel matra (ā ī ū e ai o au)
+      - Independent long vowel (आ ई ऊ ए ऐ ओ औ ॠ)
+      - Anusvara, chandrabindu, or visarga after the syllable
+      - Consonant cluster (saṃyoga) follows the syllable
+    Laghu (light): short open syllable with short vowel (a i u ṛ)
+
+    Used for gaṇa-based metre discrimination (e.g. Indravajra vs Upendravajra).
+    Example: classify_syllable_weights('नमः शिवाय') → 'LGGG'
+    """
+    _LONG_MATRAS   = set('ाीूेैोौ')    # ā ī ū e ai o au
+    _SHORT_MATRAS  = set('िुृ')          # i u ṛ
+    _LONG_IVOWELS  = set('आईऊएऐओऔॠ')
+    _SHORT_IVOWELS = set('अइउऋ')
+    _HEAVY_MARKS   = {'ं', 'ँ', 'ः'}  # anusvara, chandrabindu, visarga
+
+    weights = []
+    i = 0
+    n = len(pada)
+
+    def _is_cons(c: str) -> bool:
+        return ('क' <= c <= 'ह') or c == 'ळ'
+
+    def _has_samyoga(pos: int) -> bool:
+        """True if there is a consonant cluster (C + halant) starting at pos."""
+        if pos < n and _is_cons(pada[pos]) and pos + 1 < n and pada[pos + 1] == _HALANT:
+            return True
+        return False
+
+    while i < n:
+        c = pada[i]
+
+        # Independent long vowel
+        if c in _LONG_IVOWELS:
+            weights.append('G')
+            i += 1
+
+        # Independent short vowel
+        elif c in _SHORT_IVOWELS:
+            weights.append('G' if _has_samyoga(i + 1) else 'L')
+            i += 1
+
+        # Consonant at syllable head
+        elif _is_cons(c):
+            # Part of a cluster (halant + following cons): skip, not a syllable head
+            if i + 1 < n and pada[i + 1] == _HALANT:
+                i += 2
+                continue
+            # Determine weight from attached vowel sign
+            nxt = pada[i + 1] if i + 1 < n else ''
+            if nxt in _LONG_MATRAS:
+                weights.append('G')
+                i += 2
+            elif nxt in _SHORT_MATRAS:
+                anchor = i + 2
+                if anchor < n and pada[anchor] in _HEAVY_MARKS:
+                    weights.append('G')   # short matra + heavy mark → guru
+                    i += 3
+                elif _has_samyoga(anchor):
+                    weights.append('G')   # saṃyoga after short vowel → guru
+                    i += 2
+                else:
+                    weights.append('L')
+                    i += 2
+            elif nxt in _HEAVY_MARKS:
+                weights.append('G')   # anusvara / visarga directly after cons
+                i += 2
+            elif nxt == _HALANT:      # cluster start: this cons is not a syllable head
+                i += 2
+            else:
+                # Implicit schwa: guru only if followed by consonant cluster
+                weights.append('G' if _has_samyoga(i + 1) else 'L')
+                i += 1
+
+        # Anusvara / chandrabindu / visarga not at syllable head — skip
+        elif c in _HEAVY_MARKS:
+            i += 1
+        else:
+            i += 1
+
+    return ''.join(weights)
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # Metre definitions
 # ══════════════════════════════════════════════════════════════════════════
 
@@ -167,18 +257,34 @@ class MetreDefinition:
     pitch_contour: str = 'wave'   # 'rising', 'falling', 'level', 'wave'
     slow_mode: bool = True        # Use gTTS slow=True
     note: str = ''
+    # FEAT-4: gaṇa pattern and yati positions
+    gana_pattern: str = ''            # L/G weight string e.g. 'GGLGGLLGLGL'
+    yati_syllables: List[int] = field(default_factory=list)  # caesura positions
 
 
 # Metre catalogue — ordered by detection priority (most specific first)
 METRE_CATALOGUE: List[MetreDefinition] = [
 
     # ── Sanskrit samavritta (syllabic metres) ────────────────────────
+    # ── FEAT-4 addition: grandest metre (21 syl) — detect first ───────
+    MetreDefinition(
+        name='Sragdhara',
+        marathi_name='स्रग्धरा',
+        padas=4, syllables_per_pada=21, maatras_per_pada=0,
+        rate=0.75, pause_half_ms=800, pause_full_ms=1400, pause_yati_ms=300,
+        pitch_contour='wave', slow_mode=True,
+        gana_pattern='GGGGLGGLLLLLLGGLGGLGG',
+        yati_syllables=[7, 14],
+        note='Sragdharā (m-r-bh-n-y-y-y) — 21 syllables, grandest classical metre'
+    ),
+
     MetreDefinition(
         name='Shardula-vikridita',
         marathi_name='शार्दूलविक्रीडित',
         padas=4, syllables_per_pada=19, maatras_per_pada=0,
         rate=0.78, pause_half_ms=700, pause_full_ms=1200, pause_yati_ms=250,
         pitch_contour='wave', slow_mode=True,
+        yati_syllables=[12],
         note='Stately, lion-gait metre — used in Mahimna Stotra, Shivanandalahari'
     ),
     MetreDefinition(
@@ -187,6 +293,7 @@ METRE_CATALOGUE: List[MetreDefinition] = [
         padas=4, syllables_per_pada=14, maatras_per_pada=0,
         rate=0.82, pause_half_ms=600, pause_full_ms=1100, pause_yati_ms=220,
         pitch_contour='wave', slow_mode=True,
+        yati_syllables=[8],
         note='Spring-tile metre — lyrical, medium pace'
     ),
     MetreDefinition(
@@ -195,6 +302,7 @@ METRE_CATALOGUE: List[MetreDefinition] = [
         padas=4, syllables_per_pada=17, maatras_per_pada=0,
         rate=0.76, pause_half_ms=750, pause_full_ms=1300, pause_yati_ms=280,
         pitch_contour='falling', slow_mode=True,
+        yati_syllables=[4, 10],
         note='Slow-creeping metre — Meghaduta, Kumarasambhava'
     ),
     MetreDefinition(
@@ -203,6 +311,7 @@ METRE_CATALOGUE: List[MetreDefinition] = [
         padas=4, syllables_per_pada=15, maatras_per_pada=0,
         rate=0.80, pause_half_ms=650, pause_full_ms=1100, pause_yati_ms=240,
         pitch_contour='wave', slow_mode=True,
+        yati_syllables=[8],
         note='Garland metre — Amarushataka'
     ),
     MetreDefinition(
@@ -211,7 +320,49 @@ METRE_CATALOGUE: List[MetreDefinition] = [
         padas=4, syllables_per_pada=8, maatras_per_pada=0,
         rate=0.85, pause_half_ms=550, pause_full_ms=900, pause_yati_ms=150,
         pitch_contour='wave', slow_mode=True,
+        yati_syllables=[4],
         note='Most common Sanskrit metre — Bhagavad Gita, Ramayana, Mahabharata'
+    ),
+    # ── FEAT-4 addition: specific 11-syllable metres with gaṇa patterns ─
+    MetreDefinition(
+        name='Indravajra',
+        marathi_name='इन्द्रवज्रा',
+        padas=4, syllables_per_pada=11, maatras_per_pada=0,
+        rate=0.83, pause_half_ms=600, pause_full_ms=1050, pause_yati_ms=180,
+        pitch_contour='wave', slow_mode=True,
+        gana_pattern='GGLGGLLGLGL',
+        yati_syllables=[6],
+        note='Indravajra (t-t-j-Ga-La) — Mahimna Stotra, Shivanandalahari'
+    ),
+    MetreDefinition(
+        name='Upendravajra',
+        marathi_name='उपेन्द्रवज्रा',
+        padas=4, syllables_per_pada=11, maatras_per_pada=0,
+        rate=0.83, pause_half_ms=600, pause_full_ms=1050, pause_yati_ms=180,
+        pitch_contour='wave', slow_mode=True,
+        gana_pattern='LGLGGLLGLGL',
+        yati_syllables=[6],
+        note='Upendravajra (j-t-j-Ga-La) — complement to Indravajra'
+    ),
+    MetreDefinition(
+        name='Rathoddhatā',
+        marathi_name='रथोद्धता',
+        padas=4, syllables_per_pada=11, maatras_per_pada=0,
+        rate=0.82, pause_half_ms=580, pause_full_ms=1000, pause_yati_ms=170,
+        pitch_contour='falling', slow_mode=True,
+        gana_pattern='GLGLGLGLGGL',
+        yati_syllables=[5],
+        note='Rathoddhatā (r-j-r-Ga-La) — brisk narrative metre'
+    ),
+    MetreDefinition(
+        name='Upajati',
+        marathi_name='उपजाति',
+        padas=4, syllables_per_pada=11, maatras_per_pada=0,
+        rate=0.83, pause_half_ms=600, pause_full_ms=1050, pause_yati_ms=180,
+        pitch_contour='wave', slow_mode=True,
+        gana_pattern='',   # mixed Indravajra + Upendravajra lines — no fixed pattern
+        yati_syllables=[6],
+        note='Upajati — mixed Indravajra/Upendravajra; very common in stotras'
     ),
     MetreDefinition(
         name='Trishtubh',
@@ -219,7 +370,19 @@ METRE_CATALOGUE: List[MetreDefinition] = [
         padas=4, syllables_per_pada=11, maatras_per_pada=0,
         rate=0.83, pause_half_ms=600, pause_full_ms=1050, pause_yati_ms=200,
         pitch_contour='wave', slow_mode=True,
+        yati_syllables=[5],
         note='Second most common — Rigveda, Mahabharata'
+    ),
+    # ── FEAT-4 addition: 12-syllable Vamshastha ─────────────────────────
+    MetreDefinition(
+        name='Vamshastha',
+        marathi_name='वंशस्थ',
+        padas=4, syllables_per_pada=12, maatras_per_pada=0,
+        rate=0.83, pause_half_ms=620, pause_full_ms=1050, pause_yati_ms=200,
+        pitch_contour='wave', slow_mode=True,
+        gana_pattern='LGLGGLLGLGLG',
+        yati_syllables=[6],
+        note='Vamshastha (j-t-j-r) — 12-syllable narrative metre'
     ),
     MetreDefinition(
         name='Jagati',
@@ -227,6 +390,7 @@ METRE_CATALOGUE: List[MetreDefinition] = [
         padas=4, syllables_per_pada=12, maatras_per_pada=0,
         rate=0.83, pause_half_ms=620, pause_full_ms=1050, pause_yati_ms=200,
         pitch_contour='level', slow_mode=True,
+        yati_syllables=[4, 8],
         note='12-syllable metre — less common, found in Rigveda'
     ),
 
@@ -394,7 +558,7 @@ class MetreEngine:
             )
 
         # ── 2. Sanskrit syllabic metre matching ─────────────────────────
-        best_metre, best_conf = self._match_syllabic_metre(avg_syl, syllable_counts)
+        best_metre, best_conf = self._match_syllabic_metre(avg_syl, syllable_counts, lines)
         if best_conf >= 0.70:
             return MetreProsody(
                 metre=best_metre,
@@ -494,9 +658,15 @@ class MetreEngine:
         return False
 
     def _match_syllabic_metre(
-        self, avg_syl: float, syl_counts: List[int]
+        self, avg_syl: float, syl_counts: List[int],
+        lines: Optional[List[str]] = None,
     ) -> Tuple[MetreDefinition, float]:
-        """Find best matching metre by syllable count.
+        """Find best matching metre by syllable count and optional gaṇa pattern.
+
+        FEAT-4: When multiple metres share the same syllable count (e.g.
+        Indravajra, Upendravajra, Trishtubh — all 11 syl), the observed
+        laghu/guru weight string is compared against each metre's
+        ``gana_pattern`` to pick the most specific match.
 
         Returns (MetreDefinition, confidence_score).
         """
@@ -507,6 +677,14 @@ class MetreEngine:
 
         best_metre  = _METRE_BY_NAME['Shloka']
         best_conf   = 0.0
+
+        # Compute actual gaṇa weight pattern from the first usable line
+        actual_pattern = ''
+        if lines:
+            for ln in lines:
+                if count_syllables(ln) >= 6:
+                    actual_pattern = classify_syllable_weights(ln)
+                    break
 
         for metre in syllabic_metres:
             expected = metre.syllables_per_pada
@@ -519,11 +697,28 @@ class MetreEngine:
                 exact_ratio = exact_matches / max(len(syl_counts), 1)
                 conf = conf * 0.5 + exact_ratio * 0.5
 
+                # FEAT-4: gaṇa pattern bonus — allows Indravajra to win over Trishtubh
+                if actual_pattern and metre.gana_pattern:
+                    gana_bonus = self._gana_match_score(actual_pattern, metre.gana_pattern)
+                    conf = min(1.0, conf + gana_bonus * 0.20)
+
                 if conf > best_conf:
                     best_conf  = conf
                     best_metre = metre
 
         return best_metre, best_conf
+
+    def _gana_match_score(self, observed: str, expected: str) -> float:
+        """Return 0.0-1.0 similarity between observed and expected gaṇa patterns.
+
+        Compares the first min(len(observed), len(expected)) characters.
+        Returns proportion of matching L/G positions.
+        """
+        min_len = min(len(observed), len(expected))
+        if min_len < 4:
+            return 0.0
+        matches = sum(1 for a, b in zip(observed[:min_len], expected[:min_len]) if a == b)
+        return matches / min_len
 
     def _is_verse_text(self, text: str) -> bool:
         """Is the text verse (has dandas or structured line breaks)?"""
