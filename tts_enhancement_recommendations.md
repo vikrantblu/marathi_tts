@@ -196,30 +196,210 @@ This is what makes human recitation sound musical. Combined with SSML (recommend
 
 ---
 
-## 📋 Prioritized Implementation Roadmap
+## � BUG FIXES — Discovered During Code Audit
 
-| Priority | Enhancement | Impact | Effort | Platforms |
-|----------|------------|--------|--------|-----------|
-| 🔴 1 | Wire prosody engine into Mobile/Desktop bridges | 🔥🔥🔥 | Medium | Mobile, Desktop |
-| 🔴 2 | Desktop streaming/chunking for long text | 🔥🔥 | Medium | Desktop |
-| 🟠 3 | Implement yati (caesura) pauses in verse mode | 🔥🔥🔥 | Medium | All |
-| 🟠 4 | Use edge-tts SSML for native prosody | 🔥🔥🔥 | Medium | Desktop, Mobile |
-| 🟠 5 | Implement pitch contour from MetreDefinition | 🔥🔥 | Low | All |
-| 🟠 6 | Add gaṇa pattern matching to MetreEngine | 🔥🔥 | High | All |
-| 🟠 7 | Ovi rhythmic pulse (line 4 cadence slowdown) | 🔥🔥 | Low | All |
-| 🟡 8 | Emotion → verse prosody mapping | 🔥 | Low | All |
-| 🟡 9 | Pre-recorded stotra audio on Mobile | 🔥 | Low | Mobile |
-| 🟡 10 | Expand schwa deletion lexicon | 🔥 | Medium | All |
-| 🟡 11 | Add missing Sanskrit metres | 🔥 | Medium | All |
-| 🟡 12 | Visarga + voiced consonant sandhi rule | 🔥 | Low | All |
-| 🟡 13 | Grammar engine as hard dependency | 🔥 | Low | Desktop, Mobile |
-| 🟢 14 | Abhanga refrain detection | ⭐ | Medium | All |
-| 🟢 15 | Remove dead code in prosody engine | 🧹 | Trivial | Web |
+> Items #17-33 were discovered during a deep code audit on 2026-03-03.
+> Items marked ✅ FIXED have already been resolved.
+
+### 17. ✅ FIXED — SPECIAL_CHARS Destroys Double-Danda (॥)
+
+**Problem**: `text_constants.py` `SPECIAL_CHARS` dict mapped `'॥': '।'`, converting all double-dandas to single-dandas before `ProsodyEngine._is_verse_block()` could count `॥` markers. This broke verse-vs-prose detection for **all stotra recitation** — the engine could no longer distinguish full-verse (॥) from half-verse (।) boundaries, losing calibrated pause differences.
+
+**Fix applied**: Removed `'॥': '।'` from `SPECIAL_CHARS` in all 3 platforms. Added explanatory comment about why `॥` must be preserved.
+
+### 18. G2P `_process_anusvara()` Is a No-Op
+
+**Severity**: 🔴 HIGH
+
+**Problem**: In [g2p_engine.py](marathi_tts_web/tts/utils/phonetic/g2p_engine.py), `_process_anusvara()` (line ~188) has extensive docstring documenting anusvara assimilation rules, but the method body is simply `return word`. The `ANUSVARA_ASSIMILATION` dict in [g2p_constants.py](marathi_tts_web/tts/constants/g2p_constants.py) maps following consonants to their varga nasals (e.g., `क→ङ्`, `च→ञ्`, `ट→ण्`, `त→न्`, `प→म्`), but this dict is **never used**.
+
+Currently gTTS handles anusvara reasonably, but when moving to edge-tts SSML (#8), explicit anusvara processing will be essential. The safe approach: implement the logic now but gate it behind a flag so it's ready when needed.
+
+**Recommendation**: Implement the anusvara assimilation using `ANUSVARA_ASSIMILATION` and `ANUSVARA_NASALIZE_ONLY` from `g2p_constants.py`. Add a constructor parameter `anusvara_mode='preserve'` (default safe) with option `'assimilate'` for when edge-tts SSML is enabled.
+
+### 19. G2P `_apply_schwa_rules()` Is Essentially a No-Op
+
+**Severity**: 🔴 HIGH
+
+**Problem**: `_apply_schwa_rules()` in [g2p_engine.py](marathi_tts_web/tts/utils/phonetic/g2p_engine.py) (line ~256) only checks the `SCHWA_EXCEPTIONS` dict (8 entries) and returns the word unchanged. No rule-based schwa deletion is implemented. `SCHWA_DELETE_SUFFIXES` and `SCHWA_PRESERVE_CLUSTERS` are defined in `g2p_constants.py` but never used.
+
+Like #18, gTTS's `lang=mr` model handles basic schwa deletion, but the engine claims to do it and doesn't. The constants are there, the infrastructure is there — the logic just needs to be connected.
+
+**Recommendation**: Implement suffix-based schwa prediction using `SCHWA_DELETE_SUFFIXES` and `SCHWA_PRESERVE_CLUSTERS`. Gate behind `schwa_mode='gtts'` (trust gTTS) vs `'explicit'` (apply rules). This prepares for edge-tts migration where schwa handling must be explicit.
+
+### 20. No Audio Caching
+
+**Severity**: 🟡 MEDIUM
+
+**Problem**: Every call to `generate_tts()` in both mobile and desktop bridges performs a full gTTS/edge-tts API call, even for identical text. Stotras that users recite repeatedly pay the full network + generation cost each time.
+
+**Recommendation**: Implement hash-based audio caching in the bridges: `SHA256(text + engine + voice + params)` → cached audio file path. Check existence before generating. Add cache size limit (50 MB default) with LRU eviction. This is especially impactful for the stotra library.
+
+### 21. No Network Connectivity Pre-Check
+
+**Severity**: 🟡 MEDIUM
+
+**Problem**: Both gTTS and edge-tts require network access, but neither bridge checks connectivity before making API calls. On mobile with flaky networks, the user waits for a long timeout before getting a generic error.
+
+**Recommendation**: Add a lightweight connectivity check (socket connect to `translate.google.com:443` or `speech.platform.bing.com:443` with 3-second timeout) before TTS generation. Return a structured error immediately if offline: `{"success": false, "error_code": "NO_NETWORK", "message": "..."}`.
+
+### 22. ✅ FIXED — Abbreviation Lists Duplicated
+
+**Problem**: Mobile `tts_bridge.py` had its own `_MARATHI_ABBREV` regex list, duplicating abbreviations already in `text_constants.py` but missing several entries.
+
+**Fix applied**: Added 5 missing abbreviations to shared `text_constants.py ABBREVIATIONS` in all 3 platforms: `स्व.→स्वर्गीय`, `कि.मी.→किलोमीटर`, `नं.→नंबर`, `पृ.→पृष्ठ`, `मु.पो.→मुक्काम पोस्ट`.
+
+### 23. English-to-Devanagari Transliteration Is Mobile-Only
+
+**Severity**: 🟠 HIGH
+
+**Problem**: Mobile's `tts_bridge.py` has `_ENGLISH_TO_DEVNAGARI` (~80 common English words → Devanagari) plus `_transliterate_english_char_level()` for unknown words. Desktop and Web lack this entirely — raw ASCII English words get sent to gTTS/edge-tts which either mangles them or speaks English mid-Marathi-sentence.
+
+**Recommendation**: Move the transliteration dict and functions to a shared module (`tts/utils/text/english_transliterator.py`) and wire it into all 3 platforms. This is the single most impactful code-sharing improvement.
+
+### 24. ✅ FIXED — MarathiTextNormalizer Re-Instantiated Per Call
+
+**Problem**: `_normalize_marathi()` in mobile and desktop bridges created a new `MarathiTextNormalizer()` on every call, paying the `IndicNormalizerFactory` init cost repeatedly.
+
+**Fix applied**: Changed to `hasattr`-based lazy singleton pattern in both bridges.
+
+### 25. No Timeout or Retry on gTTS/edge-tts
+
+**Severity**: 🟠 HIGH
+
+**Problem**: gTTS `save()` and edge-tts `Communicate().save()` make HTTP calls with no explicit timeout. A single slow or hung request blocks the entire TTS pipeline indefinitely. Mobile streaming (3 concurrent calls) is especially vulnerable — one hung call can stall the whole batch.
+
+**Recommendation**: Wrap gTTS/edge-tts calls with:
+1. Timeout: 30 seconds for gTTS, 45 seconds for edge-tts (neural generation is slower)
+2. Retry: Up to 2 retries with exponential backoff (2s, 4s)
+3. On final failure: return structured error, don't hang
+
+### 26. Pydub Pitch/Speed Is Naive
+
+**Severity**: 🟢 LOW (will be superseded by SSML — see #8)
+
+**Problem**: Both bridges use `pydub`'s `speedup()` and manual sample-rate manipulation for pitch shifting. `pydub.speedup()` uses a naive overlap-add that introduces artifacts at extreme values. Sample-rate pitch shifting also changes duration.
+
+**Recommendation**: Document this as a known limitation. The real fix is to move to edge-tts SSML (#8) where `<prosody rate="X" pitch="Yst">` is applied at the neural model level with no quality loss. In the meantime, clamp values: speed ∈ [0.75, 1.25], pitch ∈ [-3st, +3st].
+
+### 27. No Temp File Cleanup on Mobile
+
+**Severity**: 🟡 MEDIUM
+
+**Problem**: Mobile's `tts_bridge.py` generates audio files in the `output/` directory but never cleans up old files. On storage-limited Android devices, stale audio files accumulate indefinitely.
+
+**Recommendation**: Add cleanup at bridge initialization: delete files in `output/` older than 24 hours. Also add a total size cap (default 100 MB) — if exceeded, delete oldest files first.
+
+### 28. ✅ FIXED — Desktop indicnlp Bare Import Crash
+
+**Problem**: Desktop's `text_normalizer.py` imported `from indicnlp.normalize...` without a try/except guard. If `indicnlp` was not installed, the entire normalizer module failed to load.
+
+**Fix applied**: Added try/except guard matching mobile's pattern. Falls back to `IndicNormalizerFactory = None`.
+
+### 29. ✅ FIXED — Inconsistent NFC Normalization
+
+**Problem**: Unicode NFC normalization was applied inconsistently — `g2p_engine.py` did NFC but the bridges didn't, so lexicon lookups could miss entries due to different Unicode representations of the same Devanagari text.
+
+**Fix applied**: Added `unicodedata.normalize('NFC', text)` at the start of `_normalize_marathi()` in both bridges.
+
+### 30. ✅ FIXED — Visarga Double-Processing
+
+**Problem**: `text_normalizer.py` applied `VISARGA_WORDS` substitutions, then `g2p_engine._process_visarga()` ran on the same text — causing words like दुःख, नमः, स्वतः to be double-processed. The normalizer's generic `'ः'→'हा'` fallback was especially destructive.
+
+**Fix applied**: Removed `VISARGA_WORDS` application from `text_normalizer.normalize_text()` in all 3 platforms. The G2P engine is now the sole visarga handler.
+
+### 31. No Structured Error Codes in Bridges
+
+**Severity**: 🟢 LOW
+
+**Problem**: Bridge error responses use free-text messages like `"Error occurred: ..."`. Kotlin/JavaFX callers must string-match to determine failure type (network error vs. invalid input vs. engine error). This makes error handling fragile and locale-dependent.
+
+**Recommendation**: Define error code constants:
+```python
+ERR_NO_NETWORK = "NO_NETWORK"
+ERR_TTS_TIMEOUT = "TTS_TIMEOUT"
+ERR_INVALID_INPUT = "INVALID_INPUT"
+ERR_ENGINE_INIT = "ENGINE_INIT_FAILED"
+ERR_AUDIO_SAVE = "AUDIO_SAVE_FAILED"
+```
+Return these in `result["error_code"]` alongside the human-readable message.
+
+### 32. Test Coverage Gaps
+
+**Severity**: 🟡 MEDIUM
+
+**Problem**: `test_all_platforms.py` covers Sandhi, MetreEngine, ProsodyEngine, and phonetics, but does **not** test:
+- `TextNormalizer.normalize_text()` — abbreviation expansion, number conversion, normalization pipeline
+- `MarathiGrammarEngine.process()` — spelling fixes, sandhi, vibhakti
+- `number_to_words` — edge cases in `convert_time()`, `convert_date()`, large numbers
+- Bridge preprocessing — `_normalize_marathi()`, English transliteration pipeline
+
+**Recommendation**: Add Section H (Normalizer), Section I (Grammar), Section J (Number conversion) to `test_all_platforms.py`. This would catch regressions in the most frequently-changed modules.
+
+### 33. `convert_time()` :45 Edge Case
+
+**Severity**: 🟡 MEDIUM
+
+**Problem**: In [number_to_words.py](marathi_tts_web/tts/utils/text/number_to_words.py) `convert_time()`, the `:45` (quarter-to) path does:
+```python
+elif minute == 45:
+    parts.append('पावणे ' + number_to_marathi_words(hour + 1))
+    return ' '.join(parts[:1] + parts[-1:])  # skip hour word
+```
+When **no AM/PM period** is present, `parts` has only `[hour_word, 'पावणे X']`, so `parts[:1]` grabs the current hour word (wrong) and `parts[-1:]` grabs the पावणे phrase. Result: `"तीन पावणे चार"` instead of `"पावणे चार"`.
+
+When AM/PM **is** present, `parts[:1]` correctly grabs the period text (e.g., `'दुपारचे'`) and the hour word in the middle is skipped.
+
+**Recommendation**: Fix the :45 path to explicitly construct the result based on whether period text exists, rather than using fragile index slicing.
+
+---
+
+## �📋 Prioritized Implementation Roadmap
+
+| Priority | # | Enhancement | Impact | Effort | Platforms | Status |
+|----------|---|------------|--------|--------|-----------|--------|
+| 🔴 | 1 | Wire prosody engine into Mobile/Desktop bridges | 🔥🔥🔥 | Medium | Mobile, Desktop | Planned |
+| 🔴 | 2 | Desktop streaming/chunking for long text | 🔥🔥 | Medium | Desktop | Planned |
+| 🔴 | 17 | SPECIAL_CHARS destroys double-danda (॥) | 🔥🔥🔥 | Trivial | All | ✅ FIXED |
+| 🔴 | 18 | G2P `_process_anusvara()` is a no-op | 🔥🔥 | Medium | All | Open |
+| 🔴 | 19 | G2P `_apply_schwa_rules()` is a no-op | 🔥🔥 | Medium | All | Open |
+| 🟠 | 3 | Implement yati (caesura) pauses in verse mode | 🔥🔥🔥 | Medium | All | Planned |
+| 🟠 | 4 | Use edge-tts SSML for native prosody | 🔥🔥🔥 | Medium | Desktop, Mobile | Planned |
+| 🟠 | 5 | Implement pitch contour from MetreDefinition | 🔥🔥 | Low | All | Planned |
+| 🟠 | 6 | Add gaṇa pattern matching to MetreEngine | 🔥🔥 | High | All | Planned |
+| 🟠 | 7 | Ovi rhythmic pulse (line 4 cadence slowdown) | 🔥🔥 | Low | All | Planned |
+| 🟠 | 23 | English transliteration is mobile-only | 🔥🔥 | Medium | Desktop, Web | Open |
+| 🟠 | 25 | No timeout/retry on gTTS/edge-tts | 🔥🔥 | Medium | Mobile, Desktop | Open |
+| 🟡 | 8 | Emotion → verse prosody mapping | 🔥 | Low | All | Planned |
+| 🟡 | 9 | Pre-recorded stotra audio on Mobile | 🔥 | Low | Mobile | Planned |
+| 🟡 | 10 | Expand schwa deletion lexicon | 🔥 | Medium | All | Planned |
+| 🟡 | 11 | Add missing Sanskrit metres | 🔥 | Medium | All | Planned |
+| 🟡 | 12 | Visarga + voiced consonant sandhi rule | 🔥 | Low | All | Planned |
+| 🟡 | 13 | Grammar engine as hard dependency | 🔥 | Low | Desktop, Mobile | Planned |
+| 🟡 | 20 | No audio caching | 🔥 | Medium | Mobile, Desktop | Open |
+| 🟡 | 21 | No network connectivity pre-check | 🔥 | Low | Mobile, Desktop | Open |
+| 🟡 | 22 | Abbreviation lists duplicated | 🔥 | Trivial | All | ✅ FIXED |
+| 🟡 | 24 | Normalizer re-instantiated per call | 🔥 | Trivial | Mobile, Desktop | ✅ FIXED |
+| 🟡 | 27 | No temp file cleanup on mobile | 🔥 | Low | Mobile | Open |
+| 🟡 | 28 | Desktop indicnlp bare import crash | 🔥 | Trivial | Desktop | ✅ FIXED |
+| 🟡 | 29 | Inconsistent NFC normalization | 🔥 | Trivial | Mobile, Desktop | ✅ FIXED |
+| 🟡 | 30 | Visarga double-processing | 🔥🔥 | Low | All | ✅ FIXED |
+| 🟡 | 32 | Test coverage gaps | 🔥 | High | All | Open |
+| 🟡 | 33 | `convert_time()` :45 edge case | 🔥 | Trivial | All | Open |
+| 🟢 | 14 | Abhanga refrain detection | ⭐ | Medium | All | Planned |
+| 🟢 | 15 | Remove dead code in prosody engine | 🧹 | Trivial | All | Planned |
+| 🟢 | 16 | Dead code in prosody_engine.py | 🧹 | Trivial | All | Open |
+| 🟢 | 26 | Pydub pitch/speed is naive | ⭐ | N/A | Mobile, Desktop | Documented |
+| 🟢 | 31 | No structured error codes | ⭐ | Medium | Mobile, Desktop | Open |
 
 ---
 
 > [!TIP]
 > The single highest-impact change is **#1 + #4 together**: wiring the prosody engine into all platforms AND using SSML with edge-tts. This would give each platform natural breathing pauses + neural-quality pitch/rate control — no pydub artifacts.
+>
+> Among the bug fixes, **#18 and #19** (anusvara + schwa no-ops) are the most important to implement before edge-tts SSML migration — those methods must produce correct output when gTTS is no longer handling them implicitly.
 
 > [!IMPORTANT]  
-> Since the Python phonetic modules are shared across all 3 platforms (identical source files), improvements to [marathi_phonetics.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/marathi_phonetics.py), [sandhi_engine.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/sandhi_engine.py), [metre_engine.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py), and [prosody_engine.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py) automatically benefit **all platforms** once the bridges properly invoke them.
+> Since the Python phonetic modules are shared across all 3 platforms (identical source files), improvements to [marathi_phonetics.py](marathi_tts_web/tts/utils/phonetic/marathi_phonetics.py), [sandhi_engine.py](marathi_tts_web/tts/utils/phonetic/sandhi_engine.py), [metre_engine.py](marathi_tts_web/tts/utils/phonetic/metre_engine.py), and [prosody_engine.py](marathi_tts_web/tts/utils/audio/prosody_engine.py) automatically benefit **all platforms** once the bridges properly invoke them.
+>
+> **6 of 17 bug-fix items are already resolved** (#17, #22, #24, #28, #29, #30).

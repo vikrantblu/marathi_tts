@@ -355,9 +355,15 @@ def _apply_pitch_speed(src: str, speed: float, pitch: float, volume: float, dst:
 
 def _normalize_marathi(text: str) -> str:
     """Normalize via web-app utility; return original text on failure."""
+    import unicodedata
+    # BUG-29 fix: canonical NFC normalization at pipeline entry point
+    text = unicodedata.normalize('NFC', text)
     try:
         from tts.utils.text.text_normalizer import MarathiTextNormalizer  # type: ignore
-        result = MarathiTextNormalizer().normalize_text(text)
+        # BUG-24 fix: lazy singleton — avoid re-init of IndicNormalizerFactory per call
+        if not hasattr(_normalize_marathi, '_instance'):
+            _normalize_marathi._instance = MarathiTextNormalizer()
+        result = _normalize_marathi._instance.normalize_text(text)
         log.debug("Text normalized | %d -> %d chars", len(text), len(result))
         return result
     except Exception as exc:

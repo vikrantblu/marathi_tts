@@ -10,6 +10,28 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 <!-- Changes staged but not yet released go here -->
 
 ### Fixed
+- **BUG-17 [CRITICAL]: SPECIAL_CHARS ॥→। killed verse detection** — removed `'॥': '।'`
+  mapping from `text_constants.py SPECIAL_CHARS` in all 3 platforms. ProsodyEngine's
+  `_is_verse_block()` counts ॥ markers to detect verse blocks, and `_segment_verse_block()`
+  uses ॥ vs । for full-verse vs half-verse pause calibration. The normalizer was destroying
+  these markers before prosody segmentation ever saw the text.
+- **BUG-22: Duplicate abbreviation lists** — consolidated mobile-only abbreviations
+  (स्व.→स्वर्गीय, कि.मी.→किलोमीटर, नं.→नंबर, पृ.→पृष्ठ, मु.पो.→मुक्काम पोस्ट)
+  into shared `text_constants.py ABBREVIATIONS` so all 3 platforms get them.
+- **BUG-24: Normalizer re-instantiated per call** — `_normalize_marathi()` in mobile
+  and desktop bridges now uses a lazy singleton instead of creating a new
+  `MarathiTextNormalizer()` on each call. Eliminates repeated IndicNormalizerFactory init.
+- **BUG-28: Desktop indicnlp bare import crash** — `text_normalizer.py` on desktop
+  now wraps `from indicnlp.normalize...` in try/except like mobile does. Falls back
+  gracefully when indicnlp is not installed.
+- **BUG-29: Inconsistent NFC normalization** — both mobile and desktop bridges now
+  apply `unicodedata.normalize('NFC', text)` at the start of `_normalize_marathi()`,
+  ensuring consistent Unicode before any lexicon lookup or text processing.
+- **BUG-30: Visarga double-processing** — removed `VISARGA_WORDS` application from
+  `text_normalizer.normalize_text()` in all 3 platforms. The G2P engine's
+  `_process_visarga()` using `VISARGA_EXCEPTIONS` is now the sole visarga handler,
+  preventing words like दुःख, नमः, स्वतः from being processed twice.
+
 - **Backup APK unsigned** — v5.0.0 backup APK was built before signing config existed;
   rebuilt v5.2.0 release APK with proper APK Signature Scheme v2 signing
 - **BookReader: buttons not wired** — Confirm (✓) and Retake (↩) buttons in crop editor

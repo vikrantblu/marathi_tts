@@ -68,8 +68,11 @@ class MarathiTextNormalizer:
             # Special characters (from centralized constants)
             replacements.update(SPECIAL_CHARS)
             
-            # Visarga word overrides (from centralized constants)
-            replacements.update(VISARGA_WORDS)
+            # NOTE: VISARGA_WORDS intentionally NOT applied here.
+            # The G2P engine (g2p_engine._process_visarga) handles visarga
+            # with full context awareness using VISARGA_EXCEPTIONS from
+            # g2p_constants.py.  Applying VISARGA_WORDS here would cause
+            # double-processing of words like दुःख, नमः, स्वतः.
             
             # Conjunct fix
             replacements['ऱ्य'] = 'र्य'

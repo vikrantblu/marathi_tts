@@ -75,11 +75,18 @@ ABBREVIATIONS: Dict[str, str] = {
     'गा.': 'गाव',
     'म.': 'महाराष्ट्र',
     'दि.': 'दिनांक',
+    'मु.पो.': 'मुक्काम पोस्ट',
 
     # Honorific titles (normalizer)
     'प. पू.': 'परमपूज्य',
     'वै.': 'वैकुंठवासी',
     'पू.': 'पूज्य',
+    'स्व.': 'स्वर्गीय',
+
+    # Units (from mobile bridge consolidation)
+    'कि.मी.': 'किलोमीटर',
+    'नं.': 'नंबर',
+    'पृ.': 'पृष्ठ',
 
     # English-derived abbreviations
     'एल.सी.पी.एस.': 'एल सी पी एस',
@@ -99,7 +106,11 @@ SPECIAL_CHARS: Dict[str, str] = {
     'ॐ': 'ओम्',
 
     # Typographic normalization
-    '॥': '।',
+    # NOTE: '॥' (double-danda) is intentionally NOT mapped to '।' here.
+    # ProsodyEngine._is_verse_block() counts ॥ to detect verse blocks,
+    # and _segment_verse_block() uses ॥ vs । for full-verse vs half-verse
+    # pause calibration.  Converting ॥→। in the normalizer would destroy
+    # verse detection before prosody segmentation sees the text.
     '–': '-',
     '\u201c': '"',   # left double quote
     '\u201d': '"',   # right double quote

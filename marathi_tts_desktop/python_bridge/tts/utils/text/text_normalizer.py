@@ -1,7 +1,10 @@
 import re
 import logging
 import unicodedata
-from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
+try:
+    from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
+except ImportError:
+    IndicNormalizerFactory = None
 from .number_to_words import normalize_numbers_for_tts
 from tts.constants.text_constants import (
     ABBREVIATIONS, SPECIAL_CHARS, VISARGA_WORDS
@@ -14,12 +17,13 @@ class MarathiTextNormalizer:
     
     def __init__(self):
         """Initialize the normalizer"""
-        try:
-            self.indic_normalizer = IndicNormalizerFactory().get_normalizer("mr")
-            logger.info("Indic normalizer initialized successfully")
-        except Exception as e:
-            logger.error(f"Error initializing indic normalizer: {str(e)}")
-            self.indic_normalizer = None
+        self.indic_normalizer = None
+        if IndicNormalizerFactory is not None:
+            try:
+                self.indic_normalizer = IndicNormalizerFactory().get_normalizer("mr")
+                logger.info("Indic normalizer initialized successfully")
+            except Exception as e:
+                logger.error(f"Error initializing indic normalizer: {str(e)}")
 
     def normalize_text(self, text: str) -> str:
         """Normalize special Sanskrit/Marathi characters for TTS"""
@@ -64,8 +68,11 @@ class MarathiTextNormalizer:
             # Special characters (from centralized constants)
             replacements.update(SPECIAL_CHARS)
             
-            # Visarga word overrides (from centralized constants)
-            replacements.update(VISARGA_WORDS)
+            # NOTE: VISARGA_WORDS intentionally NOT applied here.
+            # The G2P engine (g2p_engine._process_visarga) handles visarga
+            # with full context awareness using VISARGA_EXCEPTIONS from
+            # g2p_constants.py.  Applying VISARGA_WORDS here would cause
+            # double-processing of words like दुःख, नमः, स्वतः.
             
             # Conjunct fix
             replacements['ऱ्य'] = 'र्य'
