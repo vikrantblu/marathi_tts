@@ -8,6 +8,8 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Fixed
 
+- ~~Backup APK (v5.0.0) unsigned / not installable from file manager~~ (fixed v5.2.0 — signing config was missing at time of that build; rebuild produces properly v2-signed APK)
+
 <!-- Move fixed bugs here with the fix version, e.g.:
 - ~~gTTS y-glide on word-internal -cha~~ (fixed v1.0.0 — ZWNJ insertion)
 -->

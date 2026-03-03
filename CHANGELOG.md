@@ -10,6 +10,8 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 <!-- Changes staged but not yet released go here -->
 
 ### Fixed
+- **Backup APK unsigned** — v5.0.0 backup APK was built before signing config existed;
+  rebuilt v5.2.0 release APK with proper APK Signature Scheme v2 signing
 - **BookReader: buttons not wired** — Confirm (✓) and Retake (↩) buttons in crop editor
   had no click listeners; user could take photo but never save it
 - **BookReader: forced manual crop** — replaced two-phase capture→crop flow with Google
