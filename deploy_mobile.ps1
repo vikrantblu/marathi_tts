@@ -23,12 +23,22 @@ Write-Host ""
 Write-Host "=== Marathi TTS Mobile ===" -ForegroundColor Cyan
 Write-Host ""
 
+# ── Locate git ───────────────────────────────────────────────────────────────
+$gitExe = $null
+$gitCandidates = @(
+    $(if (Get-Command git -ErrorAction SilentlyContinue) { (Get-Command git).Source }),
+    "C:\Program Files\Git\bin\git.exe",
+    "C:\Program Files (x86)\Git\bin\git.exe"
+)
+foreach ($c in $gitCandidates) {
+    if ($c -and (Test-Path $c)) { $gitExe = $c; break }
+}
+
 # ── Git pull ─────────────────────────────────────────────────────────────────
 Write-Host "Pulling latest changes from git..." -ForegroundColor DarkGray
-$gitCmd = Get-Command git -ErrorAction SilentlyContinue
-if ($gitCmd) {
+if ($gitExe) {
     Push-Location $PSScriptRoot
-    & git pull 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+    & { $ErrorActionPreference = 'Continue'; & $gitExe pull 2>&1 } | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
     if ($LASTEXITCODE -ne 0) {
         Write-Host "  WARNING: git pull failed (exit $LASTEXITCODE). Continuing with local files." -ForegroundColor DarkYellow
     }
@@ -234,15 +244,34 @@ if ($NoDeploy) {
         Write-Host "  WARNING: APK is unsigned -- cannot install via ADB." -ForegroundColor DarkYellow
         Write-Host "  Add a signing config to app/build.gradle.kts." -ForegroundColor DarkGray
     } else {
+        $package  = "com.marathitts.mobile"
+        $activity = ".MainActivity"
+
         $adbArgs = @()
         if ($DeviceSerial) { $adbArgs += @("-s", $DeviceSerial) }
         $adbArgs += @("install", "-r", $ApkPath.FullName)
         Write-Host "  Device(s): $($devices -join ', ')" -ForegroundColor DarkGray
-        & { $ErrorActionPreference = 'Continue'; & $ADB @adbArgs 2>&1 } | ForEach-Object { "$_" } | Write-Host
-        if ($LASTEXITCODE -eq 0) {
+        $installOut = & { $ErrorActionPreference = 'Continue'; & $ADB @adbArgs 2>&1 } | ForEach-Object { "$_" }
+        $installOut | Write-Host
+        $installFailed = $LASTEXITCODE -ne 0
+
+        # ── Auto-retry on signature mismatch ─────────────────────────────────
+        if ($installFailed -and ($installOut -join "`n") -match 'INSTALL_FAILED_UPDATE_INCOMPATIBLE') {
+            Write-Host ""
+            Write-Host "  Signature mismatch detected -- uninstalling old package and retrying..." -ForegroundColor DarkYellow
+            $uninstArgs = @()
+            if ($DeviceSerial) { $uninstArgs += @("-s", $DeviceSerial) }
+            $uninstArgs += @("uninstall", $package)
+            $uninstOut = & { $ErrorActionPreference = 'Continue'; & $ADB @uninstArgs 2>&1 } | ForEach-Object { "$_" }
+            $uninstOut | Write-Host
+            Write-Host "  Reinstalling..." -ForegroundColor DarkGray
+            $installOut2 = & { $ErrorActionPreference = 'Continue'; & $ADB @adbArgs 2>&1 } | ForEach-Object { "$_" }
+            $installOut2 | Write-Host
+            $installFailed = $LASTEXITCODE -ne 0
+        }
+
+        if (-not $installFailed) {
             Write-Host "  Installed successfully." -ForegroundColor Green
-            $package  = "com.marathitts.mobile"
-            $activity = ".MainActivity"
             Write-Host "  Launching $package..." -ForegroundColor DarkGray
             $launchArgs = @()
             if ($DeviceSerial) { $launchArgs += @("-s", $DeviceSerial) }
@@ -331,10 +360,6 @@ Write-Host $sep
 Write-Host ""
 
 # ── Auto-stage changed files + optional commit ────────────────────────────────
-$gitExe = if (Get-Command git -ErrorAction SilentlyContinue) { "git" } `
-          elseif (Test-Path "C:\Program Files\Git\bin\git.exe") { "C:\Program Files\Git\bin\git.exe" } `
-          else { $null }
-
 if ($gitExe) {
     Push-Location $PSScriptRoot
 
@@ -349,7 +374,7 @@ if ($gitExe) {
     )
     foreach ($f in $filesToStage) {
         if (Test-Path (Join-Path $PSScriptRoot $f)) {
-            $null = & $gitExe add $f 2>&1
+            & { $ErrorActionPreference = 'Continue'; & $gitExe add $f 2>&1 } | Out-Null
         }
     }
 
