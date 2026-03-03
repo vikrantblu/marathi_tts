@@ -401,9 +401,30 @@ so regressions are caught immediately.
 
 **Trigger:** TtsViewModel.generateAudio() auto-routes Marathi prose > 250 chars to generateAudioStreaming().
 
-**Algorithm:** splitSentences() -> parallel async(IO) per chunk -> TtsState.streamChunks list -> TtsFragment calls AudioPlayerService.playQueueAsync().
+**Algorithm:** splitSentences() -> Semaphore(3) concurrency-limited parallel async(IO) per chunk -> TtsState.streamChunks list -> TtsFragment calls AudioPlayerService.playQueueAsync().
+
+**Concurrency:** Max 3 parallel TTS API calls (Semaphore). Prevents Google TTS rate-limiting and device overload.
+
+**Cancel:** currentJob: Job? stored in TtsViewModel. cancelGeneration() cancels the coroutine. TtsFragment toggles Generate button to "Cancel" during isLoading.
+
+**Status messages:** "Streaming: N of M ✓" (AtomicInteger counter). No "engine locked" wording.
 
 **TtsState** now has: streamChunks: List<String>. When size > 1, use playQueueAsync; else use playAsync(audioPath).
+
+---
+
+## BookReader Camera Flow (Mobile)
+
+**Google Lens-like auto-save:** Point camera at book → tap shutter → auto-crop + perspective correct → return to reader. No manual crop step.
+
+**Algorithm:** takePhoto() → loadAndShowCrop():
+1. Load JPEG with EXIF rotation
+2. Pre-crop to overlay guide frame (getFrameFractions())
+3. Run PageEdgeDetector.detect() on pre-cropped bitmap
+4. If confidence ≥ 0.30 → apply PerspectiveCropView.perspectiveCropDirect() for de-warp
+5. Save JPEG → setResult(RESULT_OK) → finish()
+
+**Fallback:** Confirm (✓) and Retake (↩) buttons are wired for the manual crop editor (Phase 2), but the default flow bypasses it entirely via auto-save.
 
 ---
 
@@ -433,12 +454,6 @@ T26 (INPUT): Native PDF OCR: Devanagari bitmap embedded in PDF → NativePdfExtr
 T13: Now uses NativeImageOcr (ML Kit Devanagari) instead of Python ocr_bridge (which requires Tesseract).
 T14: buildMinimalPdf now includes proper xref table → PyPDF2 extracts text (method=pypdf2, chars>0).
 T15: Now uses real T14 text (src=T14) instead of fallback.
-
-**Trigger:** TtsViewModel.generateAudio() auto-routes Marathi prose > 250 chars to generateAudioStreaming().
-
-**Algorithm:** splitSentences() -> parallel async(IO) per chunk -> TtsState.streamChunks list -> TtsFragment calls AudioPlayerService.playQueueAsync().
-
-**TtsState** now has: streamChunks: List<String>. When size > 1, use playQueueAsync; else use playAsync(audioPath).
 
 ---
 

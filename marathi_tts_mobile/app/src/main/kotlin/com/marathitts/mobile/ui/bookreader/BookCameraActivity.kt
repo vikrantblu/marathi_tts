@@ -105,6 +105,15 @@ class BookCameraActivity : AppCompatActivity() {
 
         binding.shutterButton.setOnClickListener { takePhoto() }
 
+        // ── Phase 2 controls (perspective crop editor) ────────────
+
+        binding.confirmBtn.setOnClickListener { confirmCrop() }
+
+        binding.retakeBtn.setOnClickListener {
+            // Discard the crop and go back to camera
+            showCameraPhase()
+        }
+
     }
 
     override fun onDestroy() {
@@ -257,27 +266,46 @@ class BookCameraActivity : AppCompatActivity() {
             Log.d(TAG, "Loaded: ${fullBmp.width}x${fullBmp.height}")
 
             // ── Step 2: Pre-crop to the overlay guide frame ──────────────
-            // The overlay guide frame IS the mask — whatever is outside it
-            // (desk, hands, background) is already excluded by the camera guide.
-            // We skip PageEdgeDetector entirely because luminance-based edge
-            // detection fails when the book page and desk surface have similar
-            // brightness (both beige/cream tones).  The user positioned the book
-            // inside the guide; trust that crop and let them confirm/adjust.
             val frameFrac: RectF = withContext(Dispatchers.Main) {
                 binding.overlayView.getFrameFractions()
             }
-            val bmp = cropToFractions(fullBmp, frameFrac)
+            var bmp = cropToFractions(fullBmp, frameFrac)
             if (bmp !== fullBmp) fullBmp.recycle()
             Log.d(TAG, "Pre-cropped to frame: ${bmp.width}x${bmp.height} (frac=$frameFrac)")
+
+            // ── Step 3: Auto-detect page edges for perspective correction ─
+            // Google Lens-like flow: the overlay guide already isolates the
+            // book area, so we auto-save without manual cropping.
+            // If PageEdgeDetector finds edges, apply perspective correction
+            // for a cleaner result; otherwise use the pre-cropped image as-is.
+            val detected = PageEdgeDetector.detect(bmp)
+            Log.d(TAG, "PageEdgeDetector: conf=${detected?.confidence ?: 0f}")
+
+            if (detected != null && detected.confidence >= 0.30f) {
+                // Apply perspective correction for a de-warped result
+                Log.d(TAG, "Applying perspective correction (conf=${detected.confidence})")
+                val corrected = PerspectiveCropView.perspectiveCropDirect(
+                    bmp, detected.tl, detected.tr, detected.br, detected.bl
+                )
+                bmp.recycle()
+                bmp = corrected
+            }
+
+            // ── Step 4: Auto-save and return (no manual crop step) ────────
+            val outFile = File(cacheDir, "book_deskewed_${System.currentTimeMillis()}.jpg")
+            outFile.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 95, it) }
+            bmp.recycle()
+            rawFile?.delete()
 
             withContext(Dispatchers.Main) {
                 showDetectingIndicator(false)
                 binding.shutterButton.isEnabled = true
-                // Show crop UI with the frame-pre-cropped image.
-                // Handles default to full extents of bmp — user can fine-tune
-                // and tap Confirm to send to OCR.
-                binding.cropView.setBitmap(bmp)
-                showCropPhase()
+                val result = Intent().apply {
+                    putExtra(EXTRA_IMAGE_PATH, outFile.absolutePath)
+                    putExtra(EXTRA_SPREAD_MODE, isSpreadMode)
+                }
+                setResult(Activity.RESULT_OK, result)
+                finish()
             }
         }
     }

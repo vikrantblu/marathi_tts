@@ -124,6 +124,13 @@ class TtsFragment : Fragment() {
         }
 
         binding.generateBtn.setOnClickListener {
+            // If streaming is in progress, cancel it
+            val currentState = viewModel.state.value
+            if (currentState?.isLoading == true) {
+                viewModel.cancelGeneration()
+                return@setOnClickListener
+            }
+
             val text = binding.textInput.text.toString().trim()
             if (text.isEmpty()) {
                 Toast.makeText(context, "Please enter Marathi text", Toast.LENGTH_SHORT).show()
@@ -155,11 +162,9 @@ class TtsFragment : Fragment() {
             originalText = binding.textInput.text.toString()
             if (state.streamChunks.size > 1) {
                 // Streaming mode: play ordered queue
-                var chunkIdx = 0
                 audioPlayer.playQueueAsync(
                     paths = state.streamChunks,
                     onChunkStart = { idx ->
-                        chunkIdx = idx
                         requireActivity().runOnUiThread {
                             binding.statusText.text =
                                 "Playing chunk ${idx + 1}/${state.streamChunks.size}…"
@@ -210,7 +215,9 @@ class TtsFragment : Fragment() {
         // Observe state
         viewModel.state.observe(viewLifecycleOwner) { state ->
             binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
-            binding.generateBtn.isEnabled = !state.isLoading
+            // Generate button is always enabled; shows "Cancel" while loading
+            binding.generateBtn.isEnabled = true
+            binding.generateBtn.text = if (state.isLoading) "Cancel" else getString(R.string.btn_generate)
             binding.statusText.text = state.status
 
             // Engine label

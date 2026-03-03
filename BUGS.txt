@@ -11,3 +11,8 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 <!-- Move fixed bugs here with the fix version, e.g.:
 - ~~gTTS y-glide on word-internal -cha~~ (fixed v1.0.0 — ZWNJ insertion)
 -->
+- ~~BookReader: Confirm/Retake buttons not wired — user could not save cropped photo~~ (fixed v5.3.0)
+- ~~BookReader: always forced manual crop step instead of auto-saving~~ (fixed v5.3.0 — Google Lens-like auto-flow)
+- ~~TTS Streaming: "engine locked" confusing status message~~ (fixed v5.3.0 — now shows "N of M ✓")
+- ~~TTS Streaming: 40+ parallel gTTS calls overwhelm API, cause hangs~~ (fixed v5.3.0 — Semaphore(3) concurrency limit)
+- ~~TTS Streaming: no way to cancel in-progress generation~~ (fixed v5.3.0 — Generate button becomes Cancel)

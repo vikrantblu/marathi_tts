@@ -9,10 +9,14 @@ import com.marathitts.mobile.service.PythonBridge
 import com.marathitts.mobile.service.TtsEngineManager
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.util.concurrent.atomic.AtomicInteger
 
 data class TtsState(
     val isLoading: Boolean = false,
@@ -34,8 +38,21 @@ class TtsViewModel(app: Application) : AndroidViewModel(app) {
 
     val engineManager = TtsEngineManager(app)
 
+    /** Reference to the current streaming job so it can be cancelled. */
+    private var currentJob: Job? = null
+
+    /** Max concurrent TTS API calls during streaming (prevents rate-limiting). */
+    private val streamingSemaphore = Semaphore(3)
+
     init {
         PythonBridge.init(app)
+    }
+
+    /** Cancel an in-progress streaming generation. */
+    fun cancelGeneration() {
+        currentJob?.cancel()
+        currentJob = null
+        _state.value = TtsState(status = "Generation cancelled")
     }
 
     fun generateAudio(
@@ -140,9 +157,9 @@ class TtsViewModel(app: Application) : AndroidViewModel(app) {
         }
 
         _state.value = TtsState(isLoading = true,
-            status = "Streaming: generating ${sentences.size} chunks…")
+            status = "Streaming: preparing ${sentences.size} chunks…")
 
-        viewModelScope.launch {
+        currentJob = viewModelScope.launch {
             // Optional emotion auto-detect on full text
             val resolvedEmotion: String? = if (autoDetect && emotion == null) {
                 withContext(Dispatchers.IO) {
@@ -188,37 +205,42 @@ class TtsViewModel(app: Application) : AndroidViewModel(app) {
                 else -> engineIndex   // keep original if we can't determine
             }
 
+            val completedCount = AtomicInteger(1)  // first chunk already done
             _state.postValue(_state.value?.copy(
-                status = "Streaming: chunk 1/${sentences.size} ready (engine locked)…"))
+                status = "Streaming: 1 of ${sentences.size} ✓"))
 
-            // ── Step 2: generate remaining chunks in parallel with locked engine ──
+            // ── Step 2: generate remaining chunks with concurrency limit ──
+            // Semaphore limits to 3 concurrent API calls to avoid rate-limiting.
             val remainingDeferreds: List<Deferred<String?>> =
-                sentences.drop(1).mapIndexed { i, chunk ->
+                sentences.drop(1).mapIndexed { _, chunk ->
                     async(Dispatchers.IO) {
-                        try {
-                            val r = engineManager.generate(
-                                text = chunk,
-                                engineIndex = lockedEngine,
-                                langCode = langCode,
-                                gender = gender,
-                                speed = speed,
-                                pitch = pitch,
-                                volume = volume,
-                                emotion = resolvedEmotion,
-                                isVerse = false
-                            )
-                            if (r.optBoolean("success", false))
-                                r.optString("audio_path").takeIf { it.isNotEmpty() }
-                            else null
-                        } catch (_: Exception) { null }
+                        streamingSemaphore.withPermit {
+                            try {
+                                val r = engineManager.generate(
+                                    text = chunk,
+                                    engineIndex = lockedEngine,
+                                    langCode = langCode,
+                                    gender = gender,
+                                    speed = speed,
+                                    pitch = pitch,
+                                    volume = volume,
+                                    emotion = resolvedEmotion,
+                                    isVerse = false
+                                )
+                                if (r.optBoolean("success", false))
+                                    r.optString("audio_path").takeIf { it.isNotEmpty() }
+                                else null
+                            } catch (_: Exception) { null }
+                        }
                     }
                 }
 
             // Await all remaining in ORDER (preserves sentence sequence)
-            val remainingPaths = remainingDeferreds.mapIndexed { i, d ->
+            val remainingPaths = remainingDeferreds.mapIndexed { _, d ->
                 d.await().also {
+                    val done = completedCount.incrementAndGet()
                     _state.postValue(_state.value?.copy(
-                        status = "Streaming: chunk ${i + 2}/${sentences.size} ready…"))
+                        status = "Streaming: $done of ${sentences.size} ✓"))
                 }
             }.filterNotNull()
 
@@ -237,9 +259,10 @@ class TtsViewModel(app: Application) : AndroidViewModel(app) {
                     audioPath = paths.first(),
                     streamChunks = paths,
                     engine = "gtts_stream",
-                    status = "Streaming ${paths.size} chunks ready ✓$emotionLabel"
+                    status = "All ${paths.size} chunks ready ✓$emotionLabel"
                 )
             }
+            currentJob = null
         }
     }
 
@@ -272,6 +295,7 @@ class TtsViewModel(app: Application) : AndroidViewModel(app) {
 
     override fun onCleared() {
         super.onCleared()
+        currentJob?.cancel()
         engineManager.shutdown()
     }
 }

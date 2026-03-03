@@ -349,7 +349,7 @@ if ($gitExe) {
     )
     foreach ($f in $filesToStage) {
         if (Test-Path (Join-Path $PSScriptRoot $f)) {
-            & $gitExe add $f 2>&1 | Out-Null
+            $null = & $gitExe add $f 2>&1
         }
     }
 

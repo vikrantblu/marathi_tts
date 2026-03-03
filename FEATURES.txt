@@ -12,3 +12,7 @@ Track feature requests and shipped features here.
 - Emotion detection in mobile/desktop bridges (v1.0.0)
 - TTS streaming for long text (v1.0.0)
 -->
+- BookReader: Google Lens-like auto-save flow — point camera, tap, auto-crop+save, no manual step (v5.3.0)
+- TTS Streaming: Cancel button during generation (Generate button toggles to Cancel) (v5.3.0)
+- TTS Streaming: Concurrency-limited parallel chunk generation with Semaphore(3) (v5.3.0)
+- TTS Streaming: Clear progressive status "Streaming: N of M ✓" (v5.3.0)
