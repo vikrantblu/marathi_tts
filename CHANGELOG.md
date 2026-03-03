@@ -9,6 +9,24 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 ## [Unreleased]
 <!-- Changes staged but not yet released go here -->
 
+### Fixed
+- **BookReader: buttons not wired** — Confirm (✓) and Retake (↩) buttons in crop editor
+  had no click listeners; user could take photo but never save it
+- **BookReader: forced manual crop** — replaced two-phase capture→crop flow with Google
+  Lens-like auto-save: point camera → tap shutter → auto-crop via guide frame +
+  PageEdgeDetector perspective correction → return immediately to reader
+- **TTS Streaming: "engine locked" error** — confusing status message
+  "Streaming: chunk 1/41 ready (engine locked)…" replaced with clear progress
+  "Streaming: N of M ✓"
+- **TTS Streaming: parallel overload** — all remaining chunks (40+) launched simultaneously,
+  overwhelming Google TTS API and causing hangs; now limited to 3 concurrent calls via Semaphore
+
+### Added
+- **TTS Cancel button** — Generate Audio button becomes "Cancel" during streaming generation;
+  `cancelGeneration()` on TtsViewModel cancels the coroutine Job
+- **BookReader auto-perspective** — PageEdgeDetector runs after guide-frame pre-crop;
+  if confidence ≥ 0.30 applies perspective de-warp automatically
+
 ---
 
 ## [5.2.0] — 2026-03-03  (build 10)
