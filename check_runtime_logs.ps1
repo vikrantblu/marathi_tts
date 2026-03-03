@@ -1,3 +1,5 @@
+param([switch]$Dump)
+
 $adb = "C:\Users\vikra\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 
 # Live-tail our app's logs only (filtered by tag).
@@ -6,18 +8,39 @@ $adb = "C:\Users\vikra\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 #   .\check_runtime_logs.ps1          → live tail (default)
 #   .\check_runtime_logs.ps1 -Dump    → dump recent logs and exit
 
-param([switch]$Dump)
-
 $tags = @(
+    # Book reader
     "BookCameraActivity",
     "BookPageProcessor",
     "BookReaderFragment",
     "BookReaderViewModel",
     "PageEdgeDetector",
     "NativeImageOcr",
-    "TtsService",
-    "ChaquopyBridge",
+    # TTS & audio
+    "TtsEngineManager",
+    "AudioPlayerService",
+    "SystemTtsEngine",
+    # Python bridge
     "PythonBridge",
+    "ChaquopyBridge",
+    # Stotra
+    "StotraRepository",
+    "StotraFragment",
+    "StotraViewModel",
+    # Other screens
+    "TtsFragment",
+    "TtsViewModel",
+    "EmotionFragment",
+    "EmotionViewModel",
+    "OcrFragment",
+    "SttFragment",
+    "CorrectionFragment",
+    "WebFetchFragment",
+    "PdfFragment",
+    "ModiFragment",
+    # TestDashboard
+    "TestDashboard",
+    # Generic app tags
     "MarathiTTS",
     "marathitts"
 )
@@ -31,8 +54,9 @@ if ($Dump) {
     Write-Host "=== Recent app logs (last 500 lines) ===" -ForegroundColor Cyan
     & $adb logcat -d -t 500 $filter 2>&1
 } else {
-    Write-Host "=== Live app logs — Ctrl+C to stop ===" -ForegroundColor Cyan
-    Write-Host "Watching: $($tags -join ', ')" -ForegroundColor DarkGray
+    Write-Host "=== Live app logs -- Ctrl+C to stop ===" -ForegroundColor Cyan
+    $watchList = $tags -join ", "
+    Write-Host "Watching: $watchList" -ForegroundColor DarkGray
     Write-Host ""
     & $adb logcat $filter 2>&1
 }

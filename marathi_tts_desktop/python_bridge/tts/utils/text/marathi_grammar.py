@@ -77,6 +77,16 @@ def extract_and_clean(text: str) -> str:
     text = re.sub(r'[-–—=_]{3,}.*?[-–—=_]{3,}', '', text)
     text = re.sub(r'^\s*(?:Page|पृष्ठ|पान)\s*[०-९\d]+\s*$', '', text, flags=re.MULTILINE)
 
+    # Remove stotra/shloka verse numbers: ॥१४॥  ॥26॥  → ॥
+    # These are line-end verse counters that should never be read aloud.
+    text = re.sub(r'॥\s*[०-९0-9]+\s*॥', '॥', text)
+
+    # Remove parenthesised editorial annotations: (ऽऽऽ), (पाठभेद), (टीका) etc.
+    text = re.sub(r'\([^)]*\)', '', text)
+
+    # Remove pure separator lines: **** or ---- or ==== (whole line)
+    text = re.sub(r'^\s*[*\-=_#]+\s*$', '', text, flags=re.MULTILINE)
+
     # Remove isolated Latin characters/words mixed into Devanagari text
     # (but keep full English phrases if intentional — heuristic: 3+ Latin chars together)
     # Remove single stray Latin letters/numbers that are OCR noise

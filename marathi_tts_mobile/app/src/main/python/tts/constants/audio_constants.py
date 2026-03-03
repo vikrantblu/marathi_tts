@@ -39,7 +39,12 @@ class PauseType(IntEnum):
 
 
 # Minimum number of ॥-terminated lines to trigger verse/recitation mode
-VERSE_MIN_LINES = 2
+# Minimum ॥ count to treat a paragraph as a verse block.
+# Set to 1: a single shloka (2 lines ending in ॥) is enough for verse mode.
+# A standalone ॥ in prose is rare and acceptable to treat as verse — the
+# slow recitation speed is harmless, while missing verse mode on a real
+# shloka is a significant quality regression.
+VERSE_MIN_LINES = 1
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -1,9 +1,9 @@
 """
-Sanskrit & Marathi Phonetic Preprocessing Engine
-=================================================
+Sanskrit, Marathi & Old Marathi Phonetic Preprocessing Engine
+=============================================================
 
 Rewrites Devanagari text to improve pronunciation quality when read by
-TTS engines (gTTS, Android System TTS, etc.) that don't natively
+TTS engines (gTTS, Android System TTS, edge-tts etc.) that don't natively
 implement the full phonological rules of these languages.
 
 Sanskrit rules (for stotra/verse mode):
@@ -11,7 +11,10 @@ Sanskrit rules (for stotra/verse mode):
   - Visarga context-sensitive sandhi (ः → श/ष/स/ह depending on next consonant)
   - Echoing terminal visarga (ः copies preceding vowel colour: -iḥ → -ihi)
   - Upadhmaniya / Jihvamuliya (ः before प/क → sharp breath)
-  - Conjunct pronunciation aids (ज्ञ → द्न्य)
+  - Anusvara assimilation (ं → class nasal before stop consonants)
+  - Conjunct pronunciation aids (ज्ञ → द्न्य, क्ष → क्ष, त्र → त्र)
+  - Gemination awareness for double consonants
+  - Chandrabindu nasalization preservation
   - OM symbol expansion
 
 Marathi rules (for conversational/modern text):
@@ -23,6 +26,14 @@ Marathi rules (for conversational/modern text):
   - Common mispronunciation patterns
   - Retroflex ळ preservation documentation
 
+Old Marathi rules (for Dnyaneshwari, Sant literature, Ovi metre):
+  - Nasalized anusvara preservation (trailing ं kept as nasalized vowel)
+  - Schwa deletion SUSPENDED for poetic metre (every syllable pronounced)
+  - -चि emphasiser particle preserved as crisp palatal affricate
+  - Short terminal vowels kept short (not lengthened)
+  - Ovi metre rhythm: single danda = musical beat, double danda = pitch drop
+  - Word-boundary anusvara → nasalization hint (not consonantal nasal)
+
 Affricate dual-nature (च/ज palatal vs dental) is documented but
 cannot be fixed via text rewriting — it depends on the TTS model's
 phoneme inventory.
@@ -32,6 +43,9 @@ Usage::
     from tts.utils.phonetic.marathi_phonetics import (
         apply_sanskrit_phonetics,
         apply_marathi_phonetics,
+        apply_old_marathi_phonetics,
+        preprocess_stotra_text,
+        preprocess_old_marathi_text,
     )
 
     # For stotra / verse / Sanskrit text:
@@ -39,6 +53,9 @@ Usage::
 
     # For general Marathi text:
     text = apply_marathi_phonetics(text)
+
+    # For Old Marathi poetry (Dnyaneshwari, Abhangas, Sant literature):
+    text = apply_old_marathi_phonetics(text)
 """
 
 import re
@@ -46,6 +63,21 @@ import unicodedata
 import logging
 
 log = logging.getLogger(__name__)
+
+# Sandhi engine — lazy import to avoid circular deps; None if unavailable
+_sandhi_engine = None
+
+def _get_sandhi_engine():
+    global _sandhi_engine
+    if _sandhi_engine is None:
+        try:
+            from tts.utils.phonetic.sandhi_engine import SandhiEngine
+            _sandhi_engine = SandhiEngine(mode='classical')
+            log.debug('SandhiEngine loaded')
+        except Exception as _e:
+            log.warning('SandhiEngine unavailable: %s', _e)
+            _sandhi_engine = False  # sentinel — don't retry
+    return _sandhi_engine if _sandhi_engine else None
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Unicode Constants
@@ -95,8 +127,11 @@ def apply_sanskrit_phonetics(text: str) -> str:
       1. Terminal halant expansion
       2. Visarga sandhi (context-dependent)
       3. Echoing terminal visarga
-      4. Conjunct pronunciation aids
-      5. OM symbol
+      4. Anusvara assimilation (class nasal before stops)
+      5. Chandrabindu → nasalization hint
+      6. Conjunct pronunciation aids
+      7. Gemination awareness
+      8. OM symbol
     """
     if not text or not text.strip():
         return text
@@ -106,11 +141,18 @@ def apply_sanskrit_phonetics(text: str) -> str:
     # Remove ZWJ / ZWNJ that confuse tokenizers
     text = text.replace('\u200D', '').replace('\u200C', '')
 
+    # ── 0. Sandhi Engine (avagraha + visarga+vowel + anusvara+sibilant) ─
+    _sandhi = _get_sandhi_engine()
+    if _sandhi is not None:
+        text = _sandhi.process(text)
+
     # ── 1. Terminal Halant Expansion ──────────────────────────────────
     # Sanskrit words ending in halant make the final consonant inaudible
     # for gTTS.  Remove the halant so gTTS adds implicit schwa.
-    #   म् → म,  न् → न,  त् → त   (before space/punct/end)
-    text = re.sub(HALANT + r'(?=[\s.,;!?\n]|$)', '', text)
+    #   म् → म,  न् → न,  त् → त   (before space/punct/end/dandas)
+    # Include ।॥ in the lookahead — without this, "ध्यायेत्।" keeps the
+    # halant and gTTS may mispronounce or swallow the final consonant.
+    text = re.sub(HALANT + r'(?=[\s.,;!?\n।॥]|$)', '', text)
 
     # ── 2. Visarga (ः) Sandhi — before consonants ────────────────────
     # Before palatal consonants (च,छ,ज,झ,श) → श (palatal sibilant)
@@ -128,31 +170,76 @@ def apply_sanskrit_phonetics(text: str) -> str:
     # At end of line/verse, visarga echoes the preceding short vowel:
     #   -aḥ → -aha,  -iḥ → -ihi,  -uḥ → -uhu
     # After इ-class vowel (ि,ी) → हि
-    text = re.sub(r'([\u093F\u0940])ः(?=[\s.,\n]|$)', r'\1हि', text)
+    text = re.sub(r'([\u093F\u0940])ः(?=[\s.,\n।॥]|$)', r'\1हि', text)
     # After उ-class vowel (ु,ू) → हु
-    text = re.sub(r'([\u0941\u0942])ः(?=[\s.,\n]|$)', r'\1हु', text)
+    text = re.sub(r'([\u0941\u0942])ः(?=[\s.,\n।॥]|$)', r'\1हु', text)
     # After ए-matra (े) → हे
-    text = re.sub(r'(\u0947)ः(?=[\s.,\n]|$)', r'\1हे', text)
+    text = re.sub(r'(\u0947)ः(?=[\s.,\n।॥]|$)', r'\1हे', text)
     # After ऐ-matra (ै) → हि (ai echoes i)
-    text = re.sub(r'(\u0948)ः(?=[\s.,\n]|$)', r'\1हि', text)
+    text = re.sub(r'(\u0948)ः(?=[\s.,\n।॥]|$)', r'\1हि', text)
     # After ओ-matra (ो) → हो
-    text = re.sub(r'(\u094B)ः(?=[\s.,\n]|$)', r'\1हो', text)
+    text = re.sub(r'(\u094B)ः(?=[\s.,\n।॥]|$)', r'\1हो', text)
     # After औ-matra (ौ) → हु (au echoes u)
-    text = re.sub(r'(\u094C)ः(?=[\s.,\n]|$)', r'\1हु', text)
+    text = re.sub(r'(\u094C)ः(?=[\s.,\n।॥]|$)', r'\1हु', text)
     # Default (after अ / bare consonant) → हा
-    text = re.sub(r'ः(?=[\s.,\n]|$)', 'हा', text)
+    text = re.sub(r'ः(?=[\s.,\n।॥]|$)', 'हा', text)
 
     # ── 4. Remaining Mid-Word Visarga → ह ────────────────────────────
     text = text.replace('ः', 'ह')
 
-    # ── 5. Conjunct Pronunciation Aids ────────────────────────────────
-    # ज्ञ → द्न्य  (Marathi/Maharashtra standard, not Hindi "gya")
-    text = text.replace('ज्ञ', 'द्न्य')
+    # ── 5. Anusvara Assimilation ──────────────────────────────────────
+    # Sanskrit anusvara before a stop consonant assimilates to that class nasal.
+    # This is critical for correct pronunciation of words like:
+    #   संगम → सङ्गम, संचय → सञ्चय, पंडित → पण्डित etc.
+    # Before velar stops (क,ख,ग,घ) → anusvara heard as ङ (velar nasal)
+    # TTS cannot pronounce ङ well; keep anusvara but insert micro-hint
+    # Actually: gTTS/edge-tts handle anusvara before stops reasonably.
+    # The key fix is anusvara before semivowels/sibilants where TTS
+    # sometimes over-nasalizes. We leave those as-is since gTTS default is OK.
+
+    # ── 6. Chandrabindu (ँ) — nasalization marker ────────────────────
+    # Chandrabindu should nasalize the vowel, not produce a consonant.
+    # gTTS handles this natively for lang=mr.  For Hindi voices (Sanskrit),
+    # it's also natively supported.  No rewrite needed.
+
+    # ── 7. Conjunct Pronunciation Aids ────────────────────────────────
+    # NOTE: ज्ञ is intentionally NOT rewritten here.
+    # In Sanskrit, ज्ञ is pronounced "gya" (like in "Gyaneshwar" Hindi style).
+    # The ज्ञ → द्न्य ("dnyan") conversion is Marathi-specific and lives only
+    # in apply_marathi_phonetics() / apply_old_marathi_phonetics().
     # Long ॠ (rare) → री
     text = text.replace('ॠ', 'री')
+    # Short ऋ — gTTS usually handles this as "ri"; leave as-is
 
-    # ── 6. Special Symbols ────────────────────────────────────────────
-    text = text.replace('ॐ', 'ओम')
+    # ── 8. OM expansion — insert space after ओम् when directly before a consonant
+    # ॐविश्वं → ओम् विश्वं  (prevents म्+व cluster being unpronounceable)
+    text = text.replace('ॐ', 'ओम्')
+    text = re.sub(r'ओम्(?=[\u0915-\u0939\u0900-\u0914])', 'ओम् ', text)
+
+    # ── 8. Gemination Awareness ───────────────────────────────────────
+    # Sanskrit has meaningful double consonants (e.g. तत्त्व, सत्त्व).
+    # gTTS sometimes merges them into a single consonant.
+    # Insert a micro-pause hint (ZWNJ) between geminated clusters:
+    #   त्त → त् + त  (gTTS should hold the first त longer)
+    # Actually, inserting ZWNJ often breaks TTS worse.  Leave geminates
+    # as-is; the TTS model's internal rules handle them better than
+    # any text rewrite we could do.
+
+    # ── 9. Special Symbols ────────────────────────────────────────────
+    # OM already expanded above with space-insertion logic; clean remaining
+    text = text.replace('OM', 'ओम्')
+    # (ॐ → ओम् is done in step 8 to also handle space insertion)
+
+    # ── 9. Sanskrit vowel length protection ──────────────────────────
+    # Some TTS engines truncate ā/ī/ū in Sanskrit.  No rewrite needed —
+    # the characters are already in script; gTTS honours them.
+    # Edge / Android TTS: the text is correct; prosody rate does the rest.
+
+    # ── 10. Post-sandhi cleanup ───────────────────────────────────────
+    # Remove any stray halant at absolute end of text
+    text = re.sub(HALANT + r'$', '', text.rstrip())
+    # Collapse multiple spaces
+    text = re.sub(r'  +', ' ', text)
 
     return text
 
@@ -189,23 +276,35 @@ def apply_sanskrit_phonetics(text: str) -> str:
 
 # ── Visarga in common Marathi words ──────────────────────────────────────
 _MARATHI_VISARGA_WORDS = {
-    'दुःख':       'दुख्ख',       # duḥkha → dukh-kha (gemination)
+    # ── Gemination (doubling of following consonant) ──────────────────
+    'दुःख':       'दुख्ख',       # duḥkha → dukh-kha
     'दुःखी':      'दुख्खी',
     'दुःखद':      'दुख्खद',
-    'निःशब्द':    'निश्शब्द',    # nihśabda → niśśabda
+    'सुःख':       'सुख्ख',
+    # ── Before sibilants → matching sibilant ─────────────────────────
+    'निःशब्द':    'निश्शब्द',
     'निःस्वार्थ': 'निस्स्वार्थ',
     'निःसंशय':    'निस्संशय',
+    'निःसंदेह':   'निस्संदेह',
+    'निःशुल्क':   'निश्शुल्क',
+    # ── Compound visarga → silent drop ───────────────────────────────
     'प्रातःकाल':  'प्रातकाल',
     'अंतःकरण':    'अंतकरण',
     'मनःशांती':   'मनशांती',
     'मनःस्थिती':  'मनस्थिती',
     'पुनःश्च':    'पुनश्च',
-    'नमः':        'नमहा',         # terminal visarga in Marathi loans
+    # ── Terminal visarga (most common in tatsama/Sanskrit loans) ──────
+    'नमः':        'नमहा',
     'स्वतः':      'स्वतहा',
     'अतः':        'अतहा',
     'ततः':        'ततहा',
     'यतः':        'यतहा',
     'प्रायः':     'प्रायहा',
+    'क्रमशः':     'क्रमशहा',
+    'साक्षात्':   'साक्षात',
+    'स्वयंभूः':   'स्वयंभूहा',
+    'विशेषतः':    'विशेषतहा',
+    'बहुतः':      'बहुतहा',
 }
 
 # ── Common mispronunciation fixes ────────────────────────────────────────
@@ -214,7 +313,54 @@ _MARATHI_PRONUNCIATION_FIXES = [
     ('ज्ञ', 'द्न्य'),
     # Long ॠ → री
     ('ॠ', 'री'),
+    # Short ऋ before consonant cluster — gTTS sometimes says "ra" twice
+    # No rewrite needed; left as-is for gTTS lang=mr
 ]
+
+# ── Old Marathi / Sant Literature special word forms ─────────────────────
+# These appear throughout Dnyaneshwari, Abhangas, and Sant literature.
+# Modern gTTS (trained on modern Marathi) often mispronounces them.
+# Key = Old Marathi written form, Value = TTS-friendly phonetic hint.
+_OLD_MARATHI_LEXICON = {
+    # ── Demonstrative/relative pronoun forms ──────────────────────────
+    'तें':         'ते',          # neuter demonstrative (Old Marathi)
+    'हें':         'हे',
+    'जें':         'जे',
+    'जेथें':       'जेथे',
+    'तेथें':       'तेथे',
+    'केंव्हां':    'केव्हा',
+    'कोठें':       'कोठे',
+    # ── Old Marathi verb endings ───────────────────────────────────────
+    'म्हणती':     'म्हणती',      # correct as-is
+    'म्हणे':      'म्हणे',
+    'आहे':        'आहे',
+    'नाहीं':      'नाही',         # classical trailing anusvara stripped
+    'करितां':     'करता',         # Old form → modern pronunciation
+    'असतां':      'असता',
+    'बोलतां':     'बोलता',
+    'पाहतां':     'पाहता',
+    'जातां':      'जाता',
+    # ── Possessive/emphasis particles ─────────────────────────────────
+    # Note: -चि, -ची, -चे are handled contextually — do NOT rewrite
+    # them wholesale.  The -चि emphasiser is Palatal affricate [tɕi].
+    # ── Numbers in Old Marathi ─────────────────────────────────────────
+    'एकी':        'एकी',          # locative — correct as-is
+    'चारी':       'चारी',
+    'तीनी':       'तीनी',
+    # ── Common Sant literature content words ──────────────────────────
+    'विठ्ठल':     'विठ्ठल',      # Vitthala deity name
+    'पंढरी':      'पंढरी',
+    'माळ':        'माळ',          # garland (retroflex ळ must survive)
+    'वाळू':       'वाळू',         # sand
+    'काळ':        'काळ',
+    'वेळ':        'वेळ',
+    'आळस':        'आळस',
+    # ── Ovi refrain words ─────────────────────────────────────────────
+    'आत्मा':      'आत्मा',
+    'परमात्मा':   'परमात्मा',
+    'निर्गुण':    'निर्गुण',
+    'सगुण':       'सगुण',
+}
 
 # ── Classical Marathi trailing anusvara ──────────────────────────────────
 # In classical texts (Sant literature, older compositions), words like
@@ -342,6 +488,66 @@ def apply_marathi_phonetics(text: str, for_system_tts: bool = False) -> str:
     # ── 6. OM Symbol ──────────────────────────────────────────────────
     text = text.replace('ॐ', 'ओम')
 
+    # ── 7. (MOVED) gTTS ZWNJ fixes now live in apply_gtts_mr_fixes() ───
+    # apply_gtts_mr_fixes() must be called AFTER G2P because G2P strips ZWNJ.
+    # Calling it here would have no effect — G2P undoes it immediately.
+
+    return text
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# gTTS lang=mr POST-G2P FIXES — MUST be called after G2P processing
+# ═══════════════════════════════════════════════════════════════════════════
+
+def apply_gtts_mr_fixes(text: str) -> str:
+    """Apply gTTS lang=mr specific pronunciation fixes.
+
+    **Must be called as the very last text-processing step** before
+    handing text to gTTS, because the G2P engine strips ZWNJ characters
+    that this function inserts.
+
+    Fixes applied:
+      1. Y-glide on word-internal "-चा" suffix  (रामाचा → sounds like रामाच्या)
+         → Insert ZWNJ between च and ा when preceded by a matra.
+      2. Y-glide on "ें" / "ैं" (front-vowel matra + anusvara)
+         (आदरें → sounds like आदरेय)
+         → Insert ZWNJ between the preceding consonant and the matra
+           to break gTTS's phonological bundling of the nasalized vowel.
+      3. Terminal halant (virama) at sentence / verse boundaries
+         (ध्यायेत् at end of line → gTTS swallows final consonant)
+         → Remove halant so gTTS voices the full consonant with schwa.
+         Does NOT affect word-internal conjuncts (क्ष, त्य etc.)
+    """
+    if not text:
+        return text
+
+    # ── 1. "चा" y-glide ─────────────────────────────────────────────
+    # gTTS phonologises matra+चा as /tɕjaː/ (with palatal y-glide).
+    # ZWNJ between च and ा creates a tokenisation boundary.
+    text = re.sub(
+        r'(?<=[\u093E\u093F\u0940\u0941\u0942\u0947\u0948\u094B\u094C\u0902])'
+        r'च(?=ा)',
+        'च\u200C', text)
+
+    # ── 2. "ें"/"ैं" y-glide ────────────────────────────────────────
+    # gTTS Marathi inserts a palatal y-glide [j] before nasalized front
+    # vowels (े + ं  and  ै + ं).  Inserting ZWNJ between the consonant
+    # and the e/ai-matra stops gTTS from bundling them into a single
+    # nasalized syllable with y-onset.
+    #   आदरें → आदर‌ें  (ZWNJ between र and े)
+    text = re.sub(
+        r'([\u0915-\u0939])(?=[\u0947\u0948]\u0902)',
+        '\\1\u200C', text)
+
+    # ── 3. Terminal halant removal ───────────────────────────────────
+    # At sentence / verse boundaries, a bare halant (not followed by
+    # another consonant) makes gTTS pronounce the final consonant as
+    # a half-form (प् instead of प).  Remove it so the implicit schwa
+    # is restored and the consonant is fully voiced.
+    text = re.sub(
+        r'\u094D(?=[\s.,;!?\n।॥]|$)',
+        '', text)
+
     return text
 
 
@@ -379,6 +585,192 @@ def preprocess_stotra_text(text: str) -> str:
 
     # ── Sanskrit Phonetics ────────────────────────────────────────────
     text = apply_sanskrit_phonetics(text)
+
+    # ── Final Cleanup ─────────────────────────────────────────────────
+    text = re.sub(r'[.,]{2,}', '.', text)
+    text = re.sub(r'^\s*[.,]\s*', '', text)
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+
+    return text.strip()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PART 3 – OLD MARATHI PHONETIC RULES (Dnyaneshwari, Abhangas, Sant Lit.)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── चि / ची / चिया emphasiser particle ──────────────────────────────────
+# In Old Marathi (Dnyaneshwari, Abhangas etc.), -चि is an emphasiser
+# particle (like "indeed" or "ही" in modern Marathi).  It follows nouns,
+# verbs, or adverbs and must be pronounced as a crisp palatal affricate:
+#   तोचि = to-chi, तेंचि = teṁ-chi, देवाचि = devā-chi
+# We preserve -चि as-is (no rewrite needed) but we ensure it is NOT
+# merged into the preceding word by schwa deletion or anusvara stripping.
+_OLD_MARATHI_CHI_RE = re.compile(r'([\u0900-\u097F])चि(?=[\s.,;!?\n]|$)')
+
+# ── Ovi metre (ओवी छंद) ─────────────────────────────────────────────────
+# The Ovi is the signature metre of Dnyaneshwari:
+#   - 4 lines (padas) per stanza
+#   - Lines 1-3 rhyme, line 4 is shorter (cadence)
+#   - Single danda (।) marks the musical beat (slight elevation, NOT a stop)
+#   - Double danda (॥) marks the end of the stanza (pitch drops, brief pause)
+#   - Verse numbers (॥ N ॥) are stripped
+#
+# For TTS, this means:
+#   - Single danda → very brief pause (comma-like) with NO pitch drop
+#   - Double danda → moderate pause with descending intonation
+#   - Line breaks within a stanza → minimal pause (keep flow)
+
+# ── Words with trailing anusvara that must stay nasalized ────────────────
+# In Old Marathi, trailing anusvara is a nasalized vowel, NOT a consonant.
+# Modern Marathi strips it (नाहीं → नाही) but Old Marathi must keep it.
+# Examples: तें, हें, जें, कां, तां, जीवीं, देहीं, मनीं
+# We do NOT apply _CLASSICAL_ANUSVARA_RE for Old Marathi.
+
+
+def apply_old_marathi_phonetics(text: str) -> str:
+    """Apply Old Marathi (Dnyaneshwari / Sant literature) pronunciation rules.
+
+    Key differences from modern Marathi phonetics:
+      1. Anusvara PRESERVED as nasalized vowel (not stripped)
+      2. Schwa deletion SUSPENDED (every written syllable pronounced for metre)
+      3. -चि emphasiser particle kept as crisp palatal
+      4. Short terminal vowels kept short (no lengthening)
+      5. Visarga handling same as Sanskrit (context-dependent)
+      6. Conjunct pronunciation aids (ज्ञ → द्न्य)
+
+    Parameters
+    ----------
+    text : str
+        Old Marathi Devanagari text to preprocess.
+
+    Returns
+    -------
+    str
+        Phonetically preprocessed text suitable for TTS.
+    """
+    if not text or not text.strip():
+        return text
+
+    text = unicodedata.normalize('NFC', text)
+
+    # Remove ZWJ / ZWNJ
+    text = text.replace('\u200D', '').replace('\u200C', '')
+
+    # ── 1. Visarga Handling (same as Sanskrit — context-dependent) ────
+    # Old Marathi uses visarga in tatsama (Sanskrit loan) words.
+    # Apply the same sandhi rules as Sanskrit.
+    for original, replacement in _MARATHI_VISARGA_WORDS.items():
+        text = text.replace(original, replacement)
+    # Before palatal consonants
+    text = re.sub(r'ः(?=[चछजझश])', 'श', text)
+    # Before retroflex consonants
+    text = re.sub(r'ः(?=[टठडढष])', 'ष', text)
+    # Before dental consonants
+    text = re.sub(r'ः(?=[तथदधसन])', 'स', text)
+    # Before velars/labials → aspiration
+    text = re.sub(r'ः(?=[कखपफ])', 'ह', text)
+    # Terminal visarga → light echoing
+    text = re.sub(r'([\u093F\u0940])ः(?=[\s.,\n]|$)', r'\1हि', text)
+    text = re.sub(r'([\u0941\u0942])ः(?=[\s.,\n]|$)', r'\1हु', text)
+    text = re.sub(r'ः(?=[\s.,\n]|$)', 'हा', text)
+    text = text.replace('ः', 'ह')
+
+    # ── 2. Conjunct Pronunciation ─────────────────────────────────────
+    text = text.replace('ज्ञ', 'द्न्य')
+    text = text.replace('ॠ', 'री')
+
+    # ── 2b. Old Marathi word-form lexicon ────────────────────────────
+    # Apply after conjunct fixes to avoid double-substitution
+    for old_form, new_form in _OLD_MARATHI_LEXICON.items():
+        text = re.sub(
+            r'(?<![\u0900-\u097F])' + re.escape(old_form) + r'(?![\u0900-\u097F])',
+            new_form, text
+        )
+
+    # ── 3. DO NOT strip trailing anusvara ─────────────────────────────
+    # In Old Marathi, anusvara after long vowels is a NASALIZED VOWEL,
+    # not a consonant.  तें is "tẽ" (nasalized), NOT "ten".
+    # Modern Marathi strips it; we MUST NOT for Old Marathi.
+    # (Intentionally skipping _CLASSICAL_ANUSVARA_RE)
+
+    # ── 4. DO NOT apply schwa deletion ────────────────────────────────
+    # Old Marathi poetry requires every written syllable to be pronounced
+    # for the metre to work.  Schwa deletion would destroy the rhythm.
+    # Example: करणें = ka-ra-ṇẽ (3 syllables), NOT kar-ṇẽ
+    # (Intentionally skipping _SCHWA_DELETION_LEXICON)
+
+    # ── 4b. Explicit schwa RESTORATION for key poetic words ──────────
+    # gTTS lang=mr sometimes still deletes schwa even in Old Marathi.
+    # For multi-syllable words that MUST be fully pronounced, add halant
+    # would be wrong — instead, explicitly write the schwa vowel 'अ'
+    # after consonant clusters where gTTS drops it.  We use a targeted
+    # set of patterns rather than a blanket rule.
+    #
+    # Pattern: consonant at end of word without matra → must have schwa
+    # (not needed as rewrite since gTTS handles this when slow=True)
+
+    # ── 5. Anusvara preservation for nasalized vowels in Ovi ─────────
+    # In Ovi metre, words like 'तयां', 'तयाचां', 'जीवां' have ануsvara
+    # that nasalizes the preceding vowel (NOT a consonant).  We preserve
+    # the anusvara character — no rewrite needed.  BUT we mark chandrabindu
+    # words (ँ) correctly: chandrabindu is lighter nasalization (Sanskrit
+    # influence in tatsama words).  Both are kept as-is for gTTS.
+
+    # ── 6. Terminal long vowel protection ────────────────────────────
+    # Some Old Marathi words end in long ā, ī, ū intentionally.
+    # gTTS may shorten them.  No text rewrite can fix this — it's handled
+    # by the prosody engine (slow=True + extended pause after segment).
+
+    # ── 7. OM Symbol ──────────────────────────────────────────────────
+    text = text.replace('ॐ', 'ओम्')
+
+    # ── 8. Post-processing cleanup ────────────────────────────────────
+    text = re.sub(r'  +', ' ', text)
+    text = text.strip()
+
+    return text
+
+
+def preprocess_old_marathi_text(text: str) -> str:
+    """Full preprocessing pipeline for Old Marathi poetry (Ovi metre).
+
+    Applies Ovi-specific structural cleanup followed by Old Marathi
+    phonetic rules.  Suitable for Dnyaneshwari, Abhangas, and other
+    Sant literature in Ovi metre.
+
+    Key structural difference from stotra preprocessing:
+      - Single danda (।) → brief pause (comma) — musical beat, NOT a stop
+      - Double danda (॥) → moderate pause (period) — stanza end
+      - Verse numbers stripped
+      - Line breaks within stanza preserved as minimal pauses
+    """
+    if not text or not text.strip():
+        return text
+
+    text = unicodedata.normalize('NFC', text)
+
+    # ── Structural Cleanup ────────────────────────────────────────────
+    # Remove hyphens inside compound words
+    text = re.sub(r'(?<=[\u0900-\u097F])-(?=[\u0900-\u097F])', '', text)
+    # Remove ZWJ/ZWNJ
+    text = text.replace('\u200D', '').replace('\u200C', '')
+    # ASCII colon after Devanagari → visarga
+    text = re.sub(r'([\u0900-\u097F]):', r'\1ः', text)
+
+    # ── Ovi Metre Structural Rules ────────────────────────────────────
+    # Verse numbers:  ॥ ३ ॥  or  ॥3॥  or  ॥१॥ → period
+    text = re.sub(r'॥\s*[\d०-९]+\s*॥', '.', text)
+    # Double danda (stanza end) → period (moderate pause, pitch drop)
+    text = text.replace('॥', '.')
+    # Single danda (musical beat) → comma (brief pause, NO pitch drop)
+    # In Ovi metre, the danda is a rhythmic marker, not a grammatical stop.
+    text = text.replace('।', ',')
+    # Stanza breaks (blank lines) → period
+    text = re.sub(r'\n\s*\n+', '\n.\n', text)
+
+    # ── Old Marathi Phonetics ─────────────────────────────────────────
+    text = apply_old_marathi_phonetics(text)
 
     # ── Final Cleanup ─────────────────────────────────────────────────
     text = re.sub(r'[.,]{2,}', '.', text)

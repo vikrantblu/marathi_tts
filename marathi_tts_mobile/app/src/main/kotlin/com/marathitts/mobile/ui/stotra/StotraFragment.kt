@@ -23,6 +23,9 @@ class StotraFragment : Fragment() {
     private val viewModel: StotraViewModel by viewModels()
     private val audioPlayer = AudioPlayerService()
     private lateinit var adapter: StotraAdapter
+    // Track which audio path we already started playing so state re-emissions
+    // (e.g. status-text updates) don't restart playback from the beginning.
+    private var lastPlayedPath: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -60,15 +63,18 @@ class StotraFragment : Fragment() {
         // ── Detail controls ──
         binding.backBtn.setOnClickListener {
             audioPlayer.stop()
+            lastPlayedPath = null
             viewModel.clearSelection()
         }
 
         binding.playTtsBtn.setOnClickListener {
+            lastPlayedPath = null   // allow re-generation to be played
             viewModel.playWithTts()
         }
 
         binding.stopBtn.setOnClickListener {
             audioPlayer.stop()
+            lastPlayedPath = null
             binding.stopBtn.visibility = View.GONE
             binding.detailStatus.text = "Stopped"
         }
@@ -117,17 +123,24 @@ class StotraFragment : Fragment() {
         binding.playTtsBtn.isEnabled = !state.isGenerating
         binding.playTtsBtn.text = if (state.isGenerating) "Generating…" else "Play (TTS)"
 
-        // Auto-play when audio path arrives
-        if (state.audioPath != null && !audioPlayer.isPlaying) {
+        // Auto-play when a NEW audio path arrives (guard against state re-emissions).
+        if (state.audioPath != null && state.audioPath != lastPlayedPath) {
+            lastPlayedPath = state.audioPath
             try {
-                audioPlayer.play(state.audioPath) {
-                    requireActivity().runOnUiThread {
-                        binding.stopBtn.visibility = View.GONE
-                        binding.detailStatus.text = "Playback complete"
+                audioPlayer.playAsync(state.audioPath,
+                    onReady = {
+                        requireActivity().runOnUiThread {
+                            binding.stopBtn.visibility = View.VISIBLE
+                            binding.detailStatus.text = "Playing…"
+                        }
+                    },
+                    onComplete = {
+                        requireActivity().runOnUiThread {
+                            binding.stopBtn.visibility = View.GONE
+                            binding.detailStatus.text = "Playback complete"
+                        }
                     }
-                }
-                binding.stopBtn.visibility = View.VISIBLE
-                binding.detailStatus.text = "Playing…"
+                )
             } catch (e: Exception) {
                 Toast.makeText(context, "Playback error: ${e.message}", Toast.LENGTH_SHORT).show()
             }

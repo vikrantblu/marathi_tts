@@ -64,6 +64,7 @@ try:
         apply_sanskrit_phonetics,
         apply_marathi_phonetics,
         apply_old_marathi_phonetics,
+        apply_gtts_mr_fixes,
         preprocess_stotra_text as _phonetic_stotra,
         preprocess_old_marathi_text as _phonetic_old_marathi,
     )
@@ -73,6 +74,7 @@ except ImportError as _e:
     def apply_sanskrit_phonetics(t): return t
     def apply_marathi_phonetics(t): return t
     def apply_old_marathi_phonetics(t): return t
+    def apply_gtts_mr_fixes(t): return t
     _phonetic_stotra = None
     _phonetic_old_marathi = None
 
@@ -629,12 +631,15 @@ def _preprocess_prose_text(text: str) -> str:
 
 
 def _generate_verse_audio(text: str, speed: float, pitch: float, volume: float,
-                          output_path: str, language: str = "mr") -> dict:
-    """Generate TTS audio with verse/shloka treatment — no ffmpeg required.
+                          output_path: str, language: str = "mr",
+                          original_language: str = "mr") -> dict:
+    """Generate TTS audio with verse/shloka treatment.
 
-    1.  Preprocesses the stotra text (pronunciation + pause punctuation)
-    2.  Generates a single gTTS file (Google's TTS pauses at periods/commas)
-    3.  Applies speed/pitch/volume via pydub only if ffmpeg is available
+    Uses ``original_language`` to choose the correct phonetic preprocessing:
+    - ``sa``     → apply_sanskrit_phonetics (ज्ञ kept, visarga sandhi, etc.)
+    - ``mr-old`` → apply_old_marathi_phonetics (no schwa deletion)
+    - ``mr``     → _preprocess_stotra_text (Sanskrit rules + structural cleanup)
+    ``language`` is the already-mapped gTTS language code (e.g. ``hi`` for Sanskrit).
     """
     try:
         from gtts import gTTS  # type: ignore
@@ -642,10 +647,23 @@ def _generate_verse_audio(text: str, speed: float, pitch: float, volume: float,
         log.warning("gTTS not available for verse mode: %s", exc)
         return {}   # empty → caller falls back to bare gTTS
 
-    # Stage A: stotra-specific preprocessing (dandas → punctuation, visarga expansion)
-    preprocessed = _preprocess_stotra_text(text)
+    # Stage A: stotra-specific preprocessing — pick rules by original language.
+    # Sanskrit: _preprocess_stotra_text already calls apply_sanskrit_phonetics internally.
+    #   Call it directly — no separate apply_sanskrit_phonetics call needed.
+    # Old Marathi: apply old-Marathi phonetics first (no schwa deletion), then structural cleanup.
+    # Modern Marathi / default: full stotra preprocessing.
+    if original_language == "sa":
+        preprocessed = _preprocess_stotra_text(text)
+    elif original_language == "mr-old":
+        preprocessed = _preprocess_stotra_text(apply_old_marathi_phonetics(text))
+    else:
+        preprocessed = _preprocess_stotra_text(text)
     # Stage B: full G2P pipeline (conjuncts, anusvara, schwa etc.)
     preprocessed = _apply_g2p(preprocessed)
+    # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)
+    # AFTER G2P because G2P strips ZWNJ.
+    if gtts_language == 'mr':
+        preprocessed = apply_gtts_mr_fixes(preprocessed)
     log.info("[Verse] Preprocessed stotra text | orig=%d  new=%d chars", len(text), len(preprocessed))
     log.debug("[Verse] Preview: %.400s", preprocessed)
 
@@ -696,12 +714,12 @@ def _generate_verse_audio(text: str, speed: float, pitch: float, volume: float,
 # ---------------------------------------------------------------------------
 
 # gTTS-supported Devanagari languages → fallback mapping for unsupported ones.
-# Sanskrit (sa) is NOT supported by gTTS; the Marathi (mr) model reads
-# Devanagari acceptably and is the closest available voice.
+# Sanskrit (sa) → Hindi: same Devanagari script, phonologically much closer than Marathi.
+# Old Marathi → Marathi (same script, different phonology handled by preprocessing).
 _GTTS_LANG_MAP = {
-    "sa": "mr",       # Sanskrit → Marathi (same script)
-    "mr-old": "mr",   # Old Marathi → Marathi (same script, different phonology)
-    "ne": "hi",       # Nepali  → Hindi   (same script, close phonology)
+    "sa": "hi",      # Sanskrit → Hindi (phonologically closest available)
+    "mr-old": "mr",  # Old Marathi → Marathi (same script)
+    "ne": "hi",      # Nepali  → Hindi   (same script, close phonology)
 }
 
 
@@ -829,7 +847,9 @@ def generate_tts(text: str,
     # 3a: Verse/shloka mode — stotra preprocessing + single gTTS call
     if is_verse:
         try:
-            result = _generate_verse_audio(text, speed, gtts_pitch, volume, output_path, gtts_language)
+            result = _generate_verse_audio(text, speed, gtts_pitch, volume, output_path,
+                                           language=gtts_language,
+                                           original_language=language)
             if result.get("success"):
                 result["elapsed_sec"] = round(time.time() - t0, 2)
                 log.info("[Stage 3a] Verse audio SUCCESS (%.2fs)", result["elapsed_sec"])
@@ -841,12 +861,18 @@ def generate_tts(text: str,
 
     # 3b: Normal gTTS (with G2P)
     try:
-        normalized = _normalize_marathi(text)
-        if language == "mr-old":
+        normalized = text if language == "sa" else _normalize_marathi(text)
+        if language == "sa":
+            normalized = apply_sanskrit_phonetics(normalized)
+        elif language == "mr-old":
             normalized = apply_old_marathi_phonetics(normalized)
         else:
-            normalized = apply_marathi_phonetics(normalized)  # Marathi phonetic rules
+            normalized = apply_marathi_phonetics(normalized)  # Modern Marathi rules
         normalized = _apply_g2p(normalized)
+        # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)
+        # AFTER G2P because G2P strips ZWNJ.
+        if gtts_language == 'mr':
+            normalized = apply_gtts_mr_fixes(normalized)
         fd, raw = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
         os.close(fd)
         log.info("[Stage 3b] Calling gTTS | lang=%s text_len=%d slow=%s",

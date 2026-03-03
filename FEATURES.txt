@@ -1,0 +1,14 @@
+# Planned & Shipped Features
+
+Track feature requests and shipped features here.
+
+## Planned
+
+<!-- Add new feature requests at the top of this section -->
+
+## Shipped
+
+<!-- Move shipped features here with the version, e.g.:
+- Emotion detection in mobile/desktop bridges (v1.0.0)
+- TTS streaming for long text (v1.0.0)
+-->

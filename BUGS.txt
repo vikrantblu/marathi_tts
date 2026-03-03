@@ -1,0 +1,13 @@
+# Known Bugs
+
+Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the version that fixed them.
+
+## Open
+
+<!-- Add new bugs at the top of this section -->
+
+## Fixed
+
+<!-- Move fixed bugs here with the fix version, e.g.:
+- ~~gTTS y-glide on word-internal -cha~~ (fixed v1.0.0 — ZWNJ insertion)
+-->

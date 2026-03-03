@@ -76,6 +76,13 @@ _VOICE_PARAMS = {
 }
 
 
+def _normalize_result(result: dict) -> dict:
+    """Ensure 'emotion' and 'score' keys always present (Kotlin side reads these)."""
+    result.setdefault("emotion", result.get("dominant", "neutral"))
+    result.setdefault("score", result.get("intensity", 0.0))
+    return result
+
+
 def _keyword_analysis(text: str) -> dict:
     """Standalone keyword-based emotion analysis."""
     word_count = max(len(re.findall(r"\S+", text)), 1)
@@ -132,7 +139,7 @@ def analyze_emotion(text: str) -> dict:
                  result.get("dominant"), result.get("intensity"))
         result["success"] = True
         result["elapsed_sec"] = round(time.time() - t0, 3)
-        return result
+        return _normalize_result(result)
     except ImportError:
         log.info("[Stage 1] EmotionAnalyzer not available")
     except Exception as exc:
@@ -148,7 +155,7 @@ def analyze_emotion(text: str) -> dict:
         result["elapsed_sec"] = round(time.time() - t0, 3)
         log.info("[Stage 2] SUCCESS | dominant=%s intensity=%.3f",
                  result["dominant"], result["intensity"])
-        return result
+        return _normalize_result(result)
     except Exception as exc:
         log.error("[Stage 2] Keyword analysis failed: %s\n%s", exc, traceback.format_exc())
         return {"success": False, "error": str(exc)}

@@ -1,6 +1,7 @@
 package com.marathitts.mobile.ui.stotra
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -22,6 +23,8 @@ data class StotraListState(
 )
 
 class StotraViewModel(app: Application) : AndroidViewModel(app) {
+
+    companion object { private const val TAG = "StotraViewModel" }
 
     private val repo = StotraRepository(app)
     val engineManager = TtsEngineManager(app)
@@ -100,6 +103,7 @@ class StotraViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = s.copy(isGenerating = true, statusMessage = "Generating verse audio…", audioPath = null)
 
         viewModelScope.launch {
+            Log.i(TAG, "playWithTts: '${stotra.titleEn}' lang=${stotra.language} chars=${text.length}")
             val langCode = stotra.language
             val result = engineManager.generate(
                 text = text,
@@ -113,15 +117,18 @@ class StotraViewModel(app: Application) : AndroidViewModel(app) {
             if (result.optBoolean("success", false)) {
                 val path = result.optString("audio_path", "")
                 val engine = result.optString("engine", "")
+                Log.i(TAG, "playWithTts success: engine=$engine path=$path")
                 _state.value = _state.value?.copy(
                     isGenerating = false,
                     audioPath = path,
                     statusMessage = "Ready — generated with $engine"
                 )
             } else {
+                val err = result.optString("error", "Unknown error")
+                Log.e(TAG, "playWithTts failed: $err")
                 _state.value = _state.value?.copy(
                     isGenerating = false,
-                    statusMessage = "Failed: ${result.optString("error", "Unknown error")}"
+                    statusMessage = "Failed: $err"
                 )
             }
         }

@@ -66,6 +66,7 @@ try:
         apply_sanskrit_phonetics,
         apply_marathi_phonetics,
         apply_old_marathi_phonetics,
+        apply_gtts_mr_fixes,
         preprocess_stotra_text as _phonetic_stotra,
         preprocess_old_marathi_text as _phonetic_old_marathi,
     )
@@ -75,6 +76,7 @@ except ImportError as _e:
     def apply_sanskrit_phonetics(t): return t
     def apply_marathi_phonetics(t): return t
     def apply_old_marathi_phonetics(t): return t
+    def apply_gtts_mr_fixes(t): return t
     _phonetic_stotra = None
     _phonetic_old_marathi = None
 
@@ -434,8 +436,9 @@ def generate_tts(text: str,
              "volume=%.2f emotion=%s verse=%s lang=%s gender=%s ===",
              len(text), speed, pitch, volume, emotion, is_verse, language, gender)
 
-    # Map unsupported gTTS languages to closest supported one
-    _gtts_lang_map = {"sa": "mr", "mr-old": "mr", "ne": "hi"}
+    # Map unsupported gTTS languages to closest supported one.
+    # Sanskrit → Hindi (phonologically much closer than Marathi; same Devanagari TTS voice)
+    _gtts_lang_map = {"sa": "hi", "mr-old": "mr", "ne": "hi"}
     gtts_language = _gtts_lang_map.get(language, language)
 
     # ── Stage 0: edge-tts — real male/female neural voices (requires internet) ──
@@ -475,10 +478,25 @@ def generate_tts(text: str,
 
     # ── Verse / Shloka mode ──────────────────────────────────────────────
     if is_verse:
-        log.info("[Verse] Verse/Shloka mode enabled")
+        log.info("[Verse] Verse/Shloka mode enabled, lang=%s", language)
         try:
-            preprocessed = _preprocess_stotra_text(_normalize_marathi(text))
-            preprocessed = _apply_g2p(preprocessed)  # G2P for verse text
+            # Sanskrit: skip Marathi normalizer (corrupts Sanskrit sandhi/visarga).
+            # _preprocess_stotra_text already applies apply_sanskrit_phonetics internally.
+            # Marathi / Old-Marathi / others: normalise first, then stotra cleanup.
+            if language == "sa":
+                preprocessed = _preprocess_stotra_text(text)
+            elif language == "mr-old":
+                preprocessed = _preprocess_stotra_text(
+                    apply_old_marathi_phonetics(_normalize_marathi(text))
+                )
+            else:
+                preprocessed = _preprocess_stotra_text(_normalize_marathi(text))
+
+            preprocessed = _apply_g2p(preprocessed)
+            # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)
+            # AFTER G2P because G2P strips ZWNJ.
+            if gtts_language == 'mr':
+                preprocessed = apply_gtts_mr_fixes(preprocessed)
             log.info("[Verse] Preprocessed stotra text | orig=%d  new=%d chars",
                      len(text), len(preprocessed))
             if preprocessed.strip():
@@ -502,14 +520,20 @@ def generate_tts(text: str,
             log.error("[Verse] Failed, falling back to normal: %s", exc)
 
     # Stage 1: gTTS + pydub effects (primary engine on mobile)
-    log.info("[Stage 1] gTTS + pydub effects")
+    log.info("[Stage 1] gTTS + pydub effects, lang=%s", language)
     try:
-        normalized = _normalize_marathi(text)
-        if language == "mr-old":
+        normalized = _normalize_marathi(text) if language not in ("sa",) else text
+        if language == "sa":
+            normalized = apply_sanskrit_phonetics(normalized)
+        elif language == "mr-old":
             normalized = apply_old_marathi_phonetics(normalized)
         else:
-            normalized = apply_marathi_phonetics(normalized)  # Marathi phonetic rules
+            normalized = apply_marathi_phonetics(normalized)  # Modern Marathi rules
         normalized = _apply_g2p(normalized)  # G2P conjunct/anusvara/schwa rules
+        # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)
+        # AFTER G2P because G2P strips ZWNJ.
+        if gtts_language == 'mr':
+            normalized = apply_gtts_mr_fixes(normalized)
         fd, raw = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
         os.close(fd)
         log.info("[Stage 1] Calling gTTS | text_len=%d slow=%s", len(normalized), speed < 0.75)

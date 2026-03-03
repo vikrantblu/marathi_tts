@@ -199,6 +199,18 @@
       "fingerprints": [
         "॥श्रीगणपतीअथर्वशीर्ष॥ॐनमस्तेगणपतये॥त्वमेवप्रत्यक्षंतत्त्वमसि"
       ]
+    },
+    {
+      "name": "श्रीदत्तभावांजली (Shri Datta Bhavanjali)",
+      "text_file": "श्रीदत्तभावांजली.txt",
+      "audio_file": null,
+      "language": "mr",
+      "meter": "Mixed",
+      "deity": "दत्त",
+      "source": "अज्ञात",
+      "fingerprints": [
+        "॥श्रीदत्तभावांजली॥"
+      ]
     }
   ]
 }

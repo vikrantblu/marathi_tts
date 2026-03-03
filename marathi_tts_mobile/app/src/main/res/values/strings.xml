@@ -91,4 +91,10 @@
     <string name="btn_format">Format</string>
     <string name="btn_suggest">Suggest</string>
     <string name="btn_feedback">Rate</string>
+
+    <!-- Test Dashboard -->
+    <string name="tab_test">Test</string>
+    <string name="test_dashboard_title">Mobile Test Dashboard</string>
+    <string name="btn_run_all">Run All</string>
+    <string name="btn_stop">Stop</string>
 </resources>

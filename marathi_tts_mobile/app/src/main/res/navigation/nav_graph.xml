@@ -54,4 +54,9 @@
         android:name="com.marathitts.mobile.ui.bookreader.BookReaderFragment"
         android:label="@string/tab_book_reader"/>
 
+    <fragment
+        android:id="@+id/testDashboardFragment"
+        android:name="com.marathitts.mobile.ui.test.TestDashboardFragment"
+        android:label="@string/tab_test"/>
+
 </navigation>

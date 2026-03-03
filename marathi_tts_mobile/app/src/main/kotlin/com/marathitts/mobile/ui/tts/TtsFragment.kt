@@ -151,16 +151,45 @@ class TtsFragment : Fragment() {
         }
 
         binding.playBtn.setOnClickListener {
-            val path = viewModel.state.value?.audioPath ?: return@setOnClickListener
+            val state = viewModel.state.value ?: return@setOnClickListener
             originalText = binding.textInput.text.toString()
-            audioPlayer.play(path) {
-                requireActivity().runOnUiThread {
-                    binding.statusText.text = "Playback complete"
-                    stopWordHighlight()
+            if (state.streamChunks.size > 1) {
+                // Streaming mode: play ordered queue
+                var chunkIdx = 0
+                audioPlayer.playQueueAsync(
+                    paths = state.streamChunks,
+                    onChunkStart = { idx ->
+                        chunkIdx = idx
+                        requireActivity().runOnUiThread {
+                            binding.statusText.text =
+                                "Playing chunk ${idx + 1}/${state.streamChunks.size}…"
+                        }
+                    },
+                    onAllComplete = {
+                        requireActivity().runOnUiThread {
+                            binding.statusText.text = "Streaming playback complete ✓"
+                            stopWordHighlight()
+                        }
+                    },
+                    onError = { err ->
+                        requireActivity().runOnUiThread {
+                            binding.statusText.text = "Playback error: $err"
+                        }
+                    }
+                )
+                binding.statusText.text = "Playing chunk 1/${state.streamChunks.size}…"
+                startWordHighlight()
+            } else {
+                val path = state.audioPath ?: return@setOnClickListener
+                audioPlayer.play(path) {
+                    requireActivity().runOnUiThread {
+                        binding.statusText.text = "Playback complete"
+                        stopWordHighlight()
+                    }
                 }
+                binding.statusText.text = "Playing…"
+                startWordHighlight()
             }
-            binding.statusText.text = "Playing…"
-            startWordHighlight()
         }
 
         binding.stopBtn.setOnClickListener {
@@ -188,12 +217,39 @@ class TtsFragment : Fragment() {
             binding.engineLabel.text = state.engine.takeIf { it.isNotEmpty() }
                 ?.let { "Engine: $it" } ?: ""
 
-            val hasAudio = state.audioPath != null && !state.isLoading
+            val hasAudio = (state.audioPath != null || state.streamChunks.isNotEmpty()) && !state.isLoading
             binding.audioControlGroup.visibility = if (hasAudio) View.VISIBLE else View.GONE
             binding.playBtn.isEnabled = hasAudio
             binding.stopBtn.isEnabled = hasAudio
             binding.saveAudioBtn.isEnabled = hasAudio
             binding.feedbackBtn.isEnabled = hasAudio
+
+            // Auto-play streaming queue as soon as all chunks are ready
+            if (!state.isLoading && state.streamChunks.size > 1 && !audioPlayer.isPlaying) {
+                originalText = binding.textInput.text.toString()
+                audioPlayer.playQueueAsync(
+                    paths = state.streamChunks,
+                    onChunkStart = { idx ->
+                        requireActivity().runOnUiThread {
+                            binding.statusText.text =
+                                "Playing chunk ${idx + 1}/${state.streamChunks.size}…"
+                        }
+                    },
+                    onAllComplete = {
+                        requireActivity().runOnUiThread {
+                            binding.statusText.text = "Streaming playback complete ✓"
+                            stopWordHighlight()
+                        }
+                    },
+                    onError = { err ->
+                        requireActivity().runOnUiThread {
+                            binding.statusText.text = "Playback error: $err"
+                        }
+                    }
+                )
+                binding.statusText.text = "Streaming: playing chunk 1/${state.streamChunks.size}…"
+                startWordHighlight()
+            }
         }
     }
 
