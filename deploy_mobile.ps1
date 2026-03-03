@@ -1,45 +1,82 @@
-# Marathi TTS Mobile - Build & Deploy Script (PowerShell)
-# Usage: .\deploy_mobile.ps1 [-Release] [-NoDeploy] [-DeviceSerial <serial>]
-#                             [-BumpMajor] [-BumpMinor] [-BumpPatch] [-Hotfix]
+﻿# Marathi TTS Mobile - Build & Deploy Script (PowerShell)
+# Usage: .\deploy_mobile.ps1 [-NoDeploy] [-DeviceSerial <serial>]
 #
-#   -Release           Build a release APK (assembleRelease) instead of debug.
-#                      Requires signing config in app/build.gradle.kts.
 #   -NoDeploy          Build only; do not push to a connected device/emulator.
 #   -DeviceSerial <s>  Target a specific ADB device serial (use: adb devices).
-#   -BumpMajor         Bump major version   (e.g. 1.2.3 -> 2.0.0)
-#   -BumpMinor         Bump minor version   (e.g. 1.2.3 -> 1.3.0)
-#   -BumpPatch         Bump patch version   (e.g. 1.2.3 -> 1.2.4)
-#   -Hotfix            Append/bump hotfix   (e.g. 1.2.3 -> 1.2.3-hotfix.1,
-#                                             1.2.3-hotfix.1 -> 1.2.3-hotfix.2)
 #
-# Version is read from and written back to app/build.gradle.kts automatically.
-# The built APK is always copied to C:\My_Drive_Backup\builds\marathi_tts\ with
-# a timestamped, versioned filename.
+# The script always asks interactively how to version and build.
+# Signing credentials are read from marathi_tts_mobile/keystore.properties (excluded from git).
+# Release APKs and doc snapshots are backed up to C:\My_Drive_Backup\builds\marathi_tts\.
 
 param(
-    [switch]$Release,
     [switch]$NoDeploy,
-    [string]$DeviceSerial = "",
-    [switch]$BumpMajor,
-    [switch]$BumpMinor,
-    [switch]$BumpPatch,
-    [switch]$Hotfix
+    [string]$DeviceSerial = ""
 )
 
 $ErrorActionPreference = "Stop"
-$Root    = Join-Path $PSScriptRoot "marathi_tts_mobile"
-$GradleW = Join-Path $Root "gradlew.bat"
+$Root      = Join-Path $PSScriptRoot "marathi_tts_mobile"
+$GradleW   = Join-Path $Root "gradlew.bat"
 $BackupDir = "C:\My_Drive_Backup\builds\marathi_tts"
+$sep       = "-" * 44
 
 Write-Host ""
 Write-Host "=== Marathi TTS Mobile ===" -ForegroundColor Cyan
 Write-Host ""
 
-# ── 0. Version management ────────────────────────────────────────────────────
-$gradleFile = Join-Path $Root "app\build.gradle.kts"
+# ── Git pull ─────────────────────────────────────────────────────────────────
+Write-Host "Pulling latest changes from git..." -ForegroundColor DarkGray
+$gitCmd = Get-Command git -ErrorAction SilentlyContinue
+if ($gitCmd) {
+    Push-Location $PSScriptRoot
+    & git pull 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  WARNING: git pull failed (exit $LASTEXITCODE). Continuing with local files." -ForegroundColor DarkYellow
+    }
+    Pop-Location
+} else {
+    Write-Host "  git not found -- skipping pull." -ForegroundColor DarkYellow
+}
+Write-Host ""
+
+# ── Locate ADB early so we can show connected devices in the menu ─────────────
+$ADB     = $null
+$adbCmd  = Get-Command adb -ErrorAction SilentlyContinue
+$adbCandidates = @(
+    $(if ($adbCmd) { $adbCmd.Source }),
+    "$env:ANDROID_HOME\platform-tools\adb.exe",
+    "$env:ANDROID_SDK_ROOT\platform-tools\adb.exe",
+    "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe",
+    "C:\Android\Sdk\platform-tools\adb.exe"
+)
+foreach ($c in $adbCandidates) {
+    if ($c -and (Test-Path $c)) { $ADB = $c; break }
+}
+if ($ADB) {
+    $SdkDir = Split-Path (Split-Path $ADB)
+    if (-not $env:ANDROID_HOME) { $env:ANDROID_HOME = $SdkDir }
+}
+
+Write-Host "Checking for connected devices..." -ForegroundColor DarkGray
+if ($ADB) {
+    $deviceLines = & { $ErrorActionPreference = 'Continue'; & $ADB devices 2>&1 } |
+                   ForEach-Object { "$_" } |
+                   Select-String "device$" |
+                   ForEach-Object { ($_ -split "\s+")[0] }
+    if ($deviceLines) {
+        Write-Host "Connected devices:" -ForegroundColor Gray
+        $deviceLines | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+    } else {
+        Write-Host "  No devices connected." -ForegroundColor DarkYellow
+    }
+} else {
+    Write-Host "  ADB not found -- device check skipped." -ForegroundColor DarkYellow
+}
+Write-Host ""
+
+# ── 0. Read current version from build.gradle.kts ────────────────────────────
+$gradleFile    = Join-Path $Root "app\build.gradle.kts"
 $gradleContent = Get-Content $gradleFile -Raw
 
-# Parse current versionName and versionCode
 if ($gradleContent -match 'versionName\s*=\s*"([^"]+)"') {
     $currentVersion = $Matches[1]
 } else {
@@ -52,7 +89,7 @@ if ($gradleContent -match 'versionCode\s*=\s*(\d+)') {
     $currentCode = 1
 }
 
-# Split version: base may be "1.2.3" or "1.2.3-hotfix.N"
+# Parse base version parts
 $hotfixNum = 0
 $basePart  = $currentVersion
 if ($currentVersion -match '^(\d+\.\d+\.\d+)-hotfix\.(\d+)$') {
@@ -60,144 +97,98 @@ if ($currentVersion -match '^(\d+\.\d+\.\d+)-hotfix\.(\d+)$') {
     $hotfixNum = [int]$Matches[2]
 }
 $vParts = $basePart -split '\.'
-$major = [int]$vParts[0]; $minor = [int]$vParts[1]; $patch = [int]$vParts[2]
+$major  = [int]$vParts[0]
+$minor  = [int]$vParts[1]
+$patch  = [int]$vParts[2]
 
-# Compute proposed new version (without writing yet)
-$bumped = $false
-$proposedBase = "$major.$minor.$patch"
-$proposedHotfix = $hotfixNum
-if ($BumpMajor) {
-    $major++; $minor = 0; $patch = 0; $proposedHotfix = 0; $bumped = $true
-} elseif ($BumpMinor) {
-    $minor++; $patch = 0; $proposedHotfix = 0; $bumped = $true
-} elseif ($BumpPatch) {
-    $patch++; $proposedHotfix = 0; $bumped = $true
-} elseif ($Hotfix) {
-    $proposedHotfix++; $bumped = $true
+# Pre-compute option versions for menu display
+$vMajor = "$($major+1).0.0"
+$vMinor = "$major.$($minor+1).0"
+$vPatch = "$major.$minor.$($patch+1)"
+$vBuild = $currentVersion
+if ($hotfixNum -gt 0) {
+    $vHotfix = "$major.$minor.$patch-hotfix.$($hotfixNum+1)"
+} else {
+    $vHotfix = "$major.$minor.$patch-hotfix.1"
 }
 
-if ($bumped) {
-    $newBase = "$major.$minor.$patch"
-    if ($proposedHotfix -gt 0) {
-        $proposedVersion = "$newBase-hotfix.$proposedHotfix"
-    } else {
-        $proposedVersion = $newBase
-    }
-    $proposedCode = $currentCode + 1
+# ── Version menu ──────────────────────────────────────────────────────────────
+Write-Host $sep
+Write-Host "  Current version: v$currentVersion (build $currentCode)" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  Version this build?" -ForegroundColor White
+Write-Host "    [1] Major release  (v$vMajor) -- breaking changes, new major feature" -ForegroundColor Cyan
+Write-Host "    [2] Minor release  (v$vMinor) -- new features, backward compatible"   -ForegroundColor Cyan
+Write-Host "    [3] Hotfix/patch   (v$vPatch) -- bug fixes"                            -ForegroundColor Cyan
+Write-Host "    [4] Build only     (v$vBuild build $($currentCode+1)) -- no version bump, just increment build" -ForegroundColor Cyan
+Write-Host "    [n] Skip           -- no versioning"                                    -ForegroundColor DarkGray
+Write-Host ""
+$vChoice = (Read-Host "  Choice [1/2/3/4/n]").Trim().ToLower()
+Write-Host $sep
 
-    # Ask for confirmation
-    Write-Host "[0/5] Current version: $currentVersion (code $currentCode)" -ForegroundColor Yellow
-    Write-Host "       Proposed bump : $proposedVersion (code $proposedCode)" -ForegroundColor Cyan
-    $confirm = Read-Host "  Proceed with version bump? (Y/n)"
-    if ($confirm -eq '' -or $confirm -match '^[Yy]') {
-        $newVersion = $proposedVersion
-        $newCode    = $proposedCode
+# Resolve new version + code from choice
+$newVersion   = $currentVersion
+$newCode      = $currentCode
+$isRelease    = $false
+$releaseNotes = ""
 
-        # Write back to build.gradle.kts
-        $gradleContent = $gradleContent -replace 'versionCode\s*=\s*\d+', "versionCode = $newCode"
-        $gradleContent = $gradleContent -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$newVersion`""
-        Set-Content $gradleFile $gradleContent -NoNewline
-        Write-Host "  Version bumped -> $newVersion (code $newCode)" -ForegroundColor Magenta
+if ($vChoice -eq "1") {
+    $newVersion = $vMajor; $newCode = $currentCode + 1; $isRelease = $true
+} elseif ($vChoice -eq "2") {
+    $newVersion = $vMinor; $newCode = $currentCode + 1; $isRelease = $true
+} elseif ($vChoice -eq "3") {
+    $newVersion = $vPatch; $newCode = $currentCode + 1; $isRelease = $true
+} elseif ($vChoice -eq "4") {
+    $newVersion = $currentVersion; $newCode = $currentCode + 1; $isRelease = $false
+} else {
+    $newVersion = $currentVersion; $newCode = $currentCode; $isRelease = $false
+}
+
+# Ask release notes for proper releases
+if ($vChoice -eq "1" -or $vChoice -eq "2" -or $vChoice -eq "3") {
+    $releaseNotes = (Read-Host "  Release notes (one line)").Trim()
+}
+
+# Write version back to build.gradle.kts if changed
+if ($newCode -ne $currentCode) {
+    $gradleContent = $gradleContent -replace 'versionCode\s*=\s*\d+', "versionCode = $newCode"
+    $gradleContent = $gradleContent -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$newVersion`""
+    Set-Content $gradleFile $gradleContent -NoNewline
+    Write-Host ""
+    if ($newVersion -ne $currentVersion) {
+        Write-Host "  Version: v$currentVersion -> v$newVersion  (build $currentCode -> $newCode)" -ForegroundColor Magenta
     } else {
-        $newVersion = $currentVersion
-        $newCode    = $currentCode
-        Write-Host "  Skipped version bump. Building as $newVersion (code $newCode)" -ForegroundColor DarkGray
+        Write-Host "  Version: v$newVersion  (build $currentCode -> $newCode)" -ForegroundColor Magenta
     }
 } else {
-    # No bump flag passed — ask if user wants to tag/version this build
-    Write-Host "[0/5] Current version: $currentVersion (code $currentCode)" -ForegroundColor Yellow
-    $tagChoice = Read-Host "  Bump version before building? (major/minor/patch/hotfix/N)"
-    switch -Regex ($tagChoice.Trim().ToLower()) {
-        '^ma'    { $major++; $minor = 0; $patch = 0; $hotfixNum = 0; $bumped = $true }
-        '^mi'    { $minor++; $patch = 0; $hotfixNum = 0; $bumped = $true }
-        '^p'     { $patch++; $hotfixNum = 0; $bumped = $true }
-        '^h'     { $hotfixNum++; $bumped = $true }
-        default  { $bumped = $false }
-    }
-    if ($bumped) {
-        $newBase = "$major.$minor.$patch"
-        if ($hotfixNum -gt 0) {
-            $newVersion = "$newBase-hotfix.$hotfixNum"
-        } else {
-            $newVersion = $newBase
-        }
-        $newCode = $currentCode + 1
-        $gradleContent = $gradleContent -replace 'versionCode\s*=\s*\d+', "versionCode = $newCode"
-        $gradleContent = $gradleContent -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$newVersion`""
-        Set-Content $gradleFile $gradleContent -NoNewline
-        Write-Host "  Version bumped -> $newVersion (code $newCode)" -ForegroundColor Magenta
-    } else {
-        $newVersion = $currentVersion
-        $newCode    = $currentCode
-        Write-Host "  No bump. Building as $newVersion (code $newCode)" -ForegroundColor DarkGray
-    }
+    Write-Host ""
+    Write-Host "  Version: v$newVersion (build $newCode) -- no change" -ForegroundColor DarkGray
 }
 Write-Host ""
 
-# ── 1. Locate ADB (skip if -NoDeploy) ────────────────────────────────────────
-$ADB = $null
-if (-not $NoDeploy) {
-    Write-Host "[1/5] Locating ADB..." -ForegroundColor Yellow
-
-    # Common locations
-    $adbCmd = Get-Command adb -ErrorAction SilentlyContinue
-    $candidates = @(
-        $(if ($adbCmd) { $adbCmd.Source }),
-        "$env:ANDROID_HOME\platform-tools\adb.exe",
-        "$env:ANDROID_SDK_ROOT\platform-tools\adb.exe",
-        "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe",
-        "C:\Android\Sdk\platform-tools\adb.exe"
-    )
-    foreach ($c in $candidates) {
-        if ($c -and (Test-Path $c)) { $ADB = $c; break }
-    }
-
-    if (-not $ADB) {
-        Write-Host "  WARNING: adb not found. Build will proceed but APK will NOT be deployed." `
-                   -ForegroundColor DarkYellow
-        Write-Host "  Set ANDROID_HOME or add platform-tools to PATH." -ForegroundColor DarkGray
-        $NoDeploy = $true
-    } else {
-        Write-Host "  ADB: $ADB" -ForegroundColor DarkGray
-        # Derive ANDROID_HOME from ADB path (…\platform-tools\adb.exe -> …)
-        $SdkDir = Split-Path (Split-Path $ADB)
-        if (-not $env:ANDROID_HOME) {
-            $env:ANDROID_HOME = $SdkDir
-            Write-Host "  ANDROID_HOME set to: $SdkDir" -ForegroundColor DarkGray
-        }
-    }
-} else {
-    Write-Host "[1/5] Skipping ADB check (-NoDeploy)" -ForegroundColor DarkGray
-}
-
-# ── 2. Check Java ─────────────────────────────────────────────────────────────
-Write-Host ""
-Write-Host "[2/5] Checking Java..." -ForegroundColor Yellow
+# ── 1. Check Java ─────────────────────────────────────────────────────────────
+Write-Host "[1/4] Checking Java..." -ForegroundColor Yellow
 $javaCmd = Get-Command java -ErrorAction SilentlyContinue
-$Java = if ($javaCmd) { $javaCmd.Source } else { $null }
+$Java    = if ($javaCmd) { $javaCmd.Source } else { $null }
 if (-not $Java) {
-    Write-Host "ERROR: Java not found. Install JDK 17+ (required by Gradle)." -ForegroundColor Red
+    Write-Host "ERROR: Java not found. Install JDK 17+." -ForegroundColor Red
     exit 1
 }
-$javaVersion = & { $ErrorActionPreference = 'Continue'; java -version 2>&1 } | ForEach-Object { "$_" } | Select-String "version" | Select-Object -First 1
+$javaVersion = & { $ErrorActionPreference = 'Continue'; java -version 2>&1 } |
+               ForEach-Object { "$_" } | Select-String "version" | Select-Object -First 1
 Write-Host "  $javaVersion" -ForegroundColor DarkGray
+$env:JAVA_HOME = Split-Path (Split-Path $Java)
+Write-Host "  JAVA_HOME: $($env:JAVA_HOME)" -ForegroundColor DarkGray
 
-# Derive JAVA_HOME from the java executable so Gradle uses this JDK
-$JavaHome = (Split-Path (Split-Path $Java))   # …\bin\java.exe → …\bin → …
-$env:JAVA_HOME = $JavaHome
-Write-Host "  JAVA_HOME set to: $JavaHome" -ForegroundColor DarkGray
-
-# ── 3. Build APK ──────────────────────────────────────────────────────────────
+# ── 2. Build ──────────────────────────────────────────────────────────────────
 Write-Host ""
-$buildVariant = if ($Release) { "Release" } else { "Debug" }
-Write-Host "[3/5] Building $buildVariant APK..." -ForegroundColor Yellow
+$gradleTask = if ($isRelease) { "assembleRelease" } else { "assembleDebug" }
+$buildLabel = if ($isRelease) { "Release APK" } else { "Debug APK" }
+Write-Host "[2/4] Building $buildLabel..." -ForegroundColor Yellow
 Write-Host "  (Chaquopy will download Python packages on first build - may take a while)" `
            -ForegroundColor DarkGray
 
 Push-Location $Root
-$gradleTask = if ($Release) { "assembleRelease" } else { "assembleDebug" }
-# Redirect stderr→stdout so pip/Chaquopy warnings don't trigger PowerShell error handling.
-# Build success/failure is determined solely by $LASTEXITCODE (Gradle exit code).
 & $GradleW $gradleTask 2>&1
 $exitCode = $LASTEXITCODE
 Pop-Location
@@ -207,55 +198,50 @@ if ($exitCode -ne 0) {
     exit $exitCode
 }
 
-# Locate the output APK
-$apkSubdir = if ($Release) { "release" } else { "debug" }
-$apkPattern = if ($Release) { "*.apk" } else { "*-debug.apk" }
-$ApkPath = Get-ChildItem (Join-Path $Root "app\build\outputs\apk\$apkSubdir") `
-               -Filter $apkPattern -ErrorAction SilentlyContinue |
-           Sort-Object LastWriteTime -Descending |
-           Select-Object -First 1
+$apkSubdir  = if ($isRelease) { "release" } else { "debug" }
+$apkPattern = if ($isRelease) { "*.apk" } else { "*-debug.apk" }
+$ApkPath    = Get-ChildItem (Join-Path $Root "app\build\outputs\apk\$apkSubdir") `
+                  -Filter $apkPattern -ErrorAction SilentlyContinue |
+              Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
 if (-not $ApkPath) {
-    Write-Host "ERROR: Could not find built APK in app/build/outputs/apk/$apkSubdir" `
-               -ForegroundColor Red
+    Write-Host "ERROR: Could not find APK in app/build/outputs/apk/$apkSubdir" -ForegroundColor Red
     exit 1
 }
-
 $apkSizeMB = [math]::Round($ApkPath.Length / 1MB, 1)
-Write-Host "  Built: $($ApkPath.Name)  ($($apkSizeMB) MB)" -ForegroundColor Green
-Write-Host "  Path : $($ApkPath.FullName)" -ForegroundColor DarkGray
+Write-Host "  Built : $($ApkPath.Name)  ($apkSizeMB MB)" -ForegroundColor Green
+Write-Host "  Path  : $($ApkPath.FullName)" -ForegroundColor DarkGray
 
-# ── 4. Deploy via ADB ─────────────────────────────────────────────────────────
+# ── 3. Deploy via ADB ─────────────────────────────────────────────────────────
 Write-Host ""
 if ($NoDeploy) {
-    Write-Host "[4/5] Skipping deploy (-NoDeploy). Copy the APK manually:" -ForegroundColor DarkGray
+    Write-Host "[3/4] Skipping deploy (-NoDeploy)." -ForegroundColor DarkGray
     Write-Host "  $($ApkPath.FullName)" -ForegroundColor White
+} elseif (-not $ADB) {
+    Write-Host "[3/4] ADB not found -- skipping install." -ForegroundColor DarkYellow
 } else {
-    Write-Host "[4/5] Deploying to device..." -ForegroundColor Yellow
+    Write-Host "[3/4] Deploying to device..." -ForegroundColor Yellow
 
-    # List connected devices (adb prints daemon startup to stderr; suppress with Continue)
     $devices = & { $ErrorActionPreference = 'Continue'; & $ADB devices 2>&1 } |
                ForEach-Object { "$_" } |
                Select-String "device$" |
                ForEach-Object { ($_ -split "\s+")[0] }
 
     if (-not $devices) {
-        Write-Host "  WARNING: No devices/emulators connected. Skipping install." `
-                   -ForegroundColor DarkYellow
-        Write-Host "  Connect a device or start an emulator, then run:" -ForegroundColor DarkGray
-        Write-Host "  adb install -r `"$($ApkPath.FullName)`"" -ForegroundColor White
+        Write-Host "  WARNING: No devices connected. Skipping install." -ForegroundColor DarkYellow
+        Write-Host "  Run: adb install -r `"$($ApkPath.FullName)`"" -ForegroundColor White
+    } elseif ($ApkPath.Name -match 'unsigned') {
+        Write-Host "  WARNING: APK is unsigned -- cannot install via ADB." -ForegroundColor DarkYellow
+        Write-Host "  Add a signing config to app/build.gradle.kts." -ForegroundColor DarkGray
     } else {
         $adbArgs = @()
         if ($DeviceSerial) { $adbArgs += @("-s", $DeviceSerial) }
         $adbArgs += @("install", "-r", $ApkPath.FullName)
-
         Write-Host "  Device(s): $($devices -join ', ')" -ForegroundColor DarkGray
         & { $ErrorActionPreference = 'Continue'; & $ADB @adbArgs 2>&1 } | ForEach-Object { "$_" } | Write-Host
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  Installed successfully." -ForegroundColor Green
-
-            # Launch the app
-            $package = "com.marathitts.mobile"
+            $package  = "com.marathitts.mobile"
             $activity = ".MainActivity"
             Write-Host "  Launching $package..." -ForegroundColor DarkGray
             $launchArgs = @()
@@ -269,38 +255,135 @@ if ($NoDeploy) {
     }
 }
 
-# ── 5. Copy APK to backup folder (release builds only) ────────────────────────
+# ── 4. Backup ─────────────────────────────────────────────────────────────────
 Write-Host ""
-if ($Release) {
-    Write-Host "[5/5] Copying APK to backup..." -ForegroundColor Yellow
-    if (-not (Test-Path $BackupDir)) {
-        New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null
-        Write-Host "  Created: $BackupDir" -ForegroundColor DarkGray
-    }
-    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+Write-Host "[4/4] Updating backup folder..." -ForegroundColor Yellow
+if (-not (Test-Path $BackupDir)) {
+    New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null
+    Write-Host "  Created: $BackupDir" -ForegroundColor DarkGray
+}
+
+if ($isRelease) {
+    $timestamp  = Get-Date -Format "yyyyMMdd-HHmmss"
     $backupName = "marathi-tts-v${newVersion}-release-${timestamp}.apk"
     $backupPath = Join-Path $BackupDir $backupName
     Copy-Item $ApkPath.FullName $backupPath -Force
     $backupSizeMB = [math]::Round((Get-Item $backupPath).Length / 1MB, 1)
-    Write-Host "  Copied: $backupName  ($backupSizeMB MB)" -ForegroundColor Green
-    Write-Host "  Path  : $backupPath" -ForegroundColor DarkGray
+    Write-Host "  APK   : $backupName  ($backupSizeMB MB)" -ForegroundColor Green
 
-    # Copy features and bugs docs as .txt to backup folder
-    $docsToCopy = @(
-        @{ Src = (Join-Path $PSScriptRoot "marathi_tts_web\tts_features.md");  Dst = "tts_features.txt" },
-        @{ Src = (Join-Path $PSScriptRoot "BUGS.txt");                          Dst = "bugs.txt" },
-        @{ Src = (Join-Path $PSScriptRoot "FEATURES.txt");                      Dst = "features.txt" }
-    )
-    foreach ($doc in $docsToCopy) {
-        if (Test-Path $doc.Src) {
-            $dstPath = Join-Path $BackupDir $doc.Dst
-            Copy-Item $doc.Src $dstPath -Force
-            Write-Host "  Copied: $($doc.Dst)" -ForegroundColor DarkGray
-        }
+    if ($releaseNotes) {
+        $notesName = "marathi-tts-v${newVersion}-release-${timestamp}.txt"
+        Set-Content (Join-Path $BackupDir $notesName) "v$newVersion`n`n$releaseNotes" -Encoding UTF8
+        Write-Host "  Notes : $notesName" -ForegroundColor DarkGray
     }
+
+    # ── Auto-update CHANGELOG.md ───────────────────────────────────────────
+    $clPath = Join-Path $PSScriptRoot "CHANGELOG.md"
+    if (Test-Path $clPath) {
+        $clRaw   = Get-Content $clPath -Raw -Encoding UTF8
+        $today   = Get-Date -Format "yyyy-MM-dd"
+
+        # Extract any items staged in the [Unreleased] block
+        $unreleasedItems = ""
+        if ($clRaw -match '(?s)## \[Unreleased\]\s*\n(.*?)\n---') {
+            $unreleasedItems = $Matches[1].Trim()
+        }
+
+        # Build new release entry
+        $bumpLabel = switch ($vChoice) {
+            '1' { 'Major release' }
+            '2' { 'Minor release' }
+            '3' { 'Hotfix / patch' }
+        }
+        $newEntry = "## [$newVersion] — $today  (build $newCode)`n### $bumpLabel`n"
+        if ($releaseNotes)     { $newEntry += "- $releaseNotes`n" }
+        if ($unreleasedItems)  { $newEntry += "$unreleasedItems`n" }
+
+        # Clear the [Unreleased] block and insert new release section after it
+        $clRaw = $clRaw -replace '(?s)(## \[Unreleased\]\s*\n).*?(\n---)', "`$1<!-- Changes staged but not yet released go here -->`$2"
+        $clRaw = $clRaw -replace '(\n---\n)(\n## \[)', "`n---`n`n## [$newVersion] — $today  (build $newCode)`n### $bumpLabel`n$(if ($releaseNotes) { "- $releaseNotes`n" })$(if ($unreleasedItems) { "$unreleasedItems`n" })`n---`n`n## ["
+
+        Set-Content $clPath $clRaw -Encoding UTF8 -NoNewline
+        Write-Host "  CHANGELOG.md updated  (v$newVersion added)" -ForegroundColor Green
+    }
+
 } else {
-    Write-Host "[5/5] Skipping backup (debug build -- only release builds are copied)" -ForegroundColor DarkGray
+    Write-Host "  APK   : skipped (not a release build)" -ForegroundColor DarkGray
+}
+
+$docsToCopy = @(
+    @{ Src = (Join-Path $PSScriptRoot "marathi_tts_web\tts_features.md"); Dst = "tts_features.txt" },
+    @{ Src = (Join-Path $PSScriptRoot "BUGS.txt");                        Dst = "bugs.txt" },
+    @{ Src = (Join-Path $PSScriptRoot "FEATURES.txt");                    Dst = "features.txt" },
+    @{ Src = (Join-Path $PSScriptRoot "CHANGELOG.md");                    Dst = "CHANGELOG.md" }
+)
+foreach ($doc in $docsToCopy) {
+    if (Test-Path $doc.Src) {
+        Copy-Item $doc.Src (Join-Path $BackupDir $doc.Dst) -Force
+        Write-Host "  Docs  : $($doc.Dst)" -ForegroundColor DarkGray
+    }
 }
 
 Write-Host ""
-Write-Host "Done. v$newVersion (code $newCode)" -ForegroundColor Cyan
+Write-Host $sep
+Write-Host "  Done.  v$newVersion  (build $newCode)" -ForegroundColor Cyan
+Write-Host $sep
+Write-Host ""
+
+# ── Auto-stage changed files + optional commit ────────────────────────────────
+$gitExe = if (Get-Command git -ErrorAction SilentlyContinue) { "git" } `
+          elseif (Test-Path "C:\Program Files\Git\bin\git.exe") { "C:\Program Files\Git\bin\git.exe" } `
+          else { $null }
+
+if ($gitExe) {
+    Push-Location $PSScriptRoot
+
+    # Stage files that the deploy script may have modified
+    $filesToStage = @(
+        "marathi_tts_mobile/app/build.gradle.kts",
+        "CHANGELOG.md",
+        "BUGS.txt",
+        "FEATURES.txt",
+        "deploy_mobile.ps1",
+        ".github/copilot-instructions.md"
+    )
+    foreach ($f in $filesToStage) {
+        if (Test-Path (Join-Path $PSScriptRoot $f)) {
+            & $gitExe add $f 2>&1 | Out-Null
+        }
+    }
+
+    $staged = & $gitExe diff --cached --name-only 2>&1
+    if ($staged) {
+        Write-Host "Staged for commit:" -ForegroundColor DarkGray
+        $staged | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+        Write-Host ""
+
+        if ($isRelease) {
+            $defaultMsg = "release: v$newVersion$(if ($releaseNotes) { " - $releaseNotes" })"
+        } else {
+            $defaultMsg = "build: v$newVersion (build $newCode)"
+        }
+        $commitMsg = (Read-Host "  Commit message (Enter = `"$defaultMsg`")").Trim()
+        if (-not $commitMsg) { $commitMsg = $defaultMsg }
+
+        & $gitExe commit -m $commitMsg 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+
+        if ($LASTEXITCODE -eq 0 -and $isRelease) {
+            $tag = "v$newVersion"
+            & $gitExe tag $tag 2>&1 | Out-Null
+            Write-Host "  Tagged: $tag" -ForegroundColor Green
+
+            $pushChoice = (Read-Host "  Push to remote? [y/n]").Trim().ToLower()
+            if ($pushChoice -eq 'y') {
+                & $gitExe push 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+                & $gitExe push --tags 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+            }
+        }
+    } else {
+        Write-Host "  Nothing to commit." -ForegroundColor DarkGray
+    }
+
+    Pop-Location
+    Write-Host ""
+}

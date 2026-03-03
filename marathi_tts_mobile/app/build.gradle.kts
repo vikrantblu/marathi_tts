@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -8,12 +10,17 @@ android {
     namespace = "com.marathitts.mobile"
     compileSdk = 34
 
+    // ── Signing config loaded from keystore.properties (not committed to git) ──
+    val keystoreProps = Properties()
+    val keystoreFile = rootProject.file("keystore.properties")
+    if (keystoreFile.exists()) keystoreProps.load(keystoreFile.inputStream())
+
     defaultConfig {
         applicationId = "com.marathitts.mobile"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 10
+        versionName = "5.2.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
@@ -36,6 +43,29 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            if (keystoreProps.isNotEmpty()) {
+                storeFile     = file(keystoreProps["storeFile"] as String)
+                storePassword = keystoreProps["storePassword"] as String
+                keyAlias      = keystoreProps["keyAlias"] as String
+                keyPassword   = keystoreProps["keyPassword"] as String
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig      = signingConfigs.getByName("release")
+            isMinifyEnabled    = true          // R8 code shrinking
+            isShrinkResources  = true          // remove unused resources
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

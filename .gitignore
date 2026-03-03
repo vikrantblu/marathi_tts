@@ -179,3 +179,15 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Android signing — never commit keystores or credentials
+*.jks
+*.keystore
+keystore.properties
+
+# Android / Gradle build cache — never commit these
+.gradle/
+marathi_tts_mobile/.gradle/
+marathi_tts_desktop/.gradle/
+**/build/
+local.properties

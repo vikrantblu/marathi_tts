@@ -27,13 +27,29 @@ Checklist after every structural change:
 
 ---
 
+## RULE 0D — GIT PULL FIRST (before any code change)
+
+**Before making any edit to any file in the workspace, run `git pull` in the
+project root to ensure you are working on the latest code.**
+
+```powershell
+cd d:\marathi_tts
+git pull
+```
+
+If the pull fails (no network, merge conflict, etc.) report the issue to the
+user before proceeding — do not edit files on a potentially stale checkout.
+
+---
+
 ## RULE 0C — CHECK BUGS & FEATURES (read before every task)
 
-**Before starting any coding task, read these three files:**
+**Before starting any coding task, read these four files:**
 
-1. `BUGS.txt` (project root) — known bugs and regressions
-2. `FEATURES.txt` (project root) — planned and shipped features
-3. `marathi_tts_web/tts_features.md` — detailed TTS feature documentation
+1. `CHANGELOG.md` (project root) — full version history: what changed, when, and why
+2. `BUGS.txt` (project root) — known bugs and regressions
+3. `FEATURES.txt` (project root) — planned and shipped features
+4. `marathi_tts_web/tts_features.md` — detailed TTS feature documentation
 
 **Why:** These files track what is broken and what is planned.  When fixing a
 bug or adding a feature, check whether it is already listed.  After completing
@@ -44,6 +60,8 @@ work, update the relevant file:
 - **Feature shipped** → move the entry from Planned to Shipped in `FEATURES.txt`.
 - **New feature planned** → add it to the Planned section of `FEATURES.txt`.
 - **TTS capability changed** → update `marathi_tts_web/tts_features.md`.
+- **Any release** → the deploy script (`deploy_mobile.ps1`) auto-appends to `CHANGELOG.md`;
+  for non-deploy changes, manually add an entry under `## [Unreleased]` in `CHANGELOG.md`.
 
 The deploy script copies these files to `C:\My_Drive_Backup\builds\marathi_tts\`
 on every build, so the backup folder always has the latest snapshot.
@@ -480,53 +498,60 @@ flag is passed.
 
 ### Interactive confirmation
 
-The deploy script **always asks for confirmation** before changing the version:
+Every run of `deploy_mobile.ps1` shows a version menu **before** building:
 
-- **With a bump flag** (`-BumpMinor`, `-BumpPatch`, etc.) — shows the proposed
-  new version and asks `Proceed with version bump? (Y/n)`.  Press Enter or `Y`
-  to accept; anything else skips the bump and builds with the current version.
-- **Without a bump flag** — shows the current version and asks
-  `Bump version before building? (major/minor/patch/hotfix/N)`.  Type the level
-  to bump, or press Enter / `N` to build without changing the version.
+```
+--------------------------------------------
+  Current version: v1.2.3 (build 7)
 
-This ensures you never accidentally bump or forget to bump.
+  Version this build?
+    [1] Major release  (v2.0.0) -- breaking changes, new major feature
+    [2] Minor release  (v1.3.0) -- new features, backward compatible
+    [3] Hotfix/patch   (v1.2.4) -- bug fixes
+    [4] Build only     (v1.2.3 build 8) -- no version bump, just increment build
+    [n] Skip           -- no versioning
 
-### How to bump (deploy script flags)
-
-```powershell
-# Regular feature release (minor bump)
-.\deploy_mobile.ps1 -Release -BumpMinor
-
-# Bug-fix release
-.\deploy_mobile.ps1 -Release -BumpPatch
-
-# Emergency hotfix on current release
-.\deploy_mobile.ps1 -Release -Hotfix
-
-# Major version bump
-.\deploy_mobile.ps1 -Release -BumpMajor
-
-# Build WITHOUT bumping (re-deploy same version)
-.\deploy_mobile.ps1 -Release
+  Choice [1/2/3/4/n]:
+--------------------------------------------
 ```
 
-Each bump flag:
-1. Reads current `versionName` and `versionCode` from `build.gradle.kts`.
-2. Shows the proposed version and asks for confirmation.
-3. On `Y`: increments `versionCode` by 1 and writes both values back.
-4. On `n`: skips the bump and proceeds with the current version.
+- Choosing **1/2/3** bumps the version, increments `versionCode`, writes back to
+  `build.gradle.kts`, prompts for one-line release notes, and builds a **release APK**.
+- Choosing **4** just increments `versionCode` (build counter) and builds **debug**.
+- Choosing **n** builds the current version without any changes (debug).
+
+The script also lists connected ADB devices at startup before showing the menu.
+
+### How to run
+
+```powershell
+# Normal interactive deploy
+.\deploy_mobile.ps1
+
+# Build only, no device install
+.\deploy_mobile.ps1 -NoDeploy
+
+# Target a specific device
+.\deploy_mobile.ps1 -DeviceSerial <serial>
+```
 
 ### APK backup
 
-Every deploy (debug or release) copies the built APK to:
+Every deploy copies docs to `C:\My_Drive_Backup\builds\marathi_tts\`. APK is only copied for release builds.
 
-```
-C:\My_Drive_Backup\builds\marathi_tts\marathi-tts-v<VERSION>-<variant>-<YYYYMMDD-HHmmss>.apk
-```
+| What | When |
+|------|------|
+| `marathi-tts-v<VERSION>-release-<YYYYMMDD-HHmmss>.apk` | Release builds only |
+| `marathi-tts-v<VERSION>-release-<YYYYMMDD-HHmmss>.txt` | Release builds only (one-line release notes) |
+| `CHANGELOG.md` | Every deploy |
+| `bugs.txt` | Every deploy |
+| `features.txt` | Every deploy |
+| `tts_features.txt` | Every deploy |
 
-Example filenames:
-- `marathi-tts-v1.3.2-release-20260303-143022.apk`
-- `marathi-tts-v1.3.2-hotfix.1-debug-20260303-150511.apk`
+**Note:** The signing key is stored in `marathi_tts_mobile/marathi_tts_release.jks` and
+credentials in `marathi_tts_mobile/keystore.properties`. Both are excluded from git via
+`.gitignore`. The signing config is wired into `app/build.gradle.kts` — release builds
+are automatically signed and installable on device via ADB.
 
 The deploy script also copies these docs to the backup folder as `.txt` files
 (if they exist):
@@ -557,12 +582,13 @@ The deploy script will always push the latest copies to the backup folder.
 ### Release checklist
 
 1. Ensure all tests pass: `python test_all_platforms.py` → `RESULT: ALL PASS`
-2. Decide bump level (major / minor / patch / hotfix).
-3. Run deploy: `.\deploy_mobile.ps1 -Release -Bump<Level>`
-4. Verify the version printed in the script output.
-5. Confirm APK copied to `C:\My_Drive_Backup\builds\marathi_tts\`.
-6. Commit the updated `build.gradle.kts` with message: `release: v<VERSION>`
-7. Tag the commit: `git tag v<VERSION>` and push.
+2. Stage notable unreleased changes under `## [Unreleased]` in `CHANGELOG.md`
+3. Run deploy: `.\deploy_mobile.ps1`
+4. At the menu, choose the appropriate bump level (1/2/3).
+5. Enter a one-line release note when prompted (deploy script auto-updates `CHANGELOG.md`).
+6. Confirm APK copied to `C:\My_Drive_Backup\builds\marathi_tts\`.
+7. Commit the updated `build.gradle.kts` + `CHANGELOG.md` with message: `release: v<VERSION>`
+8. Tag the commit: `git tag v<VERSION>` and push.
 
 ### Hotfix workflow
 
@@ -574,7 +600,7 @@ main ──●──●──●── v1.3.0 ──●── v1.3.1 ──●�
 
 1. Create a branch from the release commit: `git checkout -b hotfix/<base-version>`
 2. Apply the minimal fix.
-3. Deploy with `-Hotfix`: `.\deploy_mobile.ps1 -Release -Hotfix`
+3. Deploy: `.\deploy_mobile.ps1` → choose **[3] Hotfix/patch** at the menu.
 4. Commit + tag: `release: v1.3.0-hotfix.1`
 5. Cherry-pick the fix back to `main` branch.
 
