@@ -10,6 +10,12 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Fixed
 
+- ~~BUG-42 [HIGH] STT file transcription auto-starts microphone instead of processing audio file~~ (fixed [Unreleased] —
+  Android SpeechRecognizer cannot process audio files (mic-only); implemented playback
+  loopback transcription: plays audio through speaker via MediaPlayer while SpeechRecognizer
+  listens via mic with continuous auto-restart, accumulating transcript progressively.
+  Transcribe button toggles to Cancel during playback. Volume auto-boosted for accuracy.)
+
 - ~~BUG-40 [HIGH] STT file transcription shows "pip install openai-whisper" on Android~~ (fixed [Unreleased] —
   stt_bridge.py detects Android/Chaquopy via `sys.getandroidapilevel`; skips Whisper/project_stt stages;
   returns `use_native_stt=true` so Kotlin layer auto-starts Android SpeechRecognizer with helpful Toast)

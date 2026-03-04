@@ -17,6 +17,33 @@ Track feature requests and shipped features here.
 
 ## Shipped
 
+- FEAT-37 Tier 3 UX — Settings Screen + Dark Mode + Draft Persistence. Settings screen
+  (SettingsFragment) with theme toggle (system/light/dark via AppCompatDelegate), default
+  TTS engine selector, default speed/pitch/volume sliders, Clear History, Clear Cache,
+  Reset to Defaults buttons. About section with dynamic BuildConfig version. Nav drawer
+  header shows v{VERSION} from BuildConfig. TTS fragment saves draft text on navigate away
+  and restores on return. TTS sliders initialized from saved preferences. ([Unreleased])
+- FEAT-36 Tier 2 UX — Room DB + Generation History + Stotra Favorites + URL Bookmarks +
+  Batch OCR + Quick Re-generate Chips. Room database (marathi_tts.db) with 4 entities
+  (HistoryEntry, StotraFavorite, UrlBookmark, RecentTtsInput) and KSP annotation processing.
+  History screen (HistoryFragment) with category filter chips and clear-all. HistoryLogger
+  singleton wired to all 10 screens with hash-based dedup. Stotra heart-toggle favorites
+  with "★ Favorites" filter chip. WebFetch recent URL bookmark chips (save on fetch, tap to
+  reuse, close to delete). TTS recent input chips (last 5). Batch OCR multi-image picker
+  with sequential extraction and per-image progress. ([Unreleased])
+- FEAT-35 PDF page-by-page selection — pdf_bridge returns per-page text arrays;
+  NativePdfExtractor returns ExtractionResult with per-page data; PdfViewModel tracks
+  pageTexts, selectedPages, parsePageRange/formatPageRange; fragment_pdf.xml gains a
+  page selection card with range input ("1-5, 8, 10-12") + Select All button;
+  extracted text updates as user changes selection; Send to TTS only sends selected
+  pages. Large PDFs (>12 pages) prompt user to select pages. ([Unreleased])
+- FEAT-34 Copy/Share/Save UX across all 10 mobile screens — OutputActions utility
+  (copyText, shareText, shareAudio, saveTextToDownloads, saveAudioToDownloads);
+  TTS screen: Copy text + Share audio + Save audio; STT/OCR/PDF/WebFetch/Correction/
+  Modi/Emotion/Stotra/BookReader: Copy + Share output text; BookReader gains Send to TTS
+  navigation; Stotra detail text now selectable; FileProvider paths extended for Chaquopy
+  audio files. ([Unreleased])
+
 <!-- Move shipped features here with the version, e.g.:
 - Emotion detection in mobile/desktop bridges (v1.0.0)
 - TTS streaming for long text (v1.0.0)

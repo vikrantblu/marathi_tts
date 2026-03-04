@@ -8,14 +8,6 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ## [Unreleased]
 <!-- Changes staged but not yet released go here -->
-- STT: Fixed audio file picker passing content URI to Python (BUG-34)
-- STT: Added record button stop toggle (BUG-35)
-- STT: Fixed transcript key mismatch — ViewModel read "transcript" but bridge returns "text" (BUG-36)
-- STT: Fixed useNativeStt re-trigger loop on config change (BUG-37)
-- STT: Language spinner now respected for native recording (BUG-38)
-- STT: Human-readable error messages for speech recognizer errors (BUG-39)
-- Version reset to 1.1.0 — previous v5.x–v9.x were inflated by deploy script failures
-
 ---
 
 ## [1.0.0] — 2026-03 (initial release)

@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp") version "1.9.22-1.0.17"
     id("com.chaquo.python")
 }
 
@@ -19,8 +20,8 @@ android {
         applicationId = "com.marathitts.mobile"
         minSdk = 26
         targetSdk = 34
-        versionCode = 15
-        versionName = "2.0.0"
+        versionCode = 16
+        versionName = "3.0.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
@@ -29,6 +30,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     compileOptions {
@@ -148,6 +150,12 @@ dependencies {
 
     // ExifInterface — reads JPEG rotation tags so captured photos are upright
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // Room database
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

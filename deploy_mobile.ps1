@@ -360,7 +360,9 @@ Write-Host $sep
 Write-Host ""
 
 # ── Auto-stage changed files + optional commit ────────────────────────────────
-if ($gitExe) {
+# Only prompt for commit when a version bump was made (choices 1/2/3/4).
+# Choice [n] skips versioning entirely — user can commit manually later.
+if ($gitExe -and $vChoice -ne 'n') {
     Push-Location $PSScriptRoot
 
     # Stage files that the deploy script may have modified

@@ -118,6 +118,8 @@ All fragments are top-level destinations (no Back arrow — drawer shows on ever
 | `modiFragment` | `ui/modi/ModiFragment` | Modi script converter |
 | `stotraFragment` | `ui/stotra/StotraFragment` | Stotra library browser |
 | `bookReaderFragment` | `ui/bookreader/BookReaderFragment` | Book camera + page reader |
+| `historyFragment` | `ui/history/HistoryFragment` | Generation history |
+| `settingsFragment` | `ui/settings/SettingsFragment` | App settings |
 | `testDashboardFragment` | `ui/test/TestDashboardFragment` | Feature test dashboard |
 
 ★ = start destination
@@ -142,6 +144,9 @@ Nav graph file: `res/navigation/nav_graph.xml`
 | `fragment_stotra.xml` | StotraFragment + `item_stotra.xml` (RecyclerView row) |
 | `fragment_book_reader.xml` | BookReaderFragment |
 | `activity_book_camera.xml` | BookCameraActivity |
+| `fragment_history.xml` | HistoryFragment |
+| `item_history.xml` | HistoryAdapter — history entry row |
+| `fragment_settings.xml` | SettingsFragment |
 | `fragment_test_dashboard.xml` | TestDashboardFragment |
 | `item_test_row.xml` | TestDashboardAdapter — result row |
 | `item_test_group_header.xml` | TestDashboardAdapter — group section header |
@@ -159,6 +164,13 @@ Nav graph file: `res/navigation/nav_graph.xml`
 | `NativeImageOcr` | OCR via ML Kit |
 | `BookPageProcessor` | Handles book-photo pipeline |
 | `TextReflow` | Cleans/reflows extracted text |
+
+### Utilities (`util/` package)
+
+| Class | Purpose |
+|-------|---------|
+| `OutputActions` | Static helpers: copyText, shareText, shareAudio (FileProvider), saveTextToDownloads, saveAudioToDownloads (MediaStore for API 29+) |
+| `HistoryLogger` | Fire-and-forget Room DB logger; IO dispatcher; truncates to 2000 chars |
 
 ### Python bridge scripts (called via `PythonBridge`)
 
@@ -715,6 +727,37 @@ T26 (INPUT): Native PDF OCR via embedded Devanagari image
 
 ---
 
+## STT Playback Loopback Transcription (BUG-42)
+
+Android's `SpeechRecognizer` is mic-only — it cannot process audio files.
+Instead of showing an error, the mobile app uses **playback loopback**:
+
+1. User browses an audio file and taps **Transcribe**
+2. Fragment requests mic permission (if not already granted)
+3. `MediaPlayer` plays the audio through the phone speaker (volume auto-boosted to ~80%)
+4. `SpeechRecognizer` listens via mic simultaneously with `EXTRA_PARTIAL_RESULTS`
+5. On each `onResults` callback: text is appended to `accumulatedTranscript`, recognizer
+   auto-restarts (200 ms delay) if `MediaPlayer` is still playing — this gives continuous
+   recognition over long audio
+6. On `onError` (silence timeout, no match): recognizer also auto-restarts if playback continues
+7. When `MediaPlayer.OnCompletionListener` fires: 2 s grace period, then final transcript shown
+8. Transcribe button toggles to **Cancel** during playback loopback; tapping again stops
+   both `MediaPlayer` and `SpeechRecognizer`, keeping any partial transcript
+
+**Limitations:**
+- Accuracy depends on speaker volume and ambient noise
+- Works best with clear Marathi/Hindi speech recordings
+- Long files (>5 min) may have gaps due to recognizer restart latency
+- Not as accurate as Whisper (which runs on desktop/web)
+
+**Key fields in `SttFragment`:**
+- `mediaPlayer: MediaPlayer?` — plays the audio file
+- `isPlaybackTranscribing: Boolean` — loopback mode active flag
+- `accumulatedTranscript: StringBuilder` — progressive transcript accumulator
+- `handler: Handler` — for delayed restart / cleanup callbacks
+
+---
+
 ## Versioning & Release Workflow
 
 ### Version scheme
@@ -854,3 +897,162 @@ main ──●──●──●── v1.3.0 ──●── v1.3.1 ──●�
 5. Cherry-pick the fix back to `main` branch.
 
 ---
+
+## Copy / Share / Save UX (FEAT-34)
+
+All 10 mobile screens now have unified Copy/Share output actions via `OutputActions` utility.
+
+| Screen | Copy | Share | Save | Send to TTS |
+|--------|------|-------|------|-------------|
+| TTS | ✅ text | ✅ audio | ✅ audio→Downloads | — |
+| STT | ✅ transcript | ✅ transcript | — | — |
+| OCR | ✅ text | ✅ text | — | ✅ (existing) |
+| PDF | ✅ text | ✅ text | — | ✅ (existing) |
+| Web Fetch | ✅ text | ✅ text | — | ✅ (existing) |
+| Correction | ✅ corrected | ✅ corrected | — | ✅ (existing) |
+| Modi | ✅ converted | ✅ converted | — | — |
+| Emotion | ✅ analysis | ✅ analysis | — | ✅ (existing) |
+| Stotra | ✅ stotra text | ✅ stotra text | — | ✅ (existing) |
+| BookReader | ✅ text | ✅ text | — | ✅ (NEW) |
+
+**FileProvider paths:** `file_paths.xml` includes `cache-path`, `files-path`, and
+`external-files-path` to cover all possible audio output locations (including
+Chaquopy-generated files under `getFilesDir()`).
+
+**Icons:** `ic_content_copy_24.xml`, `ic_share_24.xml`, `ic_download_24.xml` (Material
+vector drawables, `?attr/colorOnSurface` tint).
+
+---
+
+## PDF Page Selection (FEAT-35)
+
+**Problem:** Large PDFs (100+ pages) are not feasible for full TTS. Users need to choose
+which pages to listen to.
+
+**Flow:**
+1. Browse PDF → Extract → all pages extracted with per-page text
+2. Page selection card appears showing "{N} Pages" with a range input field
+3. Pre-filled with all pages for small PDFs (≤12), prompts selection for larger ones
+4. User types ranges like "1-5, 8, 10-12" — extracted text preview updates live
+5. "Send to TTS" only sends selected pages' text
+
+**Architecture:**
+
+- `pdf_bridge.py`: `extract_pdf()` returns `pages: List[str]` (per-page text) alongside `text`
+- `NativePdfExtractor.kt`: `extractPages()` returns `ExtractionResult(combinedText, pageTexts, pageCount)`
+- `PdfState`: `pageTexts: List<String>`, `selectedPages: Set<Int>` (1-indexed), `pageCount: Int`
+- `PdfViewModel`: `setPageRange(rangeText)`, `selectAllPages()`, `getSelectedText()`,
+  `parsePageRange()` / `formatPageRange()` (companion object, static)
+- `fragment_pdf.xml`: page selection card with `page_range_input`, `select_all_btn`,
+  `selected_pages_label`, `page_count_label`
+
+---
+
+## Tier 2 UX — Room DB + History + Favorites + Bookmarks + Batch OCR (FEAT-36)
+
+### Room Database
+
+**File:** `data/AppDatabase.kt` — singleton "marathi_tts.db", version 1  
+**Plugin:** KSP 1.9.22-1.0.17 + Room 2.6.1
+
+| Entity | PK | Fields |
+|--------|-----|--------|
+| `HistoryEntry` | id (autoGenerate) | category, inputText, outputText, audioPath?, engine?, timestamp |
+| `StotraFavorite` | stotraId (String) | title, titleEn, deity, timestamp |
+| `UrlBookmark` | id (autoGenerate) | url, title?, timestamp |
+| `RecentTtsInput` | id (autoGenerate) | text, timestamp |
+
+| DAO | Key methods |
+|-----|-------------|
+| `HistoryDao` | getAll(), getByCategory(), insert(), delete(), deleteAll(), trimOld(keep 200) |
+| `StotraFavoriteDao` | getAll(), getAllIds(), isFavorite(), insert(), delete() |
+| `UrlBookmarkDao` | getRecent(limit 20), insert(REPLACE), deleteByUrl(), trimOld() |
+| `RecentTtsInputDao` | getRecent(limit 5), insert(), deleteByText(), trimOld() |
+
+### History Screen
+
+- `ui/history/HistoryFragment` → nav ID `historyFragment` in drawer
+- Filter chips: All / TTS / STT / OCR / Stotra / Other (groups PDF/WEB/CORRECTION/MODI/EMOTION/BOOK_READER)
+- Tap entry → options dialog (copy / share / send to TTS)
+- Clear All button with confirmation dialog
+
+### HistoryLogger
+
+`util/HistoryLogger.kt` — fire-and-forget singleton, IO dispatcher, truncates to 2000 chars.
+Wired to all 10 screens with hash-based dedup (each fragment stores `lastLoggedXxxHash`).
+
+### Stotra Favorites
+
+Heart icon toggle on each stotra in list + detail view. `StotraFavoriteDao` persists.
+"★ Favorites" chip in StotraFragment filters to favorites only.
+
+### URL Bookmarks (WebFetch)
+
+Recent fetched URLs shown as chips (up to 8). Tap to fill URL field, close icon to delete.
+Saved on successful fetch via `UrlBookmarkDao`.
+
+### Quick Re-generate Chips (TTS)
+
+Last 5 TTS inputs shown as Material chips below text input. Tap to fill, close to delete.
+Saved on generate via `RecentTtsInputDao`.
+
+### Batch OCR
+
+`batch_btn` in fragment_ocr.xml launches `GetMultipleContents("image/*")`.
+`OcrViewModel.extractBatch()` processes images sequentially with progress status
+("Batch: N / M"). Results concatenated with "--- Image N ---" separators.
+
+---
+
+## Tier 3 UX — Settings + Dark Mode + Draft Persistence (FEAT-37)
+
+### Settings Screen
+
+**Fragment:** `ui/settings/SettingsFragment` → nav ID `settingsFragment` in drawer  
+**Layout:** `fragment_settings.xml`  
+**Prefs helper:** `util/AppPreferences.kt` — SharedPreferences wrapper (`marathi_tts_prefs`)
+
+| Section | Controls |
+|---------|----------|
+| Appearance | Theme spinner (System/Light/Dark) — applies via `AppCompatDelegate.setDefaultNightMode()` |
+| TTS Defaults | Engine spinner (Auto/Edge-TTS/gTTS/Native), Speed/Pitch/Volume sliders |
+| Data Management | Clear History (Room), Clear Cache (cacheDir + output/), Reset to Defaults |
+| About | App icon, name, version from `BuildConfig`, feature summary |
+
+### AppPreferences keys
+
+| Key | Type | Default | Used by |
+|-----|------|---------|---------|
+| `theme_mode` | String | `"system"` | MainActivity (onCreate), SettingsFragment |
+| `default_engine` | String | `"auto"` | SettingsFragment, TtsFragment (future) |
+| `default_speed` | Float | `1.0` | TtsFragment (slider init) |
+| `default_pitch` | Float | `1.0` | TtsFragment (slider init) |
+| `default_volume` | Float | `1.0` | TtsFragment (slider init) |
+| `tts_draft_text` | String | `""` | TtsFragment (onPause save / onViewCreated restore) |
+
+### Dark Mode
+
+- Theme parent: `Theme.Material3.DayNight.NoActionBar`
+- Light colors: `values/colors.xml` (Saffron #E65C00 primary)
+- Dark colors: `values-night/colors.xml` (auto-generated M3 dark scheme)
+- Applied in `MainActivity.onCreate()` before `super.onCreate()`
+
+### Dynamic Version
+
+Nav drawer header (`nav_header.xml`) has `nav_version_text` TextView.
+`MainActivity` sets it to `"v${BuildConfig.VERSION_NAME}"` after view creation.
+`buildConfig = true` enabled in `build.gradle.kts` buildFeatures.
+
+### TTS Draft Persistence
+
+- `TtsFragment.onPause()` saves current text to `AppPreferences.setTtsDraft()`
+- `TtsFragment.onViewCreated()` restores draft if no `tts_text` argument was passed
+- Slider defaults (speed/pitch/volume) loaded from AppPreferences on fragment creation
+
+### Icons
+
+| File | Purpose |
+|------|---------|
+| `ic_settings.xml` | Material gear icon for drawer menu |
+| `ic_clear_cache.xml` | Calendar/clear icon for Clear Cache button |
+| `ic_reset.xml` | Circular arrow icon for Reset to Defaults |
