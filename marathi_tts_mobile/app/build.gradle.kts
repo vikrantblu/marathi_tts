@@ -19,8 +19,8 @@ android {
         applicationId = "com.marathitts.mobile"
         minSdk = 26
         targetSdk = 34
-        versionCode = 14
-        versionName = "9.0.0"
+        versionCode = 15
+        versionName = "2.0.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")

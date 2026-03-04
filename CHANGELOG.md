@@ -8,52 +8,17 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ## [Unreleased]
 <!-- Changes staged but not yet released go here -->
----
-
-## [5.2.0] — 2026-03-03  (build 10)
-### Added
-- Interactive version menu in deploy script: shows all connected ADB devices before build
-- Version menu choices: Major / Minor / Hotfix-patch / Build-only / Skip
-- Release notes prompt on every release build; saved as `.txt` alongside APK in backup
-- Git pull step at start of every deploy run
-
-### Changed
-- Deploy script fully rewritten; release APK is now signed automatically
-- APK backup now only runs for release builds (not debug)
-- Bug/feature docs (`bugs.txt`, `features.txt`, `tts_features.txt`) copied to backup on every deploy
+- STT: Fixed audio file picker passing content URI to Python (BUG-34)
+- STT: Added record button stop toggle (BUG-35)
+- STT: Fixed transcript key mismatch — ViewModel read "transcript" but bridge returns "text" (BUG-36)
+- STT: Fixed useNativeStt re-trigger loop on config change (BUG-37)
+- STT: Language spinner now respected for native recording (BUG-38)
+- STT: Human-readable error messages for speech recognizer errors (BUG-39)
+- Version reset to 1.1.0 — previous v5.x–v9.x were inflated by deploy script failures
 
 ---
 
-## [5.0.0] — 2026-03  (build 8)
-### Added
-- Android signing config wired into `app/build.gradle.kts` via `keystore.properties`
-- Keystore excluded from git (`.jks`, `keystore.properties` in `.gitignore`)
-- `BUGS.txt` and `FEATURES.txt` created for project-level tracking
-- RULE 0C: AI must read tracking files before every task and update after
-
-### Fixed
-- `INSTALL_PARSE_FAILED_NO_CERTIFICATES` — release APK was unsigned; signing config added
-- Deploy script syntax error (stray `}` at line 302) — script fully rewritten
-
----
-
-## [1.3.x] — (earlier builds)
-### Added
-- **TTS Streaming**: Marathi prose > 250 chars auto-routes to `generateAudioStreaming()`;
-  sentences chunked in parallel; `AudioPlayerService.playQueueAsync()` plays queue
-- **Emotion Detection** (`emotion_bridge.py`): returns `emotion`, `score`, `dominant`,
-  `intensity`, `voice_params`, `scores`, `success`; 10 categories including `devotional`
-  and `peaceful`
-- **ZWNJ cha fix**: gTTS y-glide on word-internal `-cha` suffix fixed by inserting ZWNJ
-  after G2P stage in `marathi_phonetics.py` (all 3 platforms) and `tts_bridge.py`
-- **OCR → TTS pipeline** (T25): Devanagari image → ML Kit OCR → TTS → audio
-- **Native PDF OCR** (T26): Devanagari bitmap in PDF → `NativePdfExtractor` → text
-- **Mobile test T23**: sad emotion detection (`emotion=sad`, `score>0`)
-- **Mobile test T24**: 3-sentence streaming → 3 chunks all succeed
-
----
-
-## [1.0.0] — (initial release)
+## [1.0.0] — 2026-03 (initial release)
 ### Added
 - Marathi TTS engine (3 platforms: Web/Django, Desktop/JavaFX, Mobile/Android)
 - Phonetic engine: Modern Marathi, Old Marathi (Sant literature), Sanskrit modes

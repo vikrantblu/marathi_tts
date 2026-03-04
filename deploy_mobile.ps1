@@ -392,17 +392,17 @@ if ($gitExe) {
         $commitMsg = (Read-Host "  Commit message (Enter = `"$defaultMsg`")").Trim()
         if (-not $commitMsg) { $commitMsg = $defaultMsg }
 
-        & $gitExe commit -m $commitMsg 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+        & { $ErrorActionPreference = 'Continue'; & $gitExe commit -m $commitMsg 2>&1 } | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
 
         if ($LASTEXITCODE -eq 0 -and $isRelease) {
             $tag = "v$newVersion"
-            & $gitExe tag $tag 2>&1 | Out-Null
+            & { $ErrorActionPreference = 'Continue'; & $gitExe tag $tag 2>&1 } | Out-Null
             Write-Host "  Tagged: $tag" -ForegroundColor Green
 
             $pushChoice = (Read-Host "  Push to remote? [y/n]").Trim().ToLower()
             if ($pushChoice -eq 'y') {
-                & $gitExe push 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
-                & $gitExe push --tags 2>&1 | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+                & { $ErrorActionPreference = 'Continue'; & $gitExe push 2>&1 } | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
+                & { $ErrorActionPreference = 'Continue'; & $gitExe push --tags 2>&1 } | ForEach-Object { "  $_" } | Write-Host -ForegroundColor DarkGray
             }
         }
     } else {

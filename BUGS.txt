@@ -10,7 +10,12 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Fixed
 
-- ~~BUG-18 [HIGH] G2P _process_anusvara() was a no-op~~ (fixed [Unreleased] —
+- ~~BUG-34 [CRITICAL] STT audio file picker passed content URI to Python — os.path.exists() always failed~~ (fixed [Unreleased] — copyUriToCache() copies content stream to cache file, matching PdfFragment/OcrFragment pattern)
+- ~~BUG-35 [HIGH] STT Record button had no stop toggle — tapping "Stop" restarted recognizer~~ (fixed [Unreleased] — isRecording flag + toggleRecording() start/stop logic)
+- ~~BUG-36 [HIGH] STT ViewModel read "transcript" key but Python bridge returns "text"~~ (fixed [Unreleased] — parseResult reads "text" with "transcript" fallback)
+- ~~BUG-37 [MEDIUM] STT useNativeStt observer could re-trigger recording infinitely on reobserve~~ (fixed [Unreleased] — clearNativeSttFlag() resets flag after first trigger)
+- ~~BUG-38 [LOW] STT native recognizer hardcoded to mr-IN regardless of language spinner~~ (fixed [Unreleased] — uses selected language spinner to set BCP-47 locale)
+- ~~BUG-39 [LOW] STT error codes shown as raw integers~~ (fixed [Unreleased] — human-readable error messages for all SpeechRecognizer error codes)
   implemented with mode gating: preserve mode for gTTS compat, assimilate mode for edge-tts)
 - ~~BUG-19 [HIGH] G2P _apply_schwa_rules() was essentially a no-op~~ (fixed [Unreleased] —
   implemented with gtts/explicit mode gating; explicit mode logs word-final consonants)
