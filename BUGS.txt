@@ -10,6 +10,13 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Fixed
 
+- ~~BUG-40 [HIGH] STT file transcription shows "pip install openai-whisper" on Android~~ (fixed [Unreleased] —
+  stt_bridge.py detects Android/Chaquopy via `sys.getandroidapilevel`; skips Whisper/project_stt stages;
+  returns `use_native_stt=true` so Kotlin layer auto-starts Android SpeechRecognizer with helpful Toast)
+- ~~BUG-41 [MEDIUM] APK "not supported" on 32-bit ARM phones~~ (fixed [Unreleased] —
+  added armeabi-v7a and x86 to ndk abiFilters; added `uses-feature required=false` for camera,
+  autofocus, microphone, telephony to prevent implicit hardware requirements)
+
 - ~~BUG-34 [CRITICAL] STT audio file picker passed content URI to Python — os.path.exists() always failed~~ (fixed [Unreleased] — copyUriToCache() copies content stream to cache file, matching PdfFragment/OcrFragment pattern)
 - ~~BUG-35 [HIGH] STT Record button had no stop toggle — tapping "Stop" restarted recognizer~~ (fixed [Unreleased] — isRecording flag + toggleRecording() start/stop logic)
 - ~~BUG-36 [HIGH] STT ViewModel read "transcript" key but Python bridge returns "text"~~ (fixed [Unreleased] — parseResult reads "text" with "transcript" fallback)

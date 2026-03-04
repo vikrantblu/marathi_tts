@@ -23,7 +23,7 @@ android {
         versionName = "2.0.0"
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "x86_64")
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
         }
     }
 
@@ -84,7 +84,8 @@ chaquopy {
             install("beautifulsoup4==4.12.2")
             install("PyPDF2==3.0.1")
             install("pydub==0.25.1")
-            install("click==8.2.1")           // required by typer (indic-transliteration dep)
+            install("click==8.1.7")           // gTTS needs <8.2; typer 0.9.x accepts this
+            install("typer==0.9.4")            // pinned: 0.9.x accepts click<9; 0.24+ needs >=8.2.1
             install("indic-transliteration==2.3.39")
             // Note: Pillow requires native zlib on build host - not available via Windows venv.
             // Image OCR in web_bridge.py is skipped gracefully when PIL is absent.
