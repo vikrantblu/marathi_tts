@@ -1,0 +1,47 @@
+name: TTS Engine Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  # Allow triggering manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Offline Pronunciation Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # Core engine tests use only stdlib + internal tts packages —
+      # install only the lightweight deps that the engine modules actually need.
+      - name: Install CI dependencies
+        run: pip install -r .github/ci-requirements.txt
+
+      - name: Run offline platform tests
+        run: python test_all_platforms.py
+
+      - name: Upload test log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output
+          path: |
+            marathi_tts_web/tts/
+            marathi_tts_desktop/python_bridge/tts/
+            marathi_tts_mobile/app/src/main/python/tts/
+          retention-days: 7

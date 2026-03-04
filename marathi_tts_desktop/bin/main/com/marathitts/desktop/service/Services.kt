@@ -121,6 +121,16 @@ class SttService(private val projectRoot: String? = null) {
             )
         }
 
+    /** Transcribe any-length audio with auto format conversion and chunking fallback. */
+    fun transcribeLong(audioPath: String, language: String = "mr"): Task<Map<String, Any?>> =
+        object : Task<Map<String, Any?>>() {
+            override fun call() = PythonBridge.run(
+                "stt_bridge.py",
+                listOf("transcribe-long", "--audio", audioPath, "--language", language),
+                projectRoot
+            )
+        }
+
     fun recordAndTranscribe(durationSeconds: Int = 5, language: String = "mr"): Task<Map<String, Any?>> =
         object : Task<Map<String, Any?>>() {
             override fun call() = PythonBridge.run(

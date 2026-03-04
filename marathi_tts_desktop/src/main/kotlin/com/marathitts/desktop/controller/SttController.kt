@@ -72,7 +72,7 @@ class SttController : Initializable {
         val fc = FileChooser().apply {
             title = "Select Audio File"
             extensionFilters += FileChooser.ExtensionFilter(
-                "Audio Files", "*.wav", "*.mp3", "*.m4a", "*.ogg", "*.flac"
+                "Audio Files", "*.wav", "*.mp3", "*.m4a", "*.aac", "*.ogg", "*.flac", "*.mp4", "*.wma"
             )
         }
         val file = fc.showOpenDialog(outputArea.scene.window) ?: return
@@ -88,17 +88,18 @@ class SttController : Initializable {
         val langDisplay = languageCombo.value ?: "mr (Marathi)"
         val lang = LANGUAGE_CODES[langDisplay] ?: "mr"
 
-        setStatus("Transcribing audio…", busy = true)
+        setStatus("Converting & transcribing audio…", busy = true)
         transcribeBtn.isDisable = true
 
-        val task = SttService(projectRoot?.invoke()).transcribe(file.absolutePath, lang)
+        val task = SttService(projectRoot?.invoke()).transcribeLong(file.absolutePath, lang)
         task.setOnSucceeded {
             val result = task.value
             transcribeBtn.isDisable = false
             if (result["success"] == true) {
                 val text = result["text"] as? String ?: ""
+                val chunkCount = (result["chunk_count"] as? Number)?.toInt() ?: 1
+                val engine = result["engine"] as? String ?: ""
                 val duration = result["duration_seconds"]
-                val model = result["model"] as? String ?: "whisper"
 
                 @Suppress("UNCHECKED_CAST")
                 val segs = result["segments"] as? List<Map<String, Any?>> ?: emptyList()
@@ -112,10 +113,16 @@ class SttController : Initializable {
                 Platform.runLater {
                     outputArea.text = text
                     segmentsArea.text = segText
-                    engineLabel.text = "Engine: $model  |  Duration: ${duration ?: "?"}s"
+                    engineLabel.text = buildString {
+                        if (engine.isNotEmpty()) append(engine)
+                        if (chunkCount > 1) append("  •  $chunkCount chunks")
+                        if (duration != null) append("  •  ${"%.1f".format((duration as Number).toDouble())}s")
+                    }
                     sendToTtsBtn.isDisable = text.isBlank()
+                    copyBtn.isDisable = text.isBlank()
                 }
-                setStatus("Transcription complete ✓")
+                val chunkInfo = if (chunkCount > 1) " ($chunkCount chunks)" else ""
+                setStatus("Transcription complete ✓$chunkInfo")
             } else {
                 setStatus("Error: ${result["error"]}")
             }

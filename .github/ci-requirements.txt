@@ -1,0 +1,18 @@
+# CI requirements for test_all_platforms.py
+#
+# The core TTS engine (sandhi, metre, phonetics, prosody, G2P constants)
+# uses the Python standard library only — no third-party packages are needed
+# to run the offline pronunciation test suite.
+#
+# Optional packages below give fuller test coverage:
+#   • Morfessor  — enables statistical morpheme segmentation (Section K)
+#                  without it, MarathiMorphologicalAnalyzer falls back to
+#                  rule-based only (still tested)
+#   • indicnlp   — enables TextNormalizer / GrammarEngine / number_to_words
+#                  tests (Sections I, J, K); without it those sections are
+#                  automatically SKIPPED (not failed)
+#
+# Heavy packages (torch, tensorflow, gTTS, pydub, librosa, etc.) are NOT
+# needed here — they are only required for the production web server.
+
+Morfessor>=2.0.6

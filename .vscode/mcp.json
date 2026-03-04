@@ -1,0 +1,12 @@
+{
+    "servers": {
+        "marathi-tts": {
+            "type": "stdio",
+            "command": "python",
+            "args": [
+                "${workspaceFolder}/.github/mcp/marathi_tts_mcp.py"
+            ],
+            "description": "Project-specific Copilot tools for the Marathi TTS workspace"
+        }
+    }
+}

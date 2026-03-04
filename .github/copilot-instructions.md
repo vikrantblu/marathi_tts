@@ -42,6 +42,31 @@ user before proceeding — do not edit files on a potentially stale checkout.
 
 ---
 
+## CI / GitHub Setup
+
+**Workflow file:** `.github/workflows/test.yml`  
+**CI requirements:** `.github/ci-requirements.txt`  
+**Setup guide:** `.github/SETUP_GITHUB.md`
+
+The GitHub Actions workflow runs `test_all_platforms.py` automatically on every push
+and pull request against `main`/`master`/`develop`.
+
+- **Runner:** `ubuntu-latest` (Python 3.11)
+- **Dependencies:** Only `Morfessor` (lightweight); all heavy ML deps are skipped by
+  the test's `except ModuleNotFoundError` guards.
+- **Sections I/J/K** (TextNormalizer, GrammarEngine, number_to_words) skip gracefully
+  without `indicnlp` — they do NOT fail CI.
+
+**`test_all_platforms.py` path handling:** The script now uses `_ROOT = os.path.dirname(
+os.path.abspath(__file__))` to compute all platform paths dynamically — works on both
+Windows (`d:\marathi_tts\`) and the CI Linux runner.
+
+**Copilot coding agent:** Once the repo is on GitHub, create Issues for planned features
+(from `FEATURES.txt`), assign them to Copilot, and it will open a PR. CI auto-runs on
+the PR and Copilot self-corrects on test failures.
+
+---
+
 ## RULE 0C — CHECK BUGS & FEATURES (read before every task)
 
 **Before starting any coding task, read these four files:**

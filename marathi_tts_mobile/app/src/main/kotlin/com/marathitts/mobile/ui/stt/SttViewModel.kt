@@ -18,6 +18,8 @@ data class SttState(
     val segments: List<String> = emptyList(),
     val engine: String = "",
     val useNativeStt: Boolean = false,
+    val nativeAudioPath: String? = null,
+    val nativeChunks: List<String> = emptyList(),
     val error: String? = null,
     val status: String = "Ready"
 )
@@ -32,11 +34,11 @@ class SttViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun transcribeFile(audioPath: String, language: String = "mr") {
-        _state.value = SttState(isLoading = true, status = "Transcribing audio…")
+        _state.value = SttState(isLoading = true, status = "Preparing audio\u2026")
         viewModelScope.launch {
             val result: JSONObject = withContext(Dispatchers.IO) {
                 PythonBridge.call(
-                    "stt_bridge", "transcribe",
+                    "stt_bridge", "transcribe_long_audio",
                     args = listOf(audioPath, language)
                 )
             }
@@ -64,9 +66,21 @@ class SttViewModel(app: Application) : AndroidViewModel(app) {
         if (PythonBridge.isSuccess(result)) {
             // Check if native Android STT should be used instead
             if (result.optBoolean("use_native_stt", false)) {
+                val audioPath = result.optString("audio_path", "").takeIf { it.isNotEmpty() }
+                val chunksJson = result.optJSONArray("chunks")
+                val chunks = mutableListOf<String>()
+                if (chunksJson != null) {
+                    for (i in 0 until chunksJson.length()) chunks.add(chunksJson.optString(i))
+                }
+                if (chunks.isEmpty() && audioPath != null) chunks.add(audioPath)
                 _state.value = SttState(
                     useNativeStt = true,
-                    status = "Using Android speech recognizer"
+                    nativeAudioPath = chunks.firstOrNull() ?: audioPath,
+                    nativeChunks = chunks,
+                    status = if (chunks.size > 1)
+                        "Using Android recognizer (${chunks.size} chunks)"
+                    else
+                        "Using Android speech recognizer"
                 )
                 return
             }
@@ -84,7 +98,7 @@ class SttViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
             _state.value = SttState(
-                transcript = result.optString("transcript", ""),
+                transcript = result.optString("text", ""),
                 segments = segList,
                 engine = result.optString("engine", ""),
                 status = "Transcription complete ✓"
@@ -97,5 +111,13 @@ class SttViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clear() {
         _state.value = SttState()
+    }
+
+    fun clearNativeSttFlag() {
+        _state.value = _state.value?.copy(
+            useNativeStt = false,
+            nativeAudioPath = null,
+            nativeChunks = emptyList()
+        )
     }
 }

@@ -171,6 +171,10 @@ def main():
     r.add_argument("--language", default="mr")
     r.add_argument("--output", default=None)
 
+    tl = sub.add_parser("transcribe-long")
+    tl.add_argument("--audio", required=True)
+    tl.add_argument("--language", default="mr")
+
     # Legacy: bare --audio shortcut
     parser.add_argument("--audio", help="(legacy) audio path")
     parser.add_argument("--language", default="mr")
@@ -178,6 +182,9 @@ def main():
     args = parser.parse_args()
     if args.cmd == "transcribe":
         print(json.dumps(transcribe(args.audio, args.language), ensure_ascii=False))
+    elif args.cmd == "transcribe-long":
+        print(json.dumps(transcribe_long_audio(args.audio, args.language),
+                         ensure_ascii=False))
     elif args.cmd == "record":
         print(json.dumps(record_and_transcribe(args.duration, args.language,
                                                args.output), ensure_ascii=False))

@@ -7,7 +7,16 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 ---
 
 ## [Unreleased]
-<!-- Changes staged but not yet released go here -->
+### Added
+- GitHub Actions CI workflow (`.github/workflows/test.yml`) — runs
+  `test_all_platforms.py` automatically on every push/PR to main/master/develop
+  using `ubuntu-latest` Python 3.11; only `Morfessor` needed as CI dep.
+- `.github/ci-requirements.txt` — slim dependency list for CI (no torch/TF/pydub).
+- `.github/SETUP_GITHUB.md` — step-by-step guide to push repo to GitHub, enable
+  Copilot coding agent, and use `gh copilot` CLI.
+- `test_all_platforms.py` now uses `_ROOT = os.path.dirname(os.path.abspath(__file__))`
+  for cross-platform path resolution; works on Windows dev machine and Linux CI runner.
+
 ---
 
 ## [1.0.0] — 2026-03 (initial release)

@@ -14,25 +14,28 @@ import ast
 
 # ── 0. Syntax check ────────────────────────────────────────────────────────────
 
+# Compute root dynamically so the test runs on any machine / CI runner
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 PLATFORMS = {
-    'web':     r'd:\marathi_tts\marathi_tts_web\tts',
-    'desktop': r'd:\marathi_tts\marathi_tts_desktop\python_bridge\tts',
-    'mobile':  r'd:\marathi_tts\marathi_tts_mobile\app\src\main\python\tts',
+    'web':     os.path.join(_ROOT, 'marathi_tts_web', 'tts'),
+    'desktop': os.path.join(_ROOT, 'marathi_tts_desktop', 'python_bridge', 'tts'),
+    'mobile':  os.path.join(_ROOT, 'marathi_tts_mobile', 'app', 'src', 'main', 'python', 'tts'),
 }
 
 ENGINE_FILES = [
-    r'utils\phonetic\sandhi_engine.py',
-    r'utils\phonetic\metre_engine.py',
-    r'utils\phonetic\marathi_phonetics.py',
-    r'utils\audio\prosody_engine.py',
-    r'utils\core\tts_engine.py',
-    r'constants\g2p_constants.py',
+    os.path.join('utils', 'phonetic', 'sandhi_engine.py'),
+    os.path.join('utils', 'phonetic', 'metre_engine.py'),
+    os.path.join('utils', 'phonetic', 'marathi_phonetics.py'),
+    os.path.join('utils', 'audio', 'prosody_engine.py'),
+    os.path.join('utils', 'core', 'tts_engine.py'),
+    os.path.join('constants', 'g2p_constants.py'),
 ]
 
 PLATFORM_ROOTS = {
-    'web':     r'd:\marathi_tts\marathi_tts_web',
-    'desktop': r'd:\marathi_tts\marathi_tts_desktop\python_bridge',
-    'mobile':  r'd:\marathi_tts\marathi_tts_mobile\app\src\main\python',
+    'web':     os.path.join(_ROOT, 'marathi_tts_web'),
+    'desktop': os.path.join(_ROOT, 'marathi_tts_desktop', 'python_bridge'),
+    'mobile':  os.path.join(_ROOT, 'marathi_tts_mobile', 'app', 'src', 'main', 'python'),
 }
 
 print('=' * 70)
