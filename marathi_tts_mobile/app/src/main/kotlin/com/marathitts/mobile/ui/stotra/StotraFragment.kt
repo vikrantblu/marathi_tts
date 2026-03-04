@@ -111,6 +111,17 @@ class StotraFragment : Fragment() {
         binding.detailDescription.text = stotra.description
         binding.detailText.text = state.stotraText ?: "(Loading…)"
 
+        // Show/hide pre-recorded badge and set button label — consolidate into one block
+        // that accounts for both hasPreRecordedAudio and isGenerating states.
+        binding.preRecordedBadge.visibility = if (state.hasPreRecordedAudio) View.VISIBLE else View.GONE
+        binding.playTtsBtn.isEnabled = !state.isGenerating
+        binding.playTtsBtn.text = when {
+            state.isGenerating && state.hasPreRecordedAudio -> "Loading…"
+            state.isGenerating -> "Generating…"
+            state.hasPreRecordedAudio -> "Play"
+            else -> "Play (TTS)"
+        }
+
         // Status
         if (state.statusMessage != null) {
             binding.detailStatus.visibility = View.VISIBLE
@@ -118,10 +129,6 @@ class StotraFragment : Fragment() {
         } else {
             binding.detailStatus.visibility = View.GONE
         }
-
-        // Loading state
-        binding.playTtsBtn.isEnabled = !state.isGenerating
-        binding.playTtsBtn.text = if (state.isGenerating) "Generating…" else "Play (TTS)"
 
         // Auto-play when a NEW audio path arrives (guard against state re-emissions).
         if (state.audioPath != null && state.audioPath != lastPlayedPath) {

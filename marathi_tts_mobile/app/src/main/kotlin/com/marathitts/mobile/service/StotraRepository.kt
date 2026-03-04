@@ -3,16 +3,38 @@ package com.marathitts.mobile.service
 import android.content.Context
 import android.util.Log
 import org.json.JSONArray
+import java.io.File
 
 /**
  * Repository for the stotra library.
  * Loads a catalog from assets/stotra_catalog.json and reads text files from assets/stotras/.
+ * Supports fingerprint-based matching and pre-recorded audio extraction from assets.
  */
 class StotraRepository(private val context: Context) {
 
     companion object {
         private const val TAG = "StotraRepository"
         private const val CATALOG_FILE = "stotra_catalog.json"
+        private const val FINGERPRINT_LENGTH = 60
+        /** Minimum viable fingerprint length for reliable stotra matching. */
+        private const val MIN_FINGERPRINT_LENGTH = 20
+
+        /**
+         * Compute a fingerprint for stotra matching: first [FINGERPRINT_LENGTH] Devanagari
+         * characters (U+0900–U+0963, U+0970–U+097F), excluding dandas, digits and whitespace.
+         * Mirrors the desktop _fingerprint() function in tts_bridge.py.
+         */
+        fun computeFingerprint(text: String): String {
+            val sb = StringBuilder(FINGERPRINT_LENGTH + 4)
+            for (ch in text) {
+                val cp = ch.code
+                if ((cp in 0x0900..0x0963) || (cp in 0x0970..0x097F)) {
+                    sb.append(ch)
+                    if (sb.length >= FINGERPRINT_LENGTH) break
+                }
+            }
+            return sb.toString()
+        }
     }
 
     data class Stotra(
@@ -27,10 +49,13 @@ class StotraRepository(private val context: Context) {
         val textFile: String,
         val audioFile: String?,
         val durationSec: Int?,
-        val description: String
+        val description: String,
+        val fingerprints: List<String> = emptyList()
     )
 
     private var catalog: List<Stotra>? = null
+    // Fingerprint → Stotra index for O(1) lookup
+    private var fingerprintIndex: Map<String, Stotra>? = null
 
     /** Load the catalog from assets. Cached after first call. */
     fun getAll(): List<Stotra> {
@@ -41,6 +66,10 @@ class StotraRepository(private val context: Context) {
             val list = mutableListOf<Stotra>()
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
+                val fpArr = obj.optJSONArray("fingerprints")
+                val fps = if (fpArr != null) {
+                    (0 until fpArr.length()).map { fpArr.getString(it) }
+                } else emptyList()
                 list.add(
                     Stotra(
                         id = obj.getString("id"),
@@ -54,12 +83,19 @@ class StotraRepository(private val context: Context) {
                         textFile = obj.getString("textFile"),
                         audioFile = obj.optString("audioFile", "").ifEmpty { null },
                         durationSec = if (obj.isNull("durationSec")) null else obj.optInt("durationSec"),
-                        description = obj.optString("description", "")
+                        description = obj.optString("description", ""),
+                        fingerprints = fps
                     )
                 )
             }
             catalog = list
-            Log.i(TAG, "Loaded ${list.size} stotras from catalog")
+            // Build fingerprint index
+            val idx = mutableMapOf<String, Stotra>()
+            for (s in list) {
+                for (fp in s.fingerprints) idx[fp] = s
+            }
+            fingerprintIndex = idx
+            Log.i(TAG, "Loaded ${list.size} stotras from catalog, ${idx.size} fingerprints indexed")
             list
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load stotra catalog: ${e.message}")
@@ -115,4 +151,56 @@ class StotraRepository(private val context: Context) {
     /** Get distinct language codes. */
     fun getLanguages(): List<String> =
         getAll().map { it.language }.distinct().sorted()
+
+    /**
+     * Find a stotra by fingerprint-matching the supplied text.
+     * Mirrors the desktop _try_stotra_library() / _fingerprint() logic.
+     * Returns null if no match found or catalog has no fingerprints.
+     */
+    fun findByText(inputText: String): Stotra? {
+        getAll() // ensure catalog + index are loaded
+        val idx = fingerprintIndex ?: return null
+        if (idx.isEmpty()) return null
+        val fp = computeFingerprint(inputText)
+        if (fp.length < MIN_FINGERPRINT_LENGTH) return null
+        // Exact match first
+        idx[fp]?.let { return it }
+        // Prefix match: catalog key starts with fp or fp starts with catalog key
+        for ((key, stotra) in idx) {
+            if (key.startsWith(fp) || fp.startsWith(key)) return stotra
+        }
+        return null
+    }
+
+    /**
+     * Extract a stotra's pre-recorded audio asset to the app's cache directory.
+     * Returns the absolute path of the cached file, or null if no audio is available
+     * or the asset cannot be read.
+     * Synchronized to prevent a race condition when multiple coroutines request
+     * the same stotra simultaneously.
+     */
+    @Synchronized
+    fun extractAudioToCache(stotra: Stotra): String? {
+        val assetPath = stotra.audioFile ?: return null
+        return try {
+            val cacheDir = File(context.cacheDir, "stotra_audio").also { it.mkdirs() }
+            val outFile = File(cacheDir, "${stotra.id}.mp3")
+            // Re-use cached file if already extracted
+            if (outFile.exists() && outFile.length() > 0) {
+                Log.i(TAG, "Pre-recorded cache hit: ${outFile.absolutePath}")
+                return outFile.absolutePath
+            }
+            // Write to a temp file first, then atomically rename to avoid partial reads
+            val tmpFile = File(cacheDir, "${stotra.id}.mp3.tmp")
+            context.assets.open(assetPath).use { input ->
+                tmpFile.outputStream().use { output -> input.copyTo(output) }
+            }
+            tmpFile.renameTo(outFile)
+            Log.i(TAG, "Pre-recorded audio extracted: ${outFile.absolutePath} (${outFile.length()} bytes)")
+            outFile.absolutePath
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to extract audio for ${stotra.id}: ${e.message}")
+            null
+        }
+    }
 }
