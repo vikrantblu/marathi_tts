@@ -41,6 +41,9 @@ Track feature requests and shipped features here.
 
 ## Shipped — v3.0.0 (2026-03)
 
+### Share-to-App
+- FEAT-61 Share-to-app: share URLs from browser → Web Fetch, share images from gallery → OCR (v4.0.0)
+
 ### Mobile UX
 - FEAT-37 Settings screen + Dark Mode + Draft Persistence (v3.0.0)
 - FEAT-36 Room DB + History + Favorites + Bookmarks + Batch OCR (v3.0.0)

@@ -194,6 +194,22 @@ Old drawer menu (deprecated): `res/menu/bottom_nav_menu.xml`
 | `item_test_row.xml` | TestDashboardAdapter — result row |
 | `item_test_group_header.xml` | TestDashboardAdapter — group section header |
 
+### Share-to-App (FEAT-61)
+
+The app is registered as a share target for URLs and images via `AndroidManifest.xml`
+intent filters. When a user shares content from another app (browser, gallery, etc.),
+`MainActivity.handleShareIntent()` routes by MIME type:
+
+| Shared content | MIME type | Destination | Behavior |
+|----------------|-----------|-------------|----------|
+| Image from gallery | `image/*` | OcrFragment | Auto-loads image via `shared_image_uri` arg |
+| URL from browser | `text/plain` (http/https) | WebFetchFragment | Auto-fills URL + auto-fetches via `shared_url` arg |
+| Plain text | `text/plain` (non-URL) | InputFragment | Fills text input via `tts_text` arg |
+
+**Intent filters** (in `AndroidManifest.xml` on `MainActivity`):
+- `ACTION_SEND` + `text/plain` — URLs and plain text
+- `ACTION_SEND` + `image/*` — images from gallery/camera/browser
+
 ### Services & helpers (`service/` package)
 
 | Class | Purpose |
