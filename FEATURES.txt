@@ -17,6 +17,17 @@ Track feature requests and shipped features here.
 
 ## Shipped
 
+- FEAT-38 Long-audio STT with automatic format conversion and chunked playback loopback.
+  Desktop: `transcribe_long_audio()` in `stt_bridge.py` converts non-WAV audio (mp3/m4a/aac/
+  ogg/flac) to 16 kHz mono WAV via pydub, then Whisper 'small' transcribes the full file
+  natively; if Whisper unavailable, splits into 55-second chunks and transcribes each via
+  project STT. Desktop `SttController` uses new `transcribeLong` service method; shows
+  chunk count and duration in engine label. Mobile: `transcribe_long_audio()` converts +
+  splits audio on Android and returns chunk file paths; `SttFragment` plays each chunk
+  sequentially through MediaPlayer, `SpeechRecognizer` accumulates transcript from mic;
+  progress shows "Chunk N / M". Fixed URI-to-cache copy so Python bridge can read content://
+  URIs. `SttViewModel` updated with `nativeAudioPath`/`nativeChunks` in `SttState`, calls
+  `transcribe_long_audio` instead of `transcribe`, and adds `clearNativeSttFlag()`. ([Unreleased])
 - FEAT-37 Tier 3 UX — Settings Screen + Dark Mode + Draft Persistence. Settings screen
   (SettingsFragment) with theme toggle (system/light/dark via AppCompatDelegate), default
   TTS engine selector, default speed/pitch/volume sliders, Clear History, Clear Cache,

@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ## [Unreleased]
 ### Added
+- Long-audio STT (FEAT-38): `stt_bridge.py` gains `_ensure_wav`, `_audio_duration_sec`,
+  `_split_wav_chunks`, `transcribe_long_audio` on both desktop and mobile. Desktop uses
+  Whisper (full-file) or chunked project-STT fallback with `transcribe-long` CLI subcommand.
+  Mobile Android path splits to 55-second WAV chunks and returns paths to Kotlin for
+  sequential playback-loopback transcription. `SttFragment` fully rewritten: URI-to-cache
+  copy, chunked loopback (`startChunkedPlaybackTranscription`), continuous recognizer
+  restart, history logging. `SttViewModel` adds `nativeChunks`/`nativeAudioPath` fields,
+  `clearNativeSttFlag()`, and switches to `transcribe_long_audio`. Desktop `SttService`
+  adds `transcribeLong()`; `SttController.onTranscribe` shows chunk count and engine.
+  Supported input formats: WAV, MP3, M4A, AAC, OGG, FLAC, MP4, WMA.
 - GitHub Actions CI workflow (`.github/workflows/test.yml`) — runs
   `test_all_platforms.py` automatically on every push/PR to main/master/develop
   using `ubuntu-latest` Python 3.11; only `Morfessor` needed as CI dep.
