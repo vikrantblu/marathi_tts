@@ -2,7 +2,7 @@ package com.marathitts.mobile
 
 import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.ActionBarDrawerToggle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.NavHostFragment
@@ -33,34 +33,31 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Register ALL fragments as top-level destinations so drawer opens from each
+        // Three bottom tabs are top-level (no Up arrow)
         val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.ttsFragment, R.id.emotionFragment, R.id.ocrFragment,
-                R.id.correctionFragment, R.id.pdfFragment, R.id.webFetchFragment,
-                R.id.sttFragment, R.id.modiFragment, R.id.stotraFragment,
-                R.id.bookReaderFragment, R.id.testDashboardFragment
-            ),
-            binding.drawerLayout
+            setOf(R.id.inputFragment, R.id.outputFragment, R.id.meFragment)
         )
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration)
 
-        // Drawer toggle (hamburger icon)
-        val toggle = ActionBarDrawerToggle(
-            this,
-            binding.drawerLayout,
-            binding.toolbar,
-            R.string.navigation_drawer_open,
-            R.string.navigation_drawer_close
-        )
-        binding.drawerLayout.addDrawerListener(toggle)
-        toggle.syncState()
+        // Wire BottomNavigationView to Navigation Component
+        NavigationUI.setupWithNavController(binding.bottomNav, navController)
 
-        // Wire NavigationView items to Navigation Component
-        NavigationUI.setupWithNavController(binding.navView, navController)
+        // Hide bottom nav on child destinations, show on tabs
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val isTopLevel = destination.id in setOf(
+                R.id.inputFragment, R.id.outputFragment, R.id.meFragment
+            )
+            binding.bottomNav.visibility = if (isTopLevel) View.VISIBLE else View.VISIBLE
+        }
 
         // ── Intent-driven automation (adb am start extras) ─────────────────
         handleLaunchIntent(navController)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        return navHostFragment.navController.navigateUp() || super.onSupportNavigateUp()
     }
 
     private fun handleLaunchIntent(navController: androidx.navigation.NavController) {

@@ -81,8 +81,9 @@ class OcrFragment : Fragment() {
         binding.sendToTtsBtn.setOnClickListener {
             val text = binding.extractedText.text.toString()
             if (text.isNotBlank()) {
-                val bundle = Bundle().apply { putString("tts_text", text) }
-                findNavController().navigate(R.id.ttsFragment, bundle)
+                findNavController().previousBackStackEntry
+                    ?.savedStateHandle?.set("extracted_text", text)
+                findNavController().popBackStack()
             }
         }
 

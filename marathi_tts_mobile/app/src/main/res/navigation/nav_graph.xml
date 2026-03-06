@@ -1,28 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    v4.0.0 Navigation Graph — 3 bottom tabs + child destinations
+    Old fragments are preserved as child destinations navigable from tabs.
+-->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/ttsFragment">
+    app:startDestination="@id/inputFragment">
 
+    <!-- ═══ Tab 1: INPUT ═══ -->
     <fragment
-        android:id="@+id/ttsFragment"
-        android:name="com.marathitts.mobile.ui.tts.TtsFragment"
-        android:label="@string/tab_tts"/>
+        android:id="@+id/inputFragment"
+        android:name="com.marathitts.mobile.ui.input.InputFragment"
+        android:label="@string/app_name">
 
+        <!-- Chip actions navigate to sub-screens, result comes back via savedStateHandle -->
+        <action
+            android:id="@+id/action_input_to_ocr"
+            app:destination="@id/ocrFragment"/>
+        <action
+            android:id="@+id/action_input_to_pdf"
+            app:destination="@id/pdfFragment"/>
+        <action
+            android:id="@+id/action_input_to_web"
+            app:destination="@id/webFetchFragment"/>
+        <action
+            android:id="@+id/action_input_to_stt"
+            app:destination="@id/sttFragment"/>
+        <action
+            android:id="@+id/action_input_to_book"
+            app:destination="@id/bookReaderFragment"/>
+        <action
+            android:id="@+id/action_input_to_output"
+            app:destination="@id/outputFragment"/>
+    </fragment>
+
+    <!-- ═══ Tab 2: OUTPUT ═══ -->
     <fragment
-        android:id="@+id/emotionFragment"
-        android:name="com.marathitts.mobile.ui.emotion.EmotionFragment"
-        android:label="@string/tab_emotion"/>
+        android:id="@+id/outputFragment"
+        android:name="com.marathitts.mobile.ui.output.OutputFragment"
+        android:label="@string/tab_output">
+
+        <argument
+            android:name="input_text"
+            app:argType="string"
+            android:defaultValue=""/>
+        <argument
+            android:name="language"
+            app:argType="string"
+            android:defaultValue="mr"/>
+        <argument
+            android:name="is_verse"
+            app:argType="boolean"
+            android:defaultValue="false"/>
+
+        <action
+            android:id="@+id/action_output_to_emotion"
+            app:destination="@id/emotionFragment"/>
+    </fragment>
+
+    <!-- ═══ Tab 3: ME ═══ -->
+    <fragment
+        android:id="@+id/meFragment"
+        android:name="com.marathitts.mobile.ui.me.MeFragment"
+        android:label="@string/tab_me">
+
+        <action
+            android:id="@+id/action_me_to_stotra"
+            app:destination="@id/stotraFragment"/>
+        <action
+            android:id="@+id/action_me_to_history"
+            app:destination="@id/historyFragment"/>
+        <action
+            android:id="@+id/action_me_to_settings"
+            app:destination="@id/settingsFragment"/>
+        <action
+            android:id="@+id/action_me_to_test"
+            app:destination="@id/testDashboardFragment"/>
+    </fragment>
+
+    <!-- ═══ Child destinations (accessible from tabs via actions) ═══ -->
 
     <fragment
         android:id="@+id/ocrFragment"
         android:name="com.marathitts.mobile.ui.ocr.OcrFragment"
         android:label="@string/tab_ocr"/>
-
-    <fragment
-        android:id="@+id/correctionFragment"
-        android:name="com.marathitts.mobile.ui.correction.CorrectionFragment"
-        android:label="@string/tab_correction"/>
 
     <fragment
         android:id="@+id/pdfFragment"
@@ -40,6 +102,21 @@
         android:label="@string/tab_stt"/>
 
     <fragment
+        android:id="@+id/bookReaderFragment"
+        android:name="com.marathitts.mobile.ui.bookreader.BookReaderFragment"
+        android:label="@string/tab_book_reader"/>
+
+    <fragment
+        android:id="@+id/emotionFragment"
+        android:name="com.marathitts.mobile.ui.emotion.EmotionFragment"
+        android:label="@string/tab_emotion"/>
+
+    <fragment
+        android:id="@+id/correctionFragment"
+        android:name="com.marathitts.mobile.ui.correction.CorrectionFragment"
+        android:label="@string/tab_correction"/>
+
+    <fragment
         android:id="@+id/modiFragment"
         android:name="com.marathitts.mobile.ui.modi.ModiFragment"
         android:label="@string/tab_modi"/>
@@ -50,13 +127,24 @@
         android:label="@string/tab_stotra"/>
 
     <fragment
-        android:id="@+id/bookReaderFragment"
-        android:name="com.marathitts.mobile.ui.bookreader.BookReaderFragment"
-        android:label="@string/tab_book_reader"/>
+        android:id="@+id/historyFragment"
+        android:name="com.marathitts.mobile.ui.history.HistoryFragment"
+        android:label="@string/tab_history"/>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.marathitts.mobile.ui.settings.SettingsFragment"
+        android:label="@string/tab_settings"/>
 
     <fragment
         android:id="@+id/testDashboardFragment"
         android:name="com.marathitts.mobile.ui.test.TestDashboardFragment"
         android:label="@string/tab_test"/>
+
+    <!-- Legacy TTS fragment — kept for deep links and backward compat -->
+    <fragment
+        android:id="@+id/ttsFragment"
+        android:name="com.marathitts.mobile.ui.tts.TtsFragment"
+        android:label="@string/tab_tts"/>
 
 </navigation>

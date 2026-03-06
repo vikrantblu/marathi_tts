@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom navigation menu for v4.0.0 — 3 tabs replacing 13-item drawer -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/inputFragment"
+        android:icon="@drawable/ic_edit_24"
+        android:title="@string/tab_input"/>
+    <item
+        android:id="@+id/outputFragment"
+        android:icon="@drawable/ic_volume_up"
+        android:title="@string/tab_output"/>
+    <item
+        android:id="@+id/meFragment"
+        android:icon="@drawable/ic_person_24"
+        android:title="@string/tab_me"/>
+</menu>
