@@ -126,39 +126,57 @@ tts/
 **Build:** Gradle + Chaquopy plugin (embeds Python 3.11)  
 **Python bridge location:** `app/src/main/python/` (Chaquopy copies at build time)
 
-### Navigation
+### Navigation (v4.0.0 — 3-tab bottom navigation)
 
-Pattern: `DrawerLayout` (hamburger) + `NavigationView` sidebar + `NavHostFragment`  
-All fragments are top-level destinations (no Back arrow — drawer shows on every screen).
+Pattern: `BottomNavigationView` (3 tabs) + `NavHostFragment`  
+Top-level tabs show bottom bar; child destinations show Up arrow in toolbar.
 
-| Nav ID | Fragment class | Screen |
-|--------|---------------|--------|
-| `ttsFragment` ★ | `ui/tts/TtsFragment` | Marathi TTS — enter text, speak |
-| `emotionFragment` | `ui/emotion/EmotionFragment` | Emotion analysis |
-| `sttFragment` | `ui/stt/SttFragment` | Speech-to-text |
-| `ocrFragment` | `ui/ocr/OcrFragment` | Camera OCR → text |
-| `pdfFragment` | `ui/pdf/PdfFragment` | PDF → read aloud |
-| `webFetchFragment` | `ui/web/WebFetchFragment` | Fetch web page → TTS |
-| `correctionFragment` | `ui/correction/CorrectionFragment` | Spell / grammar correction |
-| `modiFragment` | `ui/modi/ModiFragment` | Modi script converter |
-| `stotraFragment` | `ui/stotra/StotraFragment` | Stotra library browser |
-| `bookReaderFragment` | `ui/bookreader/BookReaderFragment` | Book camera + page reader |
-| `historyFragment` | `ui/history/HistoryFragment` | Generation history |
-| `settingsFragment` | `ui/settings/SettingsFragment` | App settings |
-| `testDashboardFragment` | `ui/test/TestDashboardFragment` | Feature test dashboard |
+**Bottom tabs:**
+
+| Tab | Nav ID | Fragment class | Purpose |
+|-----|--------|---------------|---------|
+| Input ★ | `inputFragment` | `ui/input/InputFragment` | Text entry, source chips, Generate |
+| Output | `outputFragment` | `ui/output/OutputFragment` | Audio playback, emotion, copy/share/save |
+| Me | `meFragment` | `ui/me/MeFragment` | Stotra, History, Modi, Settings hub |
 
 ★ = start destination
 
-Drawer menu file: `res/menu/bottom_nav_menu.xml`  
-Nav graph file: `res/navigation/nav_graph.xml`
+**Child destinations (navigable from tabs via actions):**
+
+| Nav ID | Fragment class | Accessed from | Purpose |
+|--------|---------------|---------------|---------|
+| `ocrFragment` | `ui/ocr/OcrFragment` | Input → chip_camera | Camera OCR → text |
+| `pdfFragment` | `ui/pdf/PdfFragment` | Input → chip_pdf | PDF → text |
+| `webFetchFragment` | `ui/web/WebFetchFragment` | Input → chip_web | Web page → text |
+| `sttFragment` | `ui/stt/SttFragment` | Input → chip_mic | Speech-to-text |
+| `bookReaderFragment` | `ui/bookreader/BookReaderFragment` | Input → chip_book | Book camera + reader |
+| `correctionFragment` | `ui/correction/CorrectionFragment` | Input → btn_correction | Spell/grammar correction |
+| `emotionFragment` | `ui/emotion/EmotionFragment` | Output | Emotion analysis |
+| `stotraFragment` | `ui/stotra/StotraFragment` | Me → card | Stotra library |
+| `historyFragment` | `ui/history/HistoryFragment` | Me → card | Generation history |
+| `modiFragment` | `ui/modi/ModiFragment` | Me → card | Modi script converter |
+| `settingsFragment` | `ui/settings/SettingsFragment` | Me → card | App settings |
+| `testDashboardFragment` | `ui/test/TestDashboardFragment` | Me (dev) | Feature test dashboard |
+| `ttsFragment` | `ui/tts/TtsFragment` | Legacy deep link | Original TTS screen (kept for compat) |
+
+**Text flow:** Child screens (OCR/PDF/Web/STT) return text to InputFragment via
+`savedStateHandle.set("extracted_text", text)` + `popBackStack()`. Other screens
+(Correction/Emotion/History/Modi/Stotra) navigate to `inputFragment` with `tts_text` arg.
+
+Bottom tab menu: `res/menu/bottom_tabs_menu.xml`  
+Nav graph: `res/navigation/nav_graph.xml`  
+Old drawer menu (deprecated): `res/menu/bottom_nav_menu.xml`
 
 ### Layout files
 
 | File | Used by |
 |------|---------|
-| `activity_main.xml` | `MainActivity` — DrawerLayout + Toolbar + NavHostFragment |
-| `nav_header.xml` | Drawer header |
-| `fragment_tts.xml` | TtsFragment |
+| `activity_main.xml` | `MainActivity` — Toolbar + NavHostFragment + BottomNavigationView |
+| `fragment_input.xml` | InputFragment — text entry + source chips + generate |
+| `fragment_output.xml` | OutputFragment — playback + emotion + actions |
+| `fragment_me.xml` | MeFragment — hub cards for stotra/history/modi/settings |
+| `fragment_tts.xml` | TtsFragment (legacy, kept for deep links) |
+| `nav_header.xml` | Drawer header (deprecated) |
 | `fragment_emotion.xml` | EmotionFragment |
 | `fragment_stt.xml` | SttFragment |
 | `fragment_ocr.xml` | OcrFragment |
