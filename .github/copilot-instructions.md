@@ -136,7 +136,7 @@ Top-level tabs show bottom bar; child destinations show Up arrow in toolbar.
 | Tab | Nav ID | Fragment class | Purpose |
 |-----|--------|---------------|---------|
 | Input ★ | `inputFragment` | `ui/input/InputFragment` | Text entry, source chips, Generate |
-| Output | `outputFragment` | `ui/output/OutputFragment` | Audio playback, emotion, copy/share/save |
+| Output | `outputFragment` | `ui/output/OutputFragment` | Auto-generates TTS, playback, emotion, copy/share/save |
 | Me | `meFragment` | `ui/me/MeFragment` | Stotra, History, Modi, Settings hub |
 
 ★ = start destination
@@ -230,6 +230,7 @@ intent filters. When a user shares content from another app (browser, gallery, e
 |-------|---------|
 | `OutputActions` | Static helpers: copyText, shareText, shareAudio (FileProvider), saveTextToDownloads, saveAudioToDownloads (MediaStore for API 29+) |
 | `HistoryLogger` | Fire-and-forget Room DB logger; IO dispatcher; truncates to 2000 chars |
+| `AppPreferences` | SharedPreferences wrapper: theme, TTS defaults, draft text, dev mode toggle |
 
 ### Python bridge scripts (called via `PythonBridge`)
 

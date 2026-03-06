@@ -7,11 +7,11 @@ Track feature requests and shipped features here.
 ## Planned — v4.0.0 UX Redesign
 
 ### Phase 1: UX Simplification (Critical)
-- FEAT-40 Navigation pivot: 13-item drawer -> 3 bottom tabs (INPUT / OUTPUT / ME)
-- FEAT-41 INPUT tab: unified text entry + inline OCR/PDF/Web/Voice chip actions
-- FEAT-42 OUTPUT tab: playback + emotion selector + speed/pitch + Copy/Share/Save
-- FEAT-43 ME tab: history + favorites + stotra library + settings
-- FEAT-44 Developer mode: hide TestDashboard behind Settings -> Developer toggle
+- FEAT-40 ✅ Navigation pivot: 13-item drawer -> 3 bottom tabs (INPUT / OUTPUT / ME)
+- FEAT-41 ✅ INPUT tab: unified text entry + inline OCR/PDF/Web/Voice chip actions
+- FEAT-42 ✅ OUTPUT tab: playback + emotion + speed + Copy/Share/Save + auto-generation
+- FEAT-43 ✅ ME tab: history + favorites + stotra library + settings
+- FEAT-44 ✅ Developer mode: hide TestDashboard behind Settings -> Developer toggle
 - FEAT-45 Progressive disclosure: collapse advanced options by default
 
 ### Phase 2: Intelligent Defaults (High)
@@ -43,6 +43,13 @@ Track feature requests and shipped features here.
 
 ### Share-to-App
 - FEAT-61 Share-to-app: share URLs from browser → Web Fetch, share images from gallery → OCR (v4.0.0)
+
+### v4.0.0 Phase 1 — UX Simplification
+- FEAT-40 Navigation pivot: 13-item drawer → 3 bottom tabs (INPUT/OUTPUT/ME)
+- FEAT-41 INPUT tab: text entry + source chips + language/verse toggle + Generate
+- FEAT-42 OUTPUT tab: auto-generates audio on navigate, progress + auto-play + streaming
+- FEAT-43 ME tab: hub cards for Stotra/History/Modi/Settings
+- FEAT-44 Developer mode: hidden Test Dashboard card, toggled from Settings
 
 ### Mobile UX
 - FEAT-37 Settings screen + Dark Mode + Draft Persistence (v3.0.0)
