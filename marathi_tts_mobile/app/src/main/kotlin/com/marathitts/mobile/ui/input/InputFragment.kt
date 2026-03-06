@@ -18,10 +18,11 @@ class InputFragment : Fragment() {
 
     private var _binding: FragmentInputBinding? = null
     private val binding get() = _binding!!
+    private var optionsExpanded = false
 
     companion object {
-        private val LANGUAGES = listOf("Marathi", "Sanskrit", "Hindi")
-        private val LANG_CODES = listOf("mr", "sa", "hi")
+        private val LANGUAGES = listOf("Auto-detect", "Marathi", "Sanskrit", "Hindi")
+        private val LANG_CODES = listOf("auto", "mr", "sa", "hi")
     }
 
     override fun onCreateView(
@@ -38,6 +39,7 @@ class InputFragment : Fragment() {
         setupQuickActions()
         setupSourceChips()
         setupGenerateButton()
+        setupOptionsToggle()
 
         // Accept text passed from other screens (Correction, Emotion, History, Modi, Stotra)
         val argText = arguments?.getString("tts_text")
@@ -124,7 +126,8 @@ class InputFragment : Fragment() {
             }
 
             val langIndex = binding.spinnerLanguage.selectedItemPosition
-            val langCode = LANG_CODES.getOrElse(langIndex) { "mr" }
+            val rawCode = LANG_CODES.getOrElse(langIndex) { "auto" }
+            val langCode = if (rawCode == "auto") detectLanguage(text) else rawCode
             val isVerse = binding.switchVerse.isChecked
 
             val bundle = Bundle().apply {
@@ -133,6 +136,34 @@ class InputFragment : Fragment() {
                 putBoolean("is_verse", isVerse)
             }
             findNavController().navigate(R.id.action_input_to_output, bundle)
+        }
+    }
+
+    private fun setupOptionsToggle() {
+        binding.btnOptionsToggle.setOnClickListener {
+            optionsExpanded = !optionsExpanded
+            binding.optionsCard.visibility = if (optionsExpanded) View.VISIBLE else View.GONE
+            binding.btnOptionsToggle.setIconResource(
+                if (optionsExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
+            )
+        }
+    }
+
+    /**
+     * Simple heuristic to detect Sanskrit vs Hindi vs Marathi.
+     * Sanskrit indicators: shloka markers (॥), anusvara-heavy text, common Sanskrit suffixes.
+     * Hindi indicators: common Hindi postpositions absent in Marathi.
+     * Default: Marathi.
+     */
+    private fun detectLanguage(text: String): String {
+        val sanskritMarkers = listOf("॥", "ॐ", "नमः", "स्तोत्र", "श्लोक", "सूक्त", "मन्त्र")
+        val hindiMarkers = listOf(" है ", " हैं ", " था ", " थी ", " हूँ ", " में ", " को ")
+        val sanskritScore = sanskritMarkers.count { text.contains(it) }
+        val hindiScore = hindiMarkers.count { text.contains(it) }
+        return when {
+            sanskritScore >= 2 -> "sa"
+            hindiScore >= 2 -> "hi"
+            else -> "mr"
         }
     }
 

@@ -37,6 +37,7 @@ class OutputFragment : Fragment() {
 
         setupPlaybackControls()
         setupOutputActions()
+        applySmartSpeed(isVerse)
         observeState()
 
         // Auto-trigger generation when text is provided
@@ -130,6 +131,14 @@ class OutputFragment : Fragment() {
                     }
                 }
             )
+        }
+    }
+
+    private fun applySmartSpeed(isVerse: Boolean) {
+        if (isVerse) {
+            binding.sliderSpeed.value = 0.85f
+            binding.txtSpeedHint.text = "Verse mode — slower pace recommended"
+            binding.txtSpeedHint.visibility = View.VISIBLE
         }
     }
 

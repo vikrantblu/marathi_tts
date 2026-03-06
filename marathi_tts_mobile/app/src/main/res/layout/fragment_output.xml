@@ -172,6 +172,14 @@
                     android:value="1.0"
                     android:stepSize="0.1"/>
 
+                <TextView
+                    android:id="@+id/txt_speed_hint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceLabelSmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:visibility="gone"/>
+
                 <!-- Output actions -->
                 <LinearLayout
                     android:layout_width="match_parent"

@@ -146,13 +146,26 @@
 
         </com.google.android.material.chip.ChipGroup>
 
-        <!-- Language & Mode Options -->
+        <!-- Options toggle (progressive disclosure) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_options_toggle"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/input_options"
+            app:icon="@drawable/ic_expand_more"
+            app:iconGravity="end"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Language & Mode Options (collapsed by default) -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/options_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardElevation="1dp"
             app:cardCornerRadius="12dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -187,24 +200,6 @@
             app:cornerRadius="12dp"
             app:icon="@drawable/ic_volume_up"
             app:iconGravity="textStart"/>
-
-        <!-- Status -->
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progress_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:indeterminate="true"/>
-
-        <TextView
-            android:id="@+id/status_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:visibility="gone"/>
 
     </LinearLayout>
 

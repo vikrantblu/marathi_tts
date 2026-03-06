@@ -132,6 +132,8 @@
     <string name="chip_mic">Mic</string>
     <string name="chip_book">Book</string>
     <string name="switch_verse_mode">Verse mode</string>
+    <string name="input_options">Options</string>
+    <string name="lang_auto_detect">Auto-detect</string>
 
     <!-- Output tab -->
     <string name="output_empty_hint">Enter text on the Input tab and tap Generate</string>
