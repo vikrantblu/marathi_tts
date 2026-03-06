@@ -1,5 +1,6 @@
 package com.marathitts.mobile
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -52,6 +53,9 @@ class MainActivity : AppCompatActivity() {
 
         // ── Intent-driven automation (adb am start extras) ─────────────────
         handleLaunchIntent(navController)
+
+        // ── Handle share intents (URLs and images from other apps) ──────────
+        handleShareIntent(navController)
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -72,6 +76,47 @@ class MainActivity : AppCompatActivity() {
                         R.id.testDashboardFragment,
                         bundleOf("autoRun" to autoRun)
                     )
+                }
+            }
+        }
+    }
+
+    private fun handleShareIntent(navController: androidx.navigation.NavController) {
+        val action = intent?.action ?: return
+        if (action != Intent.ACTION_SEND) return
+
+        val mimeType = intent.type.orEmpty()
+        Log.i(TAG, "Share intent: action=$action  type=$mimeType")
+
+        binding.root.post {
+            when {
+                // Shared image → OCR screen
+                mimeType.startsWith("image/") -> {
+                    val imageUri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+                    if (imageUri != null) {
+                        navController.navigate(
+                            R.id.ocrFragment,
+                            bundleOf("shared_image_uri" to imageUri.toString())
+                        )
+                    }
+                }
+                // Shared text/URL → Web Fetch screen
+                mimeType == "text/plain" -> {
+                    val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty()
+                    if (sharedText.isNotBlank()) {
+                        // If it looks like a URL, open web fetch; otherwise put in input
+                        if (sharedText.startsWith("http://") || sharedText.startsWith("https://")) {
+                            navController.navigate(
+                                R.id.webFetchFragment,
+                                bundleOf("shared_url" to sharedText)
+                            )
+                        } else {
+                            navController.navigate(
+                                R.id.inputFragment,
+                                bundleOf("tts_text" to sharedText)
+                            )
+                        }
+                    }
                 }
             }
         }

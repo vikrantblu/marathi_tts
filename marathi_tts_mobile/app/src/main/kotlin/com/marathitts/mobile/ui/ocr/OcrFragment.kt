@@ -61,6 +61,12 @@ class OcrFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Handle image shared from another app (gallery, browser, etc.)
+        arguments?.getString("shared_image_uri")?.let { uriString ->
+            val uri = Uri.parse(uriString)
+            handleImageUri(uri)
+        }
+
         binding.browseBtn.setOnClickListener { pickImage.launch("image/*") }
 
         binding.cameraBtn.setOnClickListener {

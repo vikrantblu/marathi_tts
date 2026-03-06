@@ -25,6 +25,12 @@ class WebFetchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Handle URL shared from another app (browser, etc.)
+        arguments?.getString("shared_url")?.let { url ->
+            binding.urlInput.setText(url)
+            viewModel.fetchUrl(url)
+        }
+
         val doFetch = {
             val url = binding.urlInput.text.toString().trim()
             if (url.isNotEmpty()) viewModel.fetchUrl(url)
