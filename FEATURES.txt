@@ -2,118 +2,82 @@
 
 Track feature requests and shipped features here.
 
-## Planned
+---
 
-<!-- Add new feature requests at the top of this section -->
+## Planned — v4.0.0 UX Redesign
 
-### High Priority
-(all high-priority items shipped)
+### Phase 1: UX Simplification (Critical)
+- FEAT-40 Navigation pivot: 13-item drawer -> 3 bottom tabs (INPUT / OUTPUT / ME)
+- FEAT-41 INPUT tab: unified text entry + inline OCR/PDF/Web/Voice chip actions
+- FEAT-42 OUTPUT tab: playback + emotion selector + speed/pitch + Copy/Share/Save
+- FEAT-43 ME tab: history + favorites + stotra library + settings
+- FEAT-44 Developer mode: hide TestDashboard behind Settings -> Developer toggle
+- FEAT-45 Progressive disclosure: collapse advanced options by default
 
-### Medium Priority
-(all medium-priority items shipped)
+### Phase 2: Intelligent Defaults (High)
+- FEAT-46 Auto-detect input language (Marathi/Hindi/Sanskrit/English)
+- FEAT-47 Sentiment-driven emotion auto-suggestion on text input
+- FEAT-48 Smart playback speed recommendation (verse vs prose)
+- FEAT-49 User preference learning: track preferred engines/settings
 
-### Lower Priority
-- FEAT-14 Pre-recorded stotra audio on mobile (desktop already has fingerprint matching)
+### Phase 3: Best-in-Class Voice (High)
+- FEAT-50 Kokoro TTS integration (open-source, offline, Indian voices)
+- FEAT-51 Real-time waveform/prosody preview before generation
+- FEAT-52 Per-sentence regeneration from preview
+- FEAT-53 Dual-engine A/B comparison (gTTS vs Edge-TTS vs Kokoro side-by-side)
 
-## Shipped
+### Phase 4: Innovation Features (Medium)
+- FEAT-54 Emotion intensity slider (0-100% granularity)
+- FEAT-55 Phonetic explainer: tap word -> show sandhi/schwa rules
+- FEAT-56 Batch stotra playlist: select multiple -> generate all -> play in order
+- FEAT-57 Marathi accent profiles (Northern/Mumbai/Konkanastha variants)
+- FEAT-58 Smart text clipping: NLP-aware breakpoints for long texts
 
-- FEAT-37 Tier 3 UX — Settings Screen + Dark Mode + Draft Persistence. Settings screen
-  (SettingsFragment) with theme toggle (system/light/dark via AppCompatDelegate), default
-  TTS engine selector, default speed/pitch/volume sliders, Clear History, Clear Cache,
-  Reset to Defaults buttons. About section with dynamic BuildConfig version. Nav drawer
-  header shows v{VERSION} from BuildConfig. TTS fragment saves draft text on navigate away
-  and restores on return. TTS sliders initialized from saved preferences. ([Unreleased])
-- FEAT-36 Tier 2 UX — Room DB + Generation History + Stotra Favorites + URL Bookmarks +
-  Batch OCR + Quick Re-generate Chips. Room database (marathi_tts.db) with 4 entities
-  (HistoryEntry, StotraFavorite, UrlBookmark, RecentTtsInput) and KSP annotation processing.
-  History screen (HistoryFragment) with category filter chips and clear-all. HistoryLogger
-  singleton wired to all 10 screens with hash-based dedup. Stotra heart-toggle favorites
-  with "★ Favorites" filter chip. WebFetch recent URL bookmark chips (save on fetch, tap to
-  reuse, close to delete). TTS recent input chips (last 5). Batch OCR multi-image picker
-  with sequential extraction and per-image progress. ([Unreleased])
-- FEAT-35 PDF page-by-page selection — pdf_bridge returns per-page text arrays;
-  NativePdfExtractor returns ExtractionResult with per-page data; PdfViewModel tracks
-  pageTexts, selectedPages, parsePageRange/formatPageRange; fragment_pdf.xml gains a
-  page selection card with range input ("1-5, 8, 10-12") + Select All button;
-  extracted text updates as user changes selection; Send to TTS only sends selected
-  pages. Large PDFs (>12 pages) prompt user to select pages. ([Unreleased])
-- FEAT-34 Copy/Share/Save UX across all 10 mobile screens — OutputActions utility
-  (copyText, shareText, shareAudio, saveTextToDownloads, saveAudioToDownloads);
-  TTS screen: Copy text + Share audio + Save audio; STT/OCR/PDF/WebFetch/Correction/
-  Modi/Emotion/Stotra/BookReader: Copy + Share output text; BookReader gains Send to TTS
-  navigation; Stotra detail text now selectable; FileProvider paths extended for Chaquopy
-  audio files. ([Unreleased])
+### Backlog
+- FEAT-59 Community phonetic corrections: user-submitted pronunciation fixes
+- FEAT-60 Live scripture search: voice-search for stotra phrases
 
-<!-- Move shipped features here with the version, e.g.:
-- Emotion detection in mobile/desktop bridges (v1.0.0)
-- TTS streaming for long text (v1.0.0)
--->
-- FEAT-33 Marathi morphological analyzer — rule-based suffix stripping (70+ Marathi suffixes,
-  longest-first, with stop-word guard) shared across all 3 platforms; optional Morfessor
-  statistical model for web + desktop (tts/morph/morfessor/mr.model); wired into G2P engine
-  (ZWNJ boundary insertion in explicit schwa mode) and grammar engine (stem-aware
-  remove_repetitions Pass 2). ([Unreleased])
-- FEAT-32 Test coverage: Sections I/J/K added to test_all_platforms.py — TextNormalizer
-  (verse-number strip, abbreviation expansion, empty-input), GrammarEngine (process(),
-  remove_repetitions, empty-input), number_to_words (cardinals, convert_time, convert_ordinal,
-  convert_percentage). Optional-dep skip for indicnlp in offline env. ([Unreleased])
-- FEAT-15 Chandrabindu lighter nasalization — _generate_edge_prosody() now checks each
-  segment for ँ (U+0901); when present, applies -25pp volume reduction (~-3 dB) to keep
-  nasal softness. Both mobile and desktop bridges. ([Unreleased])
-- FEAT-13 Abhanga refrain (धृवपद) detection — _detect_abhanga_refrain() in ProsodyEngine:
-  counts exact + 2-char rhyme-suffix repetitions; marks segments appearing 2+ times with
-  emphasis=1.1, pitch_shift+=0.5 for refrain highlight. When metre==Abhanga. All 3 plat. ([Unreleased])
-- FEAT-10 Schwa deletion lexicon expanded — SCHWA_EXCEPTIONS in g2p_constants.py grown
-  from 8 entries to 220+ covering verb -तो/-ते/-णे forms, -कर demonyms, adjectives, nouns,
-  place names, adverbs, postpositions, bhakti vocabulary. All 3 platforms. ([Unreleased])
-- FEAT-12 New Sanskrit metres: Sragdharā (21 syl), Indravajra (11 syl), Upendravajra (11 syl),
-  Rathoddhatā (11 syl), Upajati (11 syl mixed), Vamshastha (12 syl) added to METRE_CATALOGUE;
-  yati_syllables added to 9 existing metres. All 3 platforms. ([Unreleased])
-- FEAT-6 Yati (caesura) pauses within pādas — _apply_yati_splits() + _split_pada_at_yati() in
-  ProsodyEngine: word-boundary-aware split at gaetna-derived syllable positions; inserts
-  pause_yati_ms sub-segment between yati parts. All 3 platforms. ([Unreleased])
-- FEAT-4 Gaṇa pattern matching in MetreEngine — classify_syllable_weights() computes per-
-  syllable L/G weight; _match_syllabic_metre() adds gana_bonus (up to 0.20) when observed
-  pattern matches MetreDefinition.gana_pattern; new _gana_match_score() method.
-  All 3 platforms. ([Unreleased])
-- FEAT-1 ProsodyEngine wired into mobile/desktop bridges — _generate_prosody_audio() segments
-  prose at clause/sentence boundaries via MarathiProsodyEngine, generates per-segment gTTS
-  audio, and stitches with calibrated pydub silence pauses (180-900ms). Falls through to
-  single-call gTTS on failure. Both platforms. ([Unreleased])
-- FEAT-8 Edge-TTS prosody segmentation — _generate_edge_prosody() generates per-segment
-  edge-tts neural audio with ProsodyEngine-determined pauses, uses native SSML rate/pitch/
-  volume per segment + per-segment pitch_shift from emphasis detection. Cap at 15 segments.
-  Falls through to single-call edge-tts on failure. Both platforms. ([Unreleased])
-- FEAT-23 Shared English-to-Devanagari transliteration module (tts/utils/text/english_transliterator.py) — merged superset dict, vowel-aware char-level fallback, synced all 3 platforms ([Unreleased])
-- FEAT-20 Hash-based audio caching (tts/utils/audio_cache.py) — SHA-256 keyed LRU file cache with 50MB cap ([Unreleased])
-- FEAT-3 Grammar engine wired into desktop/mobile tts_bridge.py — _apply_grammar() lazy
-  singleton wraps MarathiGrammarEngine; applied to prose text (not verse/Sanskrit/English)
-  after text preprocessing, before all TTS stages. Both platforms. ([Unreleased])
-- FEAT-2 Desktop streaming/chunking for long text — splitSentences() splits at ।॥?!.;
-  with short-fragment merging; dispatchGeneration() routes Marathi prose >250 chars to
-  runStreamingGeneration() with Semaphore(3) concurrent chunk generation on 3-thread pool;
-  AudioPlayerUtil.playQueue() chains sequential playback; onSaveAudio() concatenates
-  chunk MP3s. Progress status "Streaming: N of M ✓". ([Unreleased])
-- FEAT-5 SandhiEngine: visarga + voiced consonant → r sandhi rule — new
-  fix_visarga_voiced_consonant() method in pipeline step 4b; पुनः दर्शनम् → पुनर् दर्शनम्.
-  All 3 platforms. ([Unreleased])
-- FEAT-7 Ovi rhythmic pulse — _apply_ovi_rhythmic_pulse() in ProsodyEngine: lines 1-3
-  rate=0.82/pause≤400ms, line 4 rate=0.75/pause≥800ms, stanza break=1200ms.
-  All 3 platforms. ([Unreleased])
-- FEAT-9 Emotion → verse prosody mapping — _apply_emotion_verse_modifiers() in
-  ProsodyEngine: devotional(0.90,-1.0st,1.2×pause), peaceful(0.85,0.0,1.3×pause),
-  happy(1.05,+1.0st,0.9×pause), sad(0.88,-1.5st,1.25×pause), etc.
-  All 3 platforms. ([Unreleased])
-- FEAT-11 Pitch contour from MetreDefinition — _apply_pitch_contour() in ProsodyEngine:
-  wave=±0.5st alternating, falling=-0.3st progressive, rising=+0.3st progressive;
-  resets per stanza. All 3 platforms. ([Unreleased])
-- FEAT-16 Dead code removal — unreachable lines after return in prosody_engine.py _segment_verse_block ([Unreleased])
-- Shared retry/timeout utility (tts/utils/tts_retry.py) — configurable timeout/retry/backoff + network check ([Unreleased])
-- Structured error codes (tts/constants/error_codes.py) — ERR_NO_NETWORK, ERR_EMPTY_TEXT, ERR_ALL_ENGINES_FAILED, etc. ([Unreleased])
-- Network pre-check in bridges — _is_network_available() with 3s socket check before TTS API calls ([Unreleased])
-- Temp file cleanup in bridges — _cleanup_output_dir() with 24h age + 100MB size cap ([Unreleased])
-- pydub safe clamping — speed [0.75-1.25], pitch [0.79-1.26] with documented limitations ([Unreleased])
-- BookReader: Google Lens-like auto-save flow — point camera, tap, auto-crop+save, no manual step (v5.3.0)
-- TTS Streaming: Cancel button during generation (Generate button toggles to Cancel) (v5.3.0)
-- TTS Streaming: Concurrency-limited parallel chunk generation with Semaphore(3) (v5.3.0)
-- TTS Streaming: Clear progressive status "Streaming: N of M ✓" (v5.3.0)
+---
+
+## Shipped — v3.0.0 (2026-03)
+
+### Mobile UX
+- FEAT-37 Settings screen + Dark Mode + Draft Persistence (v3.0.0)
+- FEAT-36 Room DB + History + Favorites + Bookmarks + Batch OCR (v3.0.0)
+- FEAT-35 PDF page-by-page selection with range input (v3.0.0)
+- FEAT-34 Copy/Share/Save across all 10 mobile screens (v3.0.0)
+- FEAT-14 Pre-recorded stotra audio playback on mobile (v3.0.0)
+
+### TTS Engine
+- FEAT-1 ProsodyEngine in mobile/desktop bridges (v3.0.0)
+- FEAT-2 Desktop streaming/chunking for long text (v3.0.0)
+- FEAT-3 Grammar engine in bridges (v3.0.0)
+- FEAT-4 Gana pattern matching in MetreEngine (v3.0.0)
+- FEAT-5 Visarga + voiced consonant r-sandhi (v3.0.0)
+- FEAT-6 Yati caesura pauses (v3.0.0)
+- FEAT-7 Ovi rhythmic pulse (v3.0.0)
+- FEAT-8 Edge-TTS prosody segmentation (v3.0.0)
+- FEAT-9 Emotion -> verse prosody mapping (v3.0.0)
+- FEAT-10 Schwa deletion lexicon expanded to 220+ (v3.0.0)
+- FEAT-11 Pitch contour from MetreDefinition (v3.0.0)
+- FEAT-12 Six new Sanskrit metres + yati (v3.0.0)
+- FEAT-13 Abhanga refrain detection (v3.0.0)
+- FEAT-15 Chandrabindu nasalization (v3.0.0)
+
+### Shared Infrastructure
+- FEAT-20 Hash-based audio caching (v3.0.0)
+- FEAT-23 English-to-Devanagari transliteration (v3.0.0)
+- FEAT-32 Test sections I/J/K (v3.0.0)
+- FEAT-33 Morphological analyzer (v3.0.0)
+- Shared retry/timeout, error codes, network pre-check, temp cleanup (v3.0.0)
+
+---
+
+## Shipped — v1.0.0 (2026-02)
+
+- Core Marathi TTS engine (Web/Django, Desktop/JavaFX, Mobile/Android)
+- SandhiEngine, MetreEngine, ProsodyEngine, G2PEngine
+- 10 mobile screens: TTS, Emotion, STT, OCR, PDF, Web, Correction, Modi, Stotra, BookReader
+- Stotra library, Modi converter, Speech-to-text
+- Emotion-based voice adaptation (10 categories)
+- test_all_platforms.py: 30+ checks (Sections A-G)
