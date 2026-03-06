@@ -7,6 +7,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.marathitts.mobile.service.PythonBridge
 import com.marathitts.mobile.service.TtsEngineManager
+import com.marathitts.mobile.util.AppPreferences
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,6 +46,34 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
         PythonBridge.init(app)
     }
 
+    /**
+     * Resolve which engine index to use based on user setting + learned preference.
+     * If user chose "auto" and we've learned a preferred engine, use that.
+     */
+    private fun resolveEngineIndex(): Int {
+        val ctx = getApplication<Application>()
+        val userChoice = AppPreferences.getDefaultEngine(ctx)
+        if (userChoice != "auto") {
+            return when (userChoice) {
+                "edge-tts" -> TtsEngineManager.ENGINE_GTTS  // gTTS bridge handles edge-tts
+                "gtts" -> TtsEngineManager.ENGINE_GTTS
+                "native" -> TtsEngineManager.ENGINE_SYSTEM
+                else -> TtsEngineManager.ENGINE_AUTO
+            }
+        }
+        // Auto mode — check learned preference
+        val learned = AppPreferences.getLearnedPreferredEngine(ctx)
+        return when (learned) {
+            "system_tts" -> TtsEngineManager.ENGINE_SYSTEM
+            "sherpa" -> TtsEngineManager.ENGINE_SHERPA
+            else -> TtsEngineManager.ENGINE_AUTO  // gtts/edge → let Auto handle
+        }
+    }
+
+    private fun recordSuccess(engineName: String) {
+        AppPreferences.recordEngineSuccess(getApplication(), engineName)
+    }
+
     fun cancelGeneration() {
         currentJob?.cancel()
         currentJob = null
@@ -75,7 +104,7 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
 
             val result = engineManager.generate(
                 text = text,
-                engineIndex = TtsEngineManager.ENGINE_AUTO,
+                engineIndex = resolveEngineIndex(),
                 langCode = langCode,
                 isVerse = isVerse,
                 emotion = emotion
@@ -83,6 +112,7 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
 
             if (result.optBoolean("success", false)) {
                 val engineUsed = result.optString("engine", "")
+                recordSuccess(engineUsed)
                 _state.value = OutputState(
                     audioPath = result.optString("audio_path"),
                     engine = engineUsed,
@@ -119,7 +149,7 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
             val firstResult = withContext(Dispatchers.IO) {
                 engineManager.generate(
                     text = sentences.first(),
-                    engineIndex = TtsEngineManager.ENGINE_AUTO,
+                    engineIndex = resolveEngineIndex(),
                     langCode = langCode,
                     emotion = emotion
                 )
@@ -179,6 +209,9 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                     status = "Error: streaming failed"
                 )
             } else {
+                // Record the engine that worked for the first chunk
+                val firstEngine = firstResult.optString("engine", "")
+                if (firstEngine.isNotEmpty()) recordSuccess(firstEngine)
                 _state.value = OutputState(
                     audioPath = paths.first(),
                     streamChunks = paths,

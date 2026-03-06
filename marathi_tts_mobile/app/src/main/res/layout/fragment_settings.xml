@@ -111,7 +111,16 @@
                     android:layout_height="48dp"
                     android:background="@android:drawable/btn_dropdown"
                     android:spinnerMode="dropdown"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/txt_engine_stats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone"/>
 
                 <!-- Speed -->
                 <LinearLayout
