@@ -24,6 +24,9 @@ object AppPreferences {
     // Draft persistence
     const val KEY_TTS_DRAFT = "tts_draft_text"
 
+    // Developer mode
+    const val KEY_DEV_MODE = "dev_mode_enabled"
+
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -88,6 +91,15 @@ object AppPreferences {
 
     fun setTtsDraft(context: Context, text: String) {
         prefs(context).edit().putString(KEY_TTS_DRAFT, text).apply()
+    }
+
+    // ── Developer mode ──────────────────────────────────────────────────
+
+    fun isDevModeEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_DEV_MODE, false)
+
+    fun setDevMode(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_DEV_MODE, enabled).apply()
     }
 
     // ── Cache / data management ─────────────────────────────────────────

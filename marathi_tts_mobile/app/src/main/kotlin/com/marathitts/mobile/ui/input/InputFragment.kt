@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.marathitts.mobile.R
 import com.marathitts.mobile.databinding.FragmentInputBinding
+import com.marathitts.mobile.util.AppPreferences
 
 class InputFragment : Fragment() {
 
@@ -39,7 +40,16 @@ class InputFragment : Fragment() {
         setupGenerateButton()
 
         // Accept text passed from other screens (Correction, Emotion, History, Modi, Stotra)
-        arguments?.getString("tts_text")?.let { binding.textInput.setText(it) }
+        val argText = arguments?.getString("tts_text")
+        if (argText != null) {
+            binding.textInput.setText(argText)
+        } else {
+            // Restore draft if no argument passed
+            val draft = AppPreferences.getTtsDraft(requireContext())
+            if (draft.isNotBlank()) {
+                binding.textInput.setText(draft)
+            }
+        }
 
         // Accept text returned from child screens (OCR, PDF, Web, STT, BookReader)
         findNavController().currentBackStackEntry
@@ -124,6 +134,12 @@ class InputFragment : Fragment() {
             }
             findNavController().navigate(R.id.action_input_to_output, bundle)
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val text = _binding?.textInput?.text?.toString().orEmpty()
+        AppPreferences.setTtsDraft(requireContext(), text)
     }
 
     override fun onDestroyView() {

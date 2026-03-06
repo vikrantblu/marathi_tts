@@ -142,6 +142,14 @@
     <string name="action_save">Save</string>
     <string name="emotion_title">Emotion Analysis</string>
     <string name="output_input_text_label">Input Text</string>
+    <string name="output_generating">Generating audio…</string>
+    <string name="output_cancel">Cancel</string>
+    <string name="output_streaming">Streaming: %1$d of %2$d ✓</string>
+    <string name="output_ready">Audio ready ✓</string>
+    <string name="output_error">Generation failed</string>
+    <string name="output_playing">Playing…</string>
+    <string name="output_stopped">Stopped</string>
+    <string name="output_playback_done">Playback complete</string>
 
     <!-- Me tab cards -->
     <string name="me_stotra_title">Stotra Library</string>
@@ -152,4 +160,8 @@
     <string name="me_modi_subtitle">Convert between Modi and Devanagari</string>
     <string name="me_settings_title">Settings</string>
     <string name="me_settings_subtitle">Theme, defaults, data management</string>
+    <string name="me_test_title">Test Dashboard</string>
+    <string name="me_test_subtitle">Run feature tests (developer)</string>
+    <string name="settings_dev_mode">Developer mode</string>
+    <string name="settings_dev_mode_desc">Show Test Dashboard in Me tab</string>
 </resources>

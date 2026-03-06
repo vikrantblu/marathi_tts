@@ -155,6 +155,12 @@ class SettingsFragment : Fragment() {
 
         // ── About section ────────────────────────────────────────────────
         binding.versionText.text = "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+
+        // ── Developer mode ───────────────────────────────────────────────
+        binding.devModeSwitch.isChecked = AppPreferences.isDevModeEnabled(ctx)
+        binding.devModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            AppPreferences.setDevMode(ctx, isChecked)
+        }
     }
 
     private fun clearCacheFiles(ctx: android.content.Context) {

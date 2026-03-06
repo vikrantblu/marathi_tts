@@ -9,6 +9,7 @@ import androidx.navigation.fragment.findNavController
 import com.marathitts.mobile.BuildConfig
 import com.marathitts.mobile.R
 import com.marathitts.mobile.databinding.FragmentMeBinding
+import com.marathitts.mobile.util.AppPreferences
 
 class MeFragment : Fragment() {
 
@@ -41,6 +42,14 @@ class MeFragment : Fragment() {
 
         binding.cardSettings.setOnClickListener {
             findNavController().navigate(R.id.action_me_to_settings)
+        }
+
+        // Developer mode: show test dashboard card
+        if (AppPreferences.isDevModeEnabled(requireContext())) {
+            binding.cardTest.visibility = View.VISIBLE
+        }
+        binding.cardTest.setOnClickListener {
+            findNavController().navigate(R.id.action_me_to_test)
         }
     }
 
