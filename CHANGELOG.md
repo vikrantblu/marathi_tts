@@ -26,6 +26,9 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - FEAT-47 Emotion auto-suggestion: OutputViewModel auto-detects emotion via emotion_bridge
   before TTS generation; emotion card displays result.
 - FEAT-48 Smart verse speed: speed slider defaults to 0.85x in verse mode with hint label.
+- FEAT-49 User preference learning: engine success counters in SharedPreferences;
+  auto-selects most successful engine after 3+ generations when user is on Auto.
+  Engine usage stats visible in Settings under dev mode.
 
 ### Planned — Phase 3: Best-in-Class Voice
 - Kokoro TTS integration (open-source, offline, Indian voices)

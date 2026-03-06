@@ -18,7 +18,7 @@ Track feature requests and shipped features here.
 - FEAT-46 ✅ Auto-detect input language (Marathi/Hindi/Sanskrit/English)
 - FEAT-47 ✅ Sentiment-driven emotion auto-suggestion on text input
 - FEAT-48 ✅ Smart playback speed recommendation (verse vs prose)
-- FEAT-49 User preference learning: track preferred engines/settings
+- FEAT-49 ✅ User preference learning: track preferred engines/settings
 
 ### Phase 3: Best-in-Class Voice (High)
 - FEAT-50 Custom Stotra Voice Model — fine-tune Piper/VITS on pre-recorded stotra
@@ -63,6 +63,9 @@ Track feature requests and shipped features here.
 - FEAT-46 Auto-detect language heuristic: Sanskrit/Hindi markers → auto-route, default Marathi
 - FEAT-47 Emotion auto-suggestion: OutputViewModel auto-detects emotion before TTS generation
 - FEAT-48 Smart verse speed: slider defaults to 0.85x in verse mode with hint label
+- FEAT-49 User preference learning: engine success counters in SharedPreferences,
+  auto-selects best engine after 3+ uses. Stats visible in Settings under dev mode.
+  auto-selects best engine after 3+ uses. Stats visible in Settings under dev mode.
 
 ### Mobile UX
 - FEAT-37 Settings screen + Dark Mode + Draft Persistence (v3.0.0)
