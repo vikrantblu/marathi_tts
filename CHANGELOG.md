@@ -11,19 +11,21 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 **Branch:** `feature/ux-redesign-v4`  
 **Baseline:** `v3.0.0-stable` tag
 
-### Planned — Phase 1: UX Simplification
-- Navigation: 13-item drawer → 3 bottom tabs (INPUT / OUTPUT / ME)
-- Consolidate OCR/PDF/Web/STT into INPUT tab as inline chip actions
-- OUTPUT tab: unified playback + emotion selector + speed/pitch controls
-- ME tab: history + favorites + stotra library + settings
-- Hide TestDashboard behind developer mode
-- Progressive disclosure: advanced options collapsed by default
+### Added — Phase 1: UX Simplification (FEAT-40 through FEAT-45, FEAT-61)
+- FEAT-40 Navigation pivot: 13-item drawer → 3 bottom tabs (INPUT/OUTPUT/ME)
+- FEAT-41 INPUT tab: text entry + source chips (Camera/PDF/Web/Mic/Book) + Generate
+- FEAT-42 OUTPUT tab: auto-generates on navigate, progress card, auto-play, streaming
+- FEAT-43 ME tab: hub cards for Stotra/History/Modi/Settings
+- FEAT-44 Developer mode: Test Dashboard hidden, toggled from Settings switch
+- FEAT-45 Progressive disclosure: language/verse options collapsed behind expandable toggle
+- FEAT-61 Share-to-app: URLs → WebFetch, images → OCR, text → Input
 
-### Planned — Phase 2: Intelligent Defaults
-- Auto-detect language (Marathi/Hindi/Sanskrit/English)
-- Sentiment-driven emotion auto-suggestion
-- Optimal playback speed recommendation (verse vs prose)
-- Smart engine fallback based on user preferences
+### Added — Phase 2: Intelligent Defaults (FEAT-46 through FEAT-48)
+- FEAT-46 Auto-detect language: Sanskrit markers (॥, ॐ, नमः) and Hindi markers analyzed;
+  default Marathi. "Auto-detect" is the first spinner option.
+- FEAT-47 Emotion auto-suggestion: OutputViewModel auto-detects emotion via emotion_bridge
+  before TTS generation; emotion card displays result.
+- FEAT-48 Smart verse speed: speed slider defaults to 0.85x in verse mode with hint label.
 
 ### Planned — Phase 3: Best-in-Class Voice
 - Kokoro TTS integration (open-source, offline, Indian voices)

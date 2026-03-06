@@ -12,12 +12,12 @@ Track feature requests and shipped features here.
 - FEAT-42 ✅ OUTPUT tab: playback + emotion + speed + Copy/Share/Save + auto-generation
 - FEAT-43 ✅ ME tab: history + favorites + stotra library + settings
 - FEAT-44 ✅ Developer mode: hide TestDashboard behind Settings -> Developer toggle
-- FEAT-45 Progressive disclosure: collapse advanced options by default
+- FEAT-45 ✅ Progressive disclosure: collapse advanced options by default
 
 ### Phase 2: Intelligent Defaults (High)
-- FEAT-46 Auto-detect input language (Marathi/Hindi/Sanskrit/English)
-- FEAT-47 Sentiment-driven emotion auto-suggestion on text input
-- FEAT-48 Smart playback speed recommendation (verse vs prose)
+- FEAT-46 ✅ Auto-detect input language (Marathi/Hindi/Sanskrit/English)
+- FEAT-47 ✅ Sentiment-driven emotion auto-suggestion on text input
+- FEAT-48 ✅ Smart playback speed recommendation (verse vs prose)
 - FEAT-49 User preference learning: track preferred engines/settings
 
 ### Phase 3: Best-in-Class Voice (High)
@@ -50,6 +50,12 @@ Track feature requests and shipped features here.
 - FEAT-42 OUTPUT tab: auto-generates audio on navigate, progress + auto-play + streaming
 - FEAT-43 ME tab: hub cards for Stotra/History/Modi/Settings
 - FEAT-44 Developer mode: hidden Test Dashboard card, toggled from Settings
+- FEAT-45 Progressive disclosure: language/verse options collapsed behind expandable toggle
+
+### v4.0.0 Phase 2 — Intelligent Defaults
+- FEAT-46 Auto-detect language heuristic: Sanskrit/Hindi markers → auto-route, default Marathi
+- FEAT-47 Emotion auto-suggestion: OutputViewModel auto-detects emotion before TTS generation
+- FEAT-48 Smart verse speed: slider defaults to 0.85x in verse mode with hint label
 
 ### Mobile UX
 - FEAT-37 Settings screen + Dark Mode + Draft Persistence (v3.0.0)
