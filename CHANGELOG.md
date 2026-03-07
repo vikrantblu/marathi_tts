@@ -6,10 +6,10 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
-## [Unreleased] — v4.0.0 UX Redesign
+## [4.0.0] — 2026-03-07
 
-**Branch:** `feature/ux-redesign-v4`  
-**Baseline:** `v3.0.0-stable` tag
+**Tag:** `v4.0.0`  
+**Branch:** `feature/ux-redesign-v4` (merged to `main`)
 
 ### Added — Phase 1: UX Simplification (FEAT-40 through FEAT-45, FEAT-61)
 - FEAT-40 Navigation pivot: 13-item drawer → 3 bottom tabs (INPUT/OUTPUT/ME)
