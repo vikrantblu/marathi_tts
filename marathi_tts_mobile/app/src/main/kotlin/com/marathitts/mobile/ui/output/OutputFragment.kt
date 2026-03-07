@@ -47,6 +47,7 @@ class OutputFragment : Fragment() {
         setupOutputActions()
         setupEmotionIntensity()
         setupAccentChips()
+        setupGenderChips()
         applySmartSpeed(isVerse)
         observeState()
         observePhoneticExplanation()
@@ -274,6 +275,25 @@ class OutputFragment : Fragment() {
             viewModel.setAccent(accent)
             binding.accentDescription.text =
                 getString(accentToDesc[accent] ?: R.string.accent_standard_desc)
+        }
+    }
+
+    /** FEAT-74: Voice gender chip wiring. */
+    private fun setupGenderChips() {
+        val chipToGender = mapOf(
+            R.id.chip_gender_female to "female",
+            R.id.chip_gender_male to "male"
+        )
+        val genderToDesc = mapOf(
+            "female" to R.string.gender_female_desc,
+            "male" to R.string.gender_male_desc
+        )
+        binding.genderChips.setOnCheckedStateChangeListener { _, checkedIds ->
+            val chipId = checkedIds.firstOrNull() ?: R.id.chip_gender_female
+            val gender = chipToGender[chipId] ?: "female"
+            viewModel.setGender(gender)
+            binding.genderDescription.text =
+                getString(genderToDesc[gender] ?: R.string.gender_female_desc)
         }
     }
 

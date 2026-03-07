@@ -170,6 +170,10 @@ class MarathiProsodyEngine:
         ``tts_rate``, ``metre_name``, and ``pitch_shift`` fields based on
         the detected metre.  Also applies Ovi rhythmic pulse (FEAT-7) and
         pitch contour from MetreDefinition (FEAT-11).
+
+        FEAT-80: When mixed metres are detected (e.g. Mandakranta → Anushtubh),
+        per-line metre prosody is applied instead of a uniform profile.
+
         Falls back gracefully if MetreEngine is unavailable.
         """
         engine = _get_metre_engine()
@@ -187,14 +191,39 @@ class MarathiProsodyEngine:
                 prosody.pause_half_ms, prosody.pause_full_ms
             )
 
-            # Apply metre-specific pauses to all segments
-            engine.apply_to_segments(segments, prosody)
+            # ── FEAT-80: Per-verse metre detection ──────────────────────
+            # Check if individual lines have different metres.
+            # If so, apply per-line prosody instead of uniform.
+            per_line = None
+            if prosody.all_lines and len(prosody.all_lines) >= 4:
+                per_line = engine.detect_per_line(prosody.all_lines)
 
-            # Also propagate rate & metre_name into each segment
-            for seg in segments:
-                seg.tts_rate = prosody.rate
-                if not seg.metre_name:
-                    seg.metre_name = prosody.name
+            if per_line:
+                # Mixed metres detected — apply per-segment where available
+                engine.apply_to_segments(segments, prosody)  # base profile
+                for idx, seg in enumerate(segments):
+                    if idx in per_line:
+                        line_prosody = per_line[idx]
+                        seg.tts_rate = line_prosody.rate
+                        seg.metre_name = line_prosody.name
+                        # Apply per-line pause profile
+                        from tts.constants.audio_constants import PauseType
+                        if seg.pause_after_ms >= PauseType.VERSE_FULL:
+                            seg.pause_after_ms = line_prosody.pause_full_ms
+                        elif seg.pause_after_ms >= PauseType.VERSE_HALF:
+                            seg.pause_after_ms = line_prosody.pause_half_ms
+                    else:
+                        # Use paragraph-level default
+                        seg.tts_rate = prosody.rate
+                        if not seg.metre_name:
+                            seg.metre_name = prosody.name
+            else:
+                # Uniform metre — apply to all segments as before
+                engine.apply_to_segments(segments, prosody)
+                for seg in segments:
+                    seg.tts_rate = prosody.rate
+                    if not seg.metre_name:
+                        seg.metre_name = prosody.name
 
             # ── FEAT-7: Ovi rhythmic pulse ──────────────────────────────
             # Ovi has a 4-line stanza: lines 1-3 flow at the same tempo,

@@ -147,10 +147,10 @@ Track feature requests and shipped features here.
 ### Voice Quality
 - FEAT-72 Pre-recorded stotra audio on mobile: bundle desktop stotra recordings into
   APK assets. Fingerprint-match already exists in tts_bridge — just needs audio files.
-- FEAT-73 G2P anusvara assimilation: implement _process_anusvara() using ANUSVARA_ASSIMILATION
-  dict from g2p_constants.py. Gate behind mode flag (preserve/assimilate).
-- FEAT-74 Multi-speaker voice selection: allow switching between Aarohi (female) and
-  Manohar (male) Edge-TTS voices from the UI. Currently hardcoded.
+- FEAT-73 ✅ G2P anusvara assimilation: _process_anusvara() implemented with
+  ANUSVARA_ASSIMILATION dict. Mode flag: preserve (gTTS default) / assimilate (edge-tts).
+- FEAT-74 ✅ Multi-speaker voice selection: _EDGE_VOICE_MAP supports Aarohi (female) and
+  Manohar (male) for Marathi, plus Hindi/Sanskrit voices. Gender chips in Output screen.
 
 ### User Experience
 - FEAT-75 Word-level playback highlighting: highlight current word/segment in prosody
@@ -163,8 +163,8 @@ Track feature requests and shipped features here.
   elements, minimum touch target sizes.
 
 ### Code Quality
-- FEAT-79 Dead code cleanup: remove unreachable code in prosody_engine.py
-  _segment_verse_block() (lines after early return).
+- FEAT-79 ✅ Dead code cleanup: unreachable code removed from _segment_verse_block()
+  in all 3 platforms.
 - FEAT-80 Per-verse metre detection: detect metre changes within mixed-metre stotras
   (e.g., Meghaduta opens Mandakranta then shifts). Currently only per-paragraph.
 

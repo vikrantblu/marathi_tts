@@ -187,6 +187,12 @@
     <string name="accent_konkanastha_desc">Konkan region — higher pitch, measured pace</string>
     <string name="accent_deccani_desc">Marathwada/Deccani — lower pitch</string>
 
+    <!-- Voice Gender (FEAT-74) -->
+    <string name="gender_female">स्त्री (Female)</string>
+    <string name="gender_male">पुरुष (Male)</string>
+    <string name="gender_female_desc">Aarohi — female Marathi neural voice</string>
+    <string name="gender_male_desc">Manohar — male Marathi neural voice</string>
+
     <!-- Smart Clip (FEAT-58) -->
     <string name="clip_preview_header">Smart Clip: %1$d segments</string>
 

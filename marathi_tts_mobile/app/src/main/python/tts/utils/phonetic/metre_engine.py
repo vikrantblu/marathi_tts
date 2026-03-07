@@ -610,6 +610,76 @@ class MetreEngine:
                     seg.pause_after_ms = prosody.pause_half_ms
                 # Small pauses (yati) stay small
 
+    # ── FEAT-80: Per-verse metre detection ───────────────────────────────
+
+    def detect_line(self, line: str) -> Tuple[MetreDefinition, float]:
+        """Detect the metre of a single verse line (pāda).
+
+        Returns (MetreDefinition, confidence).  Uses syllable count and
+        gaṇa pattern matching against the catalogue.  Returns (Shloka, 0.0)
+        if no confident match.
+        """
+        syl = count_syllables(line)
+        if syl < 3:
+            return _METRE_BY_NAME['Shloka'], 0.0
+
+        pattern = classify_syllable_weights(line)
+        syllabic_metres = [
+            m for m in METRE_CATALOGUE
+            if m.syllables_per_pada > 0 and not m.is_marathi
+        ]
+
+        best_metre = _METRE_BY_NAME['Shloka']
+        best_conf = 0.0
+
+        for metre in syllabic_metres:
+            expected = metre.syllables_per_pada
+            err = abs(syl - expected)
+            if err <= 2.0:
+                conf = max(0.0, 1.0 - err / (expected + 0.001))
+                # Exact match bonus
+                if err <= 1:
+                    conf = conf * 0.5 + 0.5
+                # Gaṇa pattern bonus
+                if pattern and metre.gana_pattern:
+                    gana_bonus = self._gana_match_score(pattern, metre.gana_pattern)
+                    conf = min(1.0, conf + gana_bonus * 0.20)
+                if conf > best_conf:
+                    best_conf = conf
+                    best_metre = metre
+
+        return best_metre, best_conf
+
+    def detect_per_line(self, lines: List[str]) -> Optional[Dict[int, MetreProsody]]:
+        """Detect metre for each individual line and return per-line results.
+
+        Returns a dict mapping line index → MetreProsody only if the text is
+        truly mixed-metre (at least 2 distinct metres with confidence ≥ 0.60).
+        Returns None if all lines share the same metre (caller should use the
+        paragraph-level detection instead).
+        """
+        if len(lines) < 4:
+            return None
+
+        per_line: Dict[int, MetreProsody] = {}
+        metre_names = set()
+
+        for i, line in enumerate(lines):
+            metre, conf = self.detect_line(line)
+            if conf >= 0.60:
+                per_line[i] = MetreProsody(
+                    metre=metre, confidence=conf,
+                    detected_pada_count=1, avg_syllables=count_syllables(line),
+                )
+                metre_names.add(metre.name)
+            # Lines below threshold: leave out of dict → will use paragraph default
+
+        # Only return per-line data if truly mixed (2+ distinct metres found)
+        if len(metre_names) >= 2:
+            log.debug('FEAT-80: Mixed metre detected — %s', metre_names)
+            return per_line
+        return None
+
     # ── Private helpers ──────────────────────────────────────────────────
 
     def _extract_verse_lines(self, text: str) -> List[str]:

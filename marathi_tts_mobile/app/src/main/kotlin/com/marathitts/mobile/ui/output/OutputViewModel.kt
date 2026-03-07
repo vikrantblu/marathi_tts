@@ -33,6 +33,7 @@ data class OutputState(
     val emotionScore: Float = 0f,
     val emotionIntensity: Float = 0.5f,
     val accent: String = "standard",
+    val gender: String = "female",
     val prosodySegments: List<ProsodySegment> = emptyList(),
     val isVerseDetected: Boolean = false,
     val detectedMetre: String = "",
@@ -99,6 +100,11 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = _state.value?.copy(accent = accent)
     }
 
+    /** FEAT-74: Update voice gender. */
+    fun setGender(gender: String) {
+        _state.value = _state.value?.copy(gender = gender)
+    }
+
     /**
      * Entry point — called by OutputFragment when it receives arguments.
      * Auto-routes to streaming for long Marathi prose.
@@ -127,10 +133,12 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
             val intensity = _state.value?.emotionIntensity ?: 0.5f
             val accent = _state.value?.accent ?: "standard"
 
+            val gender = _state.value?.gender ?: "female"
             val result = engineManager.generate(
                 text = text,
                 engineIndex = resolveEngineIndex(),
                 langCode = langCode,
+                gender = gender,
                 isVerse = isVerse,
                 emotion = emotion,
                 emotionIntensity = intensity,
@@ -174,12 +182,14 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
             val intensity = _state.value?.emotionIntensity ?: 0.5f
             val accent = _state.value?.accent ?: "standard"
 
+            val gender = _state.value?.gender ?: "female"
             // First chunk — determines which engine to lock
             val firstResult = withContext(Dispatchers.IO) {
                 engineManager.generate(
                     text = sentences.first(),
                     engineIndex = resolveEngineIndex(),
                     langCode = langCode,
+                    gender = gender,
                     emotion = emotion,
                     emotionIntensity = intensity,
                     accent = accent
@@ -213,6 +223,7 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                                     text = chunk,
                                     engineIndex = lockedEngine,
                                     langCode = langCode,
+                                    gender = gender,
                                     emotion = emotion,
                                     emotionIntensity = intensity,
                                     accent = accent
