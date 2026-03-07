@@ -103,16 +103,108 @@
             </com.google.android.material.chip.ChipGroup>
         </HorizontalScrollView>
 
-        <!-- Stotra count -->
-        <TextView
-            android:id="@+id/stotra_count"
+        <!-- Stotra count + playlist toggle -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
+            android:paddingVertical="4dp">
+
+            <TextView
+                android:id="@+id/stotra_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="12sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="15 stotras"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/playlist_toggle_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/playlist_mode"
+                android:textSize="12sp"
+                style="@style/Widget.Material3.Button.TextButton"/>
+        </LinearLayout>
+
+        <!-- Playlist action bar (visible in playlist mode) -->
+        <LinearLayout
+            android:id="@+id/playlist_action_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="12dp"
             android:paddingVertical="4dp"
-            android:textSize="12sp"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            tools:text="15 stotras"/>
+            android:background="?attr/colorSurfaceVariant"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/playlist_selection_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="13sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                tools:text="3 selected"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/playlist_select_all_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/playlist_select_all"
+                android:textSize="12sp"
+                style="@style/Widget.Material3.Button.TextButton"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/playlist_generate_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/playlist_generate"
+                android:textSize="12sp"
+                app:icon="@drawable/ic_play_arrow_24"
+                app:iconSize="18dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+        </LinearLayout>
+
+        <!-- Playlist status bar (visible during generation/playback) -->
+        <LinearLayout
+            android:id="@+id/playlist_status_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="6dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/playlist_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="?attr/colorPrimary"
+                tools:text="Generating playlist: 2 / 5"/>
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/playlist_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:trackThickness="4dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/playlist_stop_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginTop="4dp"
+                android:text="@string/playlist_stop"
+                app:icon="@drawable/ic_stop_24"
+                app:iconSize="18dp"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
+        </LinearLayout>
 
         <!-- List -->
         <androidx.recyclerview.widget.RecyclerView

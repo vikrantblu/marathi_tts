@@ -28,6 +28,8 @@ data class OutputState(
     val status: String = "",
     val emotionLabel: String? = null,
     val emotionScore: Float = 0f,
+    val emotionIntensity: Float = 0.5f,
+    val accent: String = "standard",
     val prosodySegments: List<ProsodySegment> = emptyList(),
     val isVerseDetected: Boolean = false,
     val detectedMetre: String = "",
@@ -84,6 +86,16 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = _state.value?.copy(isLoading = false, status = "Cancelled")
     }
 
+    /** FEAT-54: Update emotion intensity from the UI slider. */
+    fun setEmotionIntensity(intensity: Float) {
+        _state.value = _state.value?.copy(emotionIntensity = intensity.coerceIn(0f, 1f))
+    }
+
+    /** FEAT-57: Update accent profile. */
+    fun setAccent(accent: String) {
+        _state.value = _state.value?.copy(accent = accent)
+    }
+
     /**
      * Entry point — called by OutputFragment when it receives arguments.
      * Auto-routes to streaming for long Marathi prose.
@@ -109,13 +121,17 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
         currentJob = viewModelScope.launch {
             // Auto-detect emotion
             val emotion = detectEmotion(text)
+            val intensity = _state.value?.emotionIntensity ?: 0.5f
+            val accent = _state.value?.accent ?: "standard"
 
             val result = engineManager.generate(
                 text = text,
                 engineIndex = resolveEngineIndex(),
                 langCode = langCode,
                 isVerse = isVerse,
-                emotion = emotion
+                emotion = emotion,
+                emotionIntensity = intensity,
+                accent = accent
             )
 
             if (result.optBoolean("success", false)) {
@@ -152,6 +168,8 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
 
         currentJob = viewModelScope.launch {
             val emotion = detectEmotion(text)
+            val intensity = _state.value?.emotionIntensity ?: 0.5f
+            val accent = _state.value?.accent ?: "standard"
 
             // First chunk — determines which engine to lock
             val firstResult = withContext(Dispatchers.IO) {
@@ -159,7 +177,9 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                     text = sentences.first(),
                     engineIndex = resolveEngineIndex(),
                     langCode = langCode,
-                    emotion = emotion
+                    emotion = emotion,
+                    emotionIntensity = intensity,
+                    accent = accent
                 )
             }
 
@@ -190,7 +210,9 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                                     text = chunk,
                                     engineIndex = lockedEngine,
                                     langCode = langCode,
-                                    emotion = emotion
+                                    emotion = emotion,
+                                    emotionIntensity = intensity,
+                                    accent = accent
                                 )
                                 if (r.optBoolean("success", false))
                                     r.optString("audio_path").takeIf { it.isNotEmpty() }
@@ -287,6 +309,7 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
      */
     fun analyzeProsody(text: String, language: String, isVerse: Boolean, emotion: String?) {
         viewModelScope.launch {
+            val intensity = _state.value?.emotionIntensity ?: 0.5f
             val segments = withContext(Dispatchers.IO) {
                 try {
                     val result = PythonBridge.call(
@@ -295,7 +318,8 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                             "text" to text,
                             "language" to language,
                             "is_verse" to isVerse,
-                            "emotion" to emotion
+                            "emotion" to emotion,
+                            "emotion_intensity" to intensity.toDouble()
                         )
                     )
                     if (PythonBridge.isSuccess(result)) {
@@ -402,5 +426,64 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                 )
             }
         }
+    }
+
+    // -----------------------------------------------------------------
+    // FEAT-55: Phonetic Explainer
+    // -----------------------------------------------------------------
+
+    private val _phoneticExplanation = MutableLiveData<PhoneticExplanation?>()
+    val phoneticExplanation: LiveData<PhoneticExplanation?> get() = _phoneticExplanation
+
+    data class PhoneticRule(
+        val stage: String,
+        val rule: String,
+        val before: String,
+        val after: String,
+        val description: String
+    )
+
+    data class PhoneticExplanation(
+        val original: String,
+        val final: String,
+        val rules: List<PhoneticRule>
+    )
+
+    fun explainPhonetics(word: String, language: String) {
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    PythonBridge.call(
+                        "tts_bridge", "explain_phonetics",
+                        kwargs = mapOf("word" to word, "language" to language)
+                    )
+                } catch (_: Exception) { null }
+            }
+            if (result != null && result.optBoolean("success", false)) {
+                val rulesArr = result.optJSONArray("rules")
+                val rules = mutableListOf<PhoneticRule>()
+                if (rulesArr != null) {
+                    for (i in 0 until rulesArr.length()) {
+                        val r = rulesArr.getJSONObject(i)
+                        rules.add(PhoneticRule(
+                            stage = r.optString("stage", ""),
+                            rule = r.optString("rule", ""),
+                            before = r.optString("before", ""),
+                            after = r.optString("after", ""),
+                            description = r.optString("description", "")
+                        ))
+                    }
+                }
+                _phoneticExplanation.value = PhoneticExplanation(
+                    original = result.optString("original", word),
+                    final = result.optString("final", word),
+                    rules = rules
+                )
+            }
+        }
+    }
+
+    fun clearPhoneticExplanation() {
+        _phoneticExplanation.value = null
     }
 }

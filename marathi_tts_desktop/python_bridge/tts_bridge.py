@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 TTS Bridge - Marathi Text-to-Speech
 ====================================
@@ -14,10 +14,8 @@ Returns: JSON to stdout
     { success:false, error, stage }  on failure
 
 Engine priority:
-  1. Full TTSEngine from web app (normalizer + grammar + G2P + prosody)
-  2. edge-tts (Microsoft Edge neural voices — Marathi + Sanskrit via Hindi)
-  3. gTTS + pydub speed/pitch post-processing  (primary standalone)
-  4. gTTS bare fallback (no pydub)
+  1. gTTS + pydub speed/pitch post-processing  (primary standalone)
+  2. gTTS bare fallback (no pydub)
 """
 
 import sys
@@ -28,6 +26,9 @@ import tempfile
 import traceback
 import time
 import socket
+
+# Cap individual socket ops to 30s so gTTS fails fast on bad networks
+socket.setdefaulttimeout(30)
 
 # -- Logging setup ----------------------------------------------------------
 _BRIDGE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -46,9 +47,9 @@ log = get_logger("tts_bridge")
 # -- Path setup -------------------------------------------------------------
 _PROJECT_ROOT = os.environ.get(
     "MARATHI_TTS_PROJECT_ROOT",
-    _BRIDGE_DIR
+    os.path.abspath(os.path.join(_BRIDGE_DIR, "..", "marathi_tts_web"))
 )
-if _PROJECT_ROOT not in sys.path:
+if _PROJECT_ROOT not in sys.path and os.path.isdir(_PROJECT_ROOT):
     sys.path.insert(0, _PROJECT_ROOT)
 
 os.environ.setdefault("MARATHI_TTS_STANDALONE", "1")
@@ -135,16 +136,51 @@ except ImportError as _e:
     _phonetic_stotra = None
     _phonetic_old_marathi = None
 
+
 # ---------------------------------------------------------------------------
-# Edge-TTS (Microsoft Edge neural voices) — supports Marathi + Hindi (for Sanskrit)
+# G2P Engine (lazy singleton)
+# ---------------------------------------------------------------------------
+_g2p_engine = None
+
+def _get_g2p():
+    """Lazy-load the G2P engine. Returns None if unavailable."""
+    global _g2p_engine
+    if _g2p_engine is not None:
+        return _g2p_engine
+    try:
+        from tts.utils.phonetic.g2p_engine import MarathiG2PEngine
+        _g2p_engine = MarathiG2PEngine()
+        log.info("G2P engine loaded OK")
+        return _g2p_engine
+    except Exception as exc:
+        log.warning("G2P engine not available: %s", exc)
+        return None
+
+
+def _apply_g2p(text: str) -> str:
+    """Run text through G2P engine; return original on failure."""
+    g2p = _get_g2p()
+    if g2p is None:
+        return text
+    try:
+        result = g2p.process(text)
+        log.debug("G2P processed | %d -> %d chars", len(text), len(result))
+        return result
+    except Exception as exc:
+        log.warning("G2P processing failed: %s", exc)
+        return text
+
+
+# ---------------------------------------------------------------------------
+# Edge-TTS (Microsoft Edge neural voices) — real male/female voices
+# Same voice map as the desktop bridge.
 # ---------------------------------------------------------------------------
 _EDGE_VOICE_MAP = {
-    # (language, gender) → edge-tts voice name
     ("mr", "female"): "mr-IN-AarohiNeural",
     ("mr", "male"):   "mr-IN-ManoharNeural",
     ("hi", "female"): "hi-IN-SwaraNeural",
     ("hi", "male"):   "hi-IN-MadhurNeural",
-    # Sanskrit → Hindi voices (closest Devanagari match, better phonology than Marathi)
+    # Sanskrit → Hindi voices (best Devanagari phonology available)
     ("sa", "female"): "hi-IN-SwaraNeural",
     ("sa", "male"):   "hi-IN-MadhurNeural",
     # Old Marathi → Marathi voices (phonetic preprocessing handles the rest)
@@ -152,8 +188,65 @@ _EDGE_VOICE_MAP = {
     ("mr-old", "male"):   "mr-IN-ManoharNeural",
 }
 
+# ---------------------------------------------------------------------------
+# Accent Profiles (FEAT-57)
+# Each profile adjusts pitch, rate, and defines phonetic hints that are applied
+# as SSML phoneme-level tweaks via edge-tts prosody.
+# ---------------------------------------------------------------------------
+ACCENT_PROFILES = {
+    "standard": {
+        "label": "Standard (प्रमाण)",
+        "pitch_offset": 0.0,
+        "rate_offset": 0.0,
+        "description": "Standard Marathi accent (Pune/media)"
+    },
+    "mumbai": {
+        "label": "Mumbai (मुंबई)",
+        "pitch_offset": 0.03,
+        "rate_offset": 0.08,
+        "description": "Mumbai Marathi — faster pace, slightly higher pitch"
+    },
+    "northern": {
+        "label": "Northern (उत्तर महाराष्ट्र)",
+        "pitch_offset": -0.02,
+        "rate_offset": -0.05,
+        "description": "Khandesh/Vidarbha — slower, deeper tone"
+    },
+    "konkanastha": {
+        "label": "Konkanastha (कोकणस्थ)",
+        "pitch_offset": 0.05,
+        "rate_offset": -0.03,
+        "description": "Konkan region — higher pitch, measured pace"
+    },
+    "deccani": {
+        "label": "Deccani (दख्खनी)",
+        "pitch_offset": -0.04,
+        "rate_offset": 0.0,
+        "description": "Marathwada/Deccani — lower pitch, Urdu influence"
+    },
+}
+
+def get_accent_profiles():
+    """Return available accent profiles for UI population."""
+    return {
+        "success": True,
+        "profiles": {
+            k: {"label": v["label"], "description": v["description"]}
+            for k, v in ACCENT_PROFILES.items()
+        }
+    }
+
+def _apply_accent(speed: float, pitch: float, accent: str):
+    """Adjust speed and pitch based on accent profile. Returns (speed, pitch)."""
+    profile = ACCENT_PROFILES.get(accent)
+    if not profile:
+        return speed, pitch
+    return (
+        speed + profile["rate_offset"],
+        pitch + profile["pitch_offset"]
+    )
+
 def _edge_tts_available() -> bool:
-    """Check whether edge_tts is importable."""
     try:
         import edge_tts  # noqa: F401
         return True
@@ -170,30 +263,20 @@ def _generate_edge_tts(text: str, language: str, gender: str,
     try:
         import edge_tts
     except ImportError:
-        log.warning("[edge-tts] edge_tts package not installed")
+        log.warning("[edge-tts] package not installed")
         return {}
 
-    voice = _EDGE_VOICE_MAP.get((language, gender))
+    voice = _EDGE_VOICE_MAP.get((language, gender)) \
+        or _EDGE_VOICE_MAP.get((language, "female"))
     if voice is None:
-        # Try same language with default gender, else fallback
-        voice = _EDGE_VOICE_MAP.get((language, "female"))
-    if voice is None:
-        log.warning("[edge-tts] No voice mapping for lang=%s gender=%s", language, gender)
+        log.warning("[edge-tts] No voice for lang=%s gender=%s", language, gender)
         return {}
 
-    # edge-tts rate: "+0%", "-50%", "+100%" etc.
-    rate_pct = int((speed - 1.0) * 100)
-    rate_str = f"{rate_pct:+d}%"
-    # edge-tts volume: "+0%", "-50%" etc.
-    vol_pct = int((volume - 1.0) * 100)
-    vol_str = f"{vol_pct:+d}%"
-    # edge-tts pitch: "+0Hz", "-50Hz", "+100Hz" etc.
-    pitch_hz = int((pitch - 1.0) * 100)
-    pitch_str = f"{pitch_hz:+d}Hz"
+    rate_str   = f"{int((speed  - 1.0) * 100):+d}%"
+    vol_str    = f"{int((volume - 1.0) * 100):+d}%"
+    pitch_str  = f"{int((pitch  - 1.0) * 100):+d}Hz"
 
-    # Preprocess if verse mode or Old Marathi
     if language == "mr-old":
-        # Old Marathi: always use Old Marathi preprocessing (Ovi metre etc.)
         if _phonetic_old_marathi is not None:
             processed = _phonetic_old_marathi(text)
         else:
@@ -203,26 +286,21 @@ def _generate_edge_tts(text: str, language: str, gender: str,
     elif is_verse:
         processed = _preprocess_stotra_text(text)
         processed = _apply_g2p(processed)
-        log.info("[edge-tts] [Verse] Preprocessed | orig=%d  new=%d chars", len(text), len(processed))
     else:
         processed = _apply_g2p(text)
 
-    log.info("[edge-tts] Generating | voice=%s rate=%s vol=%s pitch=%s text_len=%d",
-             voice, rate_str, vol_str, pitch_str, len(processed))
+    log.info("[edge-tts] voice=%s rate=%s pitch=%s text_len=%d",
+             voice, rate_str, pitch_str, len(processed))
 
     async def _run():
         comm = edge_tts.Communicate(
-            text=processed,
-            voice=voice,
-            rate=rate_str,
-            volume=vol_str,
-            pitch=pitch_str,
+            text=processed, voice=voice,
+            rate=rate_str, volume=vol_str, pitch=pitch_str,
         )
         await comm.save(output_path)
 
     t0 = time.time()
     try:
-        # Use new event loop to avoid issues if one is already running
         loop = asyncio.new_event_loop()
         try:
             loop.run_until_complete(_run())
@@ -230,20 +308,16 @@ def _generate_edge_tts(text: str, language: str, gender: str,
             loop.close()
     except Exception as exc:
         log.error("[edge-tts] Failed: %s", exc)
-        log.debug("[edge-tts] Traceback:\n%s", traceback.format_exc())
         return {}
 
-    # Verify file was created and has content
     if not os.path.exists(output_path) or os.path.getsize(output_path) < 1000:
-        log.warning("[edge-tts] Output file missing or too small")
+        log.warning("[edge-tts] Output missing or too small")
         try: os.unlink(output_path)
         except OSError: pass
         return {}
 
     elapsed = time.time() - t0
-    engine_name = f"edge_tts_{language}"
-    if is_verse:
-        engine_name += "_verse"
+    engine_name = f"edge_tts_{language}" + ("_verse" if is_verse else "")
     log.info("[edge-tts] SUCCESS -> %s (%.2fs) voice=%s", output_path, elapsed, voice)
     return {"success": True, "audio_path": output_path, "engine": engine_name,
             "elapsed_sec": round(elapsed, 2)}
@@ -254,7 +328,7 @@ def _generate_edge_tts(text: str, language: str, gender: str,
 # ---------------------------------------------------------------------------
 
 def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
-                           output_path):
+                           output_path, emotion_intensity=1.0):
     """Generate edge-tts audio with prosody-segmented pauses.
 
     Uses ProsodyEngine to determine natural pause points, generates
@@ -263,6 +337,8 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
 
     Edge-tts natively handles speed/pitch/volume via SSML, so no pydub
     post-processing is needed for those parameters.
+
+    emotion_intensity (0.0–1.0) scales the ProsodyEngine emotion modifiers.
 
     Returns result dict on success, None to fall through.
     """
@@ -321,8 +397,10 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
             if not processed.strip():
                 continue
 
-            # Per-segment pitch adjustment from ProsodyEngine emphasis
-            seg_pitch_hz = base_pitch_hz + int(seg.pitch_shift * 100)
+            # Per-segment pitch adjustment from ProsodyEngine emphasis,
+            # scaled by emotion_intensity
+            scaled_pitch_shift = seg.pitch_shift * emotion_intensity
+            seg_pitch_hz = base_pitch_hz + int(scaled_pitch_shift * 100)
             seg_pitch_str = f"{seg_pitch_hz:+d}Hz"
 
             # Chandrabindu (ँ U+0901) → reduce volume ~3 dB for soft nasal
@@ -398,13 +476,15 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
 # ---------------------------------------------------------------------------
 
 def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
-                                  output_path):
+                                  output_path, emotion_intensity=1.0):
     """Generate edge-tts audio with verse-specific prosody segmentation.
 
     Uses ProsodyEngine for metre-aware verse segmentation (pauses at ।/॥,
     pitch contour, tts_rate per metre), generates per-segment audio via
     edge-tts neural voice, and stitches with calibrated verse pauses for
     natural shloka recitation.
+
+    emotion_intensity (0.0–1.0) scales the ProsodyEngine emotion modifiers.
 
     Returns result dict on success, None to fall through.
     """
@@ -469,12 +549,17 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
             if not processed.strip():
                 continue
 
-            # Per-segment rate from ProsodyEngine (verse metre rate × user speed)
-            seg_rate = speed * seg.tts_rate if seg.tts_rate else speed
+            # Per-segment rate from ProsodyEngine (verse metre rate × user speed),
+            # scaled by emotion_intensity
+            effective_tts_rate = 1.0 + (seg.tts_rate - 1.0) * emotion_intensity \
+                if seg.tts_rate else 1.0
+            seg_rate = speed * effective_tts_rate
             rate_str = f"{int((seg_rate - 1.0) * 100):+d}%"
 
-            # Per-segment pitch: user pitch + ProsodyEngine contour
-            seg_pitch_hz = base_pitch_hz + int(seg.pitch_shift * 100)
+            # Per-segment pitch: user pitch + ProsodyEngine contour,
+            # scaled by emotion_intensity
+            scaled_pitch_shift = seg.pitch_shift * emotion_intensity
+            seg_pitch_hz = base_pitch_hz + int(scaled_pitch_shift * 100)
             seg_pitch_str = f"{seg_pitch_hz:+d}Hz"
 
             # Chandrabindu nasalization (FEAT-15)
@@ -549,130 +634,9 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
 
 
 # ---------------------------------------------------------------------------
-# G2P Engine (lazy singleton)
-# ---------------------------------------------------------------------------
-_g2p_engine = None
-
-def _get_g2p():
-    """Lazy-load the G2P engine. Returns None if unavailable."""
-    global _g2p_engine
-    if _g2p_engine is not None:
-        return _g2p_engine
-    try:
-        from tts.utils.phonetic.g2p_engine import MarathiG2PEngine
-        _g2p_engine = MarathiG2PEngine()
-        log.info("G2P engine loaded OK")
-        return _g2p_engine
-    except Exception as exc:
-        log.warning("G2P engine not available: %s", exc)
-        return None
-
-
-def _apply_g2p(text: str) -> str:
-    """Run text through G2P engine; return original on failure."""
-    g2p = _get_g2p()
-    if g2p is None:
-        return text
-    try:
-        result = g2p.process(text)
-        log.debug("G2P processed | %d -> %d chars", len(text), len(result))
-        return result
-    except Exception as exc:
-        log.warning("G2P processing failed: %s", exc)
-        return text
-
-
-# ---------------------------------------------------------------------------
-# Stotra Library — pre-recorded audio for known stotras
-# ---------------------------------------------------------------------------
-_stotra_catalog = None
-
-def _load_stotra_catalog():
-    """Load stotra_catalog.json from STOTRA_DIR. Returns dict or empty."""
-    global _stotra_catalog
-    if _stotra_catalog is not None:
-        return _stotra_catalog
-    stotra_dir = os.environ.get("STOTRA_AUDIO_DIR", "")
-    if not stotra_dir or not os.path.isdir(stotra_dir):
-        _stotra_catalog = {}
-        return _stotra_catalog
-    catalog_path = os.path.join(stotra_dir, "stotra_catalog.json")
-    if not os.path.isfile(catalog_path):
-        log.debug("No stotra_catalog.json in %s", stotra_dir)
-        _stotra_catalog = {}
-        return _stotra_catalog
-    try:
-        with open(catalog_path, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-        # Index by fingerprints for fast lookup
-        catalog = {}
-        for entry in data.get("stotras", []):
-            for fp in entry.get("fingerprints", []):
-                catalog[fp] = entry
-        _stotra_catalog = catalog
-        log.info("Stotra catalog loaded | %d entries, %d fingerprints from %s",
-                 len(data.get('stotras', [])), len(catalog), stotra_dir)
-        return _stotra_catalog
-    except Exception as exc:
-        log.warning("Failed to load stotra catalog: %s", exc)
-        _stotra_catalog = {}
-        return _stotra_catalog
-
-
-def _fingerprint(text: str) -> str:
-    """Generate a simple fingerprint from Devanagari text for stotra matching.
-    Strips whitespace, digits, punctuation, dandas and takes first 60 Devanagari chars."""
-    import re
-    # Keep only Devanagari letters and matras (U+0900-U+0963, U+0970-U+097F)
-    # Exclude dandas (।॥ = U+0964-U+0965) and Devanagari digits (U+0966-U+096F)
-    cleaned = re.sub(r'[^\u0900-\u0963\u0970-\u097F]', '', text)
-    return cleaned[:60]
-
-
-def _try_stotra_library(text: str, speed: float, pitch: float, volume: float,
-                         output_path: str) -> dict:
-    """Check if text matches a known stotra; if so, copy/adjust pre-recorded audio."""
-    catalog = _load_stotra_catalog()
-    if not catalog:
-        return {}
-    fp = _fingerprint(text)
-    if not fp or len(fp) < 20:
-        return {}
-    # Try exact match first, then prefix match (catalog key starts with fp or vice versa)
-    entry = catalog.get(fp)
-    if entry is None:
-        for key, val in catalog.items():
-            if key.startswith(fp) or fp.startswith(key):
-                entry = val
-                break
-    if entry is None:
-        return {}
-    stotra_dir = os.environ.get("STOTRA_AUDIO_DIR", "")
-    audio_file = os.path.join(stotra_dir, entry.get("audio_file", ""))
-    if not os.path.isfile(audio_file):
-        log.warning("[Stotra Library] Audio file not found: %s", audio_file)
-        return {}
-    log.info("[Stotra Library] MATCH: %s -> %s", entry.get("name", "unknown"), audio_file)
-    import shutil
-    # Apply speed/volume if needed via pydub, else copy directly
-    needs_fx = (abs(speed - 1.0) > 0.05 or abs(pitch - 1.0) > 0.05 or
-                abs(volume - 1.0) > 0.05)
-    if needs_fx:
-        try:
-            _apply_pitch_speed(audio_file, speed, pitch, volume, output_path)
-        except Exception:
-            shutil.copy(audio_file, output_path)
-    else:
-        shutil.copy(audio_file, output_path)
-    return {"success": True, "audio_path": output_path,
-            "engine": "stotra_library",
-            "stotra_name": entry.get("name", ""),
-            "stotra_source": entry.get("source", "")}
-
-
-# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _apply_pitch_speed(src: str, speed: float, pitch: float, volume: float, dst: str) -> str:
     """Apply speed/pitch/volume adjustments via pydub. Returns dst path.
@@ -740,269 +704,159 @@ def _normalize_marathi(text: str) -> str:
 
 
 def _preprocess_stotra_text(text: str) -> str:
-    """Apply pronunciation and pause rules for stotra/shloka Sanskrit-Marathi text.
+    """Apply pronunciation and pause rules for stotra/shloka text.
 
     If the full phonetic module is available, delegates to it.
-    Otherwise falls back to the inline rules below.
+    Otherwise falls back to inline rules.
 
-    Sanskrit has strict phonetic rules that gTTS (a Marathi conversational model)
-    cannot handle natively.  This function rewrites the text so that gTTS produces
-    approximately correct pronunciation.
-
-    1.  STRUCTURAL cleanup (hyphens, verse numbers, dandas → punctuation)
-    2.  TERMINAL HALANT expansion (म् → म, न् → न, etc.)
-    3.  VISARGA context-dependent expansion (ः → हा / ह / स / श)
-    4.  Echoing terminal visarga (-iḥ → -ihi, -uḥ → -uhu)
-    5.  ANUSVARA context-dependent nasal hint
-    6.  CONJUNCT pronunciation hints for gTTS
-    7.  OM / special symbols
-    8.  Final punctuation & whitespace cleanup
+    Pronunciation rules (via module):
+      - Terminal halant expansion (म् → म)
+      - Visarga context-sensitive sandhi (ः → श/ष/स/हा)
+      - Echoing terminal visarga (-iḥ → -ihi, -uḥ → -uhu)
+      - Conjunct aids (ज्ञ → द्न्य)
+      - OM → ओम
+    Structural:
+      - ॥ N ॥ (verse number) → .
+      - ॥ → .   (long pause)
+      - । → ,   (half-line pause)
+      - blank lines → .
     """
     # Use the full phonetic module if available
     if _phonetic_stotra is not None:
         return _phonetic_stotra(text)
 
     # --- Fallback: inline rules (kept for environments without the module) ---
-    import re
-    r = text
-
-    # ── 0. Unicode NFC ─────────────────────────────────────────────────
-    import unicodedata
-    r = unicodedata.normalize('NFC', r)
-
-    # ── 1. STRUCTURAL CLEANUP ──────────────────────────────────────────
-    # Remove hyphens inside compound words (वामाङ्कारूढ-सीता → वामाङ्कारूढसीता)
-    r = re.sub(r'(?<=[\u0900-\u097F])-(?=[\u0900-\u097F])', '', r)
-    # Remove ZWJ/ZWNJ that confuse tokenizers
-    r = r.replace('\u200D', '').replace('\u200C', '')
-
-    # ── 2. VERSE STRUCTURE → PUNCTUATION ───────────────────────────────
-    # Section headers: ॥ अथ ध्यानम् ॥ → keep text, add period
-    r = re.sub(r'॥\s*[\d०-९]+\s*॥', '.', r)  # verse numbers
-    r = r.replace('॥', '.')
-    r = r.replace('।', ',')
-    r = re.sub(r'\n\s*\n+', '\n.\n', r)       # stanza breaks
-
-    # ── 3. ASCII COLON → VISARGA ───────────────────────────────────────
-    r = re.sub(r'([\u0900-\u097F]):', r'\1ः', r)
-
-    # ── 4. TERMINAL HALANT (विराम) ─────────────────────────────────────
-    # Sanskrit words ending in halant+consonant: gTTS cannot pronounce these.
-    # Add implicit short 'a' (schwa) so gTTS enunciates the final consonant.
-    # म् → म, न् → न, त् → त, etc.  (before space, punct, or end of string)
-    HALANT = '\u094D'
-    r = re.sub(HALANT + r'(?=[\s.,;!?\n]|$)', '', r)
-
-    # ── 5. VISARGA (ः) — context-dependent ─────────────────────────────
-    # Before palatal consonants (च, छ, ज, झ, श): ः → श
-    r = re.sub(r'ः(?=[चछजझश])', 'श', r)
-    # Before retroflex consonants (ट, ठ, ड, ढ, ष): ः → ष
-    r = re.sub(r'ः(?=[टठडढष])', 'ष', r)
-    # Before dental/sibilant consonants (त, थ, द, ध, स, न): ः → स
-    r = re.sub(r'ः(?=[तथदधसन])', 'स', r)
-    # Terminal visarga (before space/punct/newline/end): ः → हा
-    r = re.sub(r'ः(?=[\s.,\n]|$)', 'हा', r)
-    # Remaining mid-word visarga: ः → ह
-    r = r.replace('ः', 'ह')
-
-    # ── 6. ANUSVARA (ं) pronunciation hints ────────────────────────────
-    # Before velar (क,ख,ग,घ): anusvara sounds like ङ — leave as ं (gTTS OK)
-    # Before palatal (च,छ,ज,झ): anusvara → ञ-like — leave as ं
-    # Before labial (प,फ,ब,भ,म): anusvara → म-like — leave as ं
-    # anusvara before nothing or non-Devanagari: nasalization — leave as ं
-    # gTTS handles anusvara reasonably, so minimal intervention here.
-
-    # ── 7. CONJUNCT pronunciation aids for gTTS ────────────────────────
-    # ज्ञ is commonly mispronounced — hint as द्न्य (Marathi) or ग्य (Sanskrit)
-    r = r.replace('ज्ञ', 'द्न्य')
-    # ऋ vowel — gTTS often says 'ri' weakly; reinforce
-    r = r.replace('ॠ', 'री')   # long ṝ
-    # क्ष → ksha — gTTS usually handles this, leave as is
-
-    # ── 8. SPECIAL SYMBOLS ─────────────────────────────────────────────
-    r = r.replace('ॐ', 'ओम')
-
-    # ── 9. CLEANUP ─────────────────────────────────────────────────────
-    r = re.sub(r'[.,]{2,}', '.', r)         # collapse repeated punctuation
-    r = re.sub(r'^\s*[.,]\s*', '', r)       # strip leading punctuation
-    r = re.sub(r'[ \t]+', ' ', r)           # normalise whitespace
-    r = re.sub(r'\n{3,}', '\n\n', r)
-    return r.strip()
+    import re as _re
+    result = text
+    # ASCII colon after Devanagari → visarga
+    result = _re.sub(r'([\u0900-\u097F]):', r'\1ः', result)
+    # Terminal visarga → "हा"
+    result = _re.sub(r'ः(?=[\s,।॥.\n]|$)', 'हा', result)
+    # Mid-word visarga → "ह"
+    result = result.replace('ः', 'ह')
+    # OM symbol
+    result = result.replace('ॐ', 'ओम')
+    # Verse numbers:  ॥ ३ ॥  or  ॥3॥ → period
+    result = _re.sub(r'॥\s*[\d०-९]+\s*॥', '.', result)
+    # Double danda → period
+    result = result.replace('॥', '.')
+    # Single danda → comma
+    result = result.replace('।', ',')
+    # Blank lines → period
+    result = _re.sub(r'\n\s*\n+', '\n.\n', result)
+    # Cleanup
+    result = _re.sub(r'[.,]{2,}', '.', result)
+    result = _re.sub(r'^\s*[.,]\s*', '', result)
+    result = _re.sub(r'[ \t]+', ' ', result)
+    result = _re.sub(r'\n{3,}', '\n\n', result)
+    return result.strip()
 
 
 # ---------------------------------------------------------------------------
-# Prose text preprocessing (non-verse Marathi book/document text)
+# Prose preprocessing — abbreviation expansion + English transliteration
 # ---------------------------------------------------------------------------
+import re as _re_prose
 
-# ── Honorific / common abbreviation expansions ──────────────────────────────
-# Ordered longest-first so sub-patterns don't shadow longer ones.
+# Ordered longest-match first so  प. पू.  beats  पू.
 _MARATHI_ABBREV = [
-    # Honorifics (most common in religious/biographical Marathi)
-    (r'\bप\s*\.\s*पू\s*\.', 'परमपूज्य'),
-    (r'\bपू\s*\.', 'पूज्य'),
-    (r'\bश्री\s*\.', 'श्री'),
-    (r'\bश्रीमती\s*\.', 'श्रीमती'),
-    (r'\bसौ\s*\.', 'सौभाग्यवती'),
-    (r'\bकु\s*\.', 'कुमारी'),
-    (r'\bडॉ\s*\.', 'डॉक्टर'),
-    (r'\bप्रा\s*\.', 'प्राध्यापक'),
-    (r'\bप्रो\s*\.', 'प्रोफेसर'),
-    (r'\bस्व\s*\.', 'स्वर्गीय'),
-    # Measures / misc
-    (r'\bकि\s*\.\s*मी\s*\.', 'किलोमीटर'),
-    (r'\bकि\s*\.', 'किलो'),
-    (r'\bनं\s*\.', 'नंबर'),
-    (r'\bक्र\s*\.', 'क्रमांक'),
-    (r'\bरु\s*\.', 'रुपये'),
-    (r'\bइ\s*\.\s*स\s*\.', 'इसवी सन'),
-    (r'\bइ\s*\.', 'इत्यादी'),
+    (_re_prose.compile(r'\bप\s*\.\s*पू\s*\.'), 'परमपूज्य'),
+    (_re_prose.compile(r'\bपू\s*\.'), 'पूज्य'),
+    (_re_prose.compile(r'\bश्रीमती\s*\.'), 'श्रीमती'),
+    (_re_prose.compile(r'\bश्री\s*\.'), 'श्री'),
+    (_re_prose.compile(r'\bसौ\s*\.'), 'सौभाग्यवती'),
+    (_re_prose.compile(r'\bकु\s*\.'), 'कुमारी'),
+    (_re_prose.compile(r'\bडॉ\s*\.'), 'डॉक्टर'),
+    (_re_prose.compile(r'\bप्रा\s*\.'), 'प्राध्यापक'),
+    (_re_prose.compile(r'\bस्व\s*\.'), 'स्वर्गीय'),
+    (_re_prose.compile(r'\bकि\s*\.\s*मी\s*\.'), 'किलोमीटर'),
+    (_re_prose.compile(r'\bइ\s*\.\s*स\s*\.'), 'इसवी सन'),
+    (_re_prose.compile(r'\bइ\s*\.\s*स\s*\.\s*पू\s*\.'), 'इसवी सनपूर्व'),
+    (_re_prose.compile(r'\bरु\s*\.'), 'रुपये'),
+    (_re_prose.compile(r'\bनं\s*\.'), 'नंबर'),
+    (_re_prose.compile(r'\bक्र\s*\.'), 'क्रमांक'),
+    (_re_prose.compile(r'\bपृ\s*\.'), 'पृष्ठ'),
+    (_re_prose.compile(r'\bसं\s*\.'), 'संख्या'),
+    (_re_prose.compile(r'\bजि\s*\.'), 'जिल्हा'),
+    (_re_prose.compile(r'\bता\s*\.'), 'तालुका'),
+    (_re_prose.compile(r'\bमु\s*\.\s*पो\s*\.'), 'मुक्काम पोस्ट'),
 ]
 
-# ── English → Devanagari common word lookup ──────────────────────────────────
 _ENGLISH_TO_DEVNAGARI = {
-    # Medical
-    'heart'       : 'हार्ट',
-    'attack'      : 'अटॅक',
-    'normal'      : 'नॉर्मल',
-    'abnormal'    : 'अबनॉर्मल',
-    'delivery'    : 'डिलिव्हरी',
-    'convulsion'  : 'कन्व्हल्शन',
-    'convulsions' : 'कन्व्हल्शन्स',
-    'injection'   : 'इंजेक्शन',
-    'injections'  : 'इंजेक्शन्स',
-    'doctor'      : 'डॉक्टर',
-    'doctors'     : 'डॉक्टर्स',
-    'hospital'    : 'हॉस्पिटल',
-    'tablet'      : 'टॅब्लेट',
-    'tablets'     : 'टॅब्लेट्स',
-    'blood'       : 'ब्लड',
-    'pressure'    : 'प्रेशर',
-    'operation'   : 'ऑपरेशन',
-    'patient'     : 'पेशंट',
-    'cesarean'    : 'सिझेरियन',
-    'caesarean'   : 'सिझेरियन',
-    'misoprost'   : 'मिसोप्रोस्ट',
-    'expand'      : 'एक्सपँड',
-    'expanding'   : 'एक्सपँडिंग',
-    # Everyday
-    'station'     : 'स्टेशन',
-    'bus'         : 'बस',
-    'train'       : 'ट्रेन',
-    'office'      : 'ऑफिस',
-    'school'      : 'स्कूल',
-    'college'     : 'कॉलेज',
-    'mobile'      : 'मोबाईल',
-    'phone'       : 'फोन',
-    'call'        : 'कॉल',
-    'online'      : 'ऑनलाईन',
-    'video'       : 'व्हिडिओ',
-    'news'        : 'न्यूज',
-    'test'        : 'टेस्ट',
-    'report'      : 'रिपोर्ट',
-    'god'         : 'गॉड',
-    'sir'         : 'सर',
-    'madam'       : 'मॅडम',
+    "heart": "हार्ट", "attack": "अटॅक", "blood": "ब्लड", "pressure": "प्रेशर",
+    "sugar": "शुगर", "diabetes": "डायबिटीस", "hospital": "हॉस्पिटल",
+    "doctor": "डॉक्टर", "medicine": "मेडिसिन", "tablet": "टॅब्लेट",
+    "capsule": "कॅप्सूल", "injection": "इंजेक्शन", "dose": "डोस",
+    "fever": "फीव्हर", "pain": "पेन", "test": "टेस्ट", "report": "रिपोर्ट",
+    "delivery": "डिलिव्हरी", "normal": "नॉर्मल", "caesarean": "सिझेरियन",
+    "operation": "ऑपरेशन", "emergency": "इमर्जन्सी", "ambulance": "अँब्युलन्स",
+    "oxygen": "ऑक्सिजन", "icu": "आयसीयू", "ward": "वॉर्ड",
+    "convulsions": "कन्व्हल्शन्स", "infection": "इन्फेक्शन", "virus": "व्हायरस",
+    "vaccine": "व्हॅक्सिन", "protein": "प्रोटीन", "calcium": "कॅल्शियम",
+    "vitamin": "व्हिटॅमिन", "hemoglobin": "हिमोग्लोबिन", "anemia": "अॅनिमिया",
+    "ultrasound": "अल्ट्रासाउंड", "xray": "एक्सरे", "scan": "स्कॅन",
+    "school": "स्कूल", "college": "कॉलेज", "class": "क्लास", "exam": "एक्झाम",
+    "result": "रिझल्ट", "pass": "पास", "fail": "फेल", "marks": "मार्क्स",
+    "percent": "पर्सेंट", "fee": "फी", "form": "फॉर्म",
+    "mobile": "मोबाईल", "phone": "फोन", "internet": "इंटरनेट",
+    "computer": "कॉम्प्युटर", "software": "सॉफ्टवेअर", "app": "अॅप",
+    "online": "ऑनलाईन", "offline": "ऑफलाईन", "download": "डाऊनलोड",
+    "upload": "अपलोड", "account": "अकाऊंट", "password": "पासवर्ड",
+    "video": "व्हिडिओ", "photo": "फोटो", "camera": "कॅमेरा",
+    "bus": "बस", "train": "ट्रेन", "car": "कार", "bike": "बाईक",
+    "ticket": "तिकीट", "station": "स्टेशन", "platform": "प्लॅटफॉर्म",
+    "office": "ऑफिस", "file": "फाईल", "copy": "कॉपी", "post": "पोस्ट",
 }
 
+_DEVANAGARI_CONSONANTS = (
+    'ब','भ','च','छ','ड','ढ','फ','ग','घ','ह','ज','झ','क','ख','ल','ळ','म','न',
+    'ण','प','र','स','श','ष','त','थ','द','ध','व','य','झ','ट','ठ',
+)
 
 def _transliterate_english_char_level(word: str) -> str:
-    """Letter-by-letter English → Devanagari fallback for unknown words.
-
-    Maps English characters to approximate Marathi phonetics so the Marathi
-    TTS voice reads them without switching to an English tone.
-    """
-    # Vowels: standalone (word-initial or after another vowel) vs. after consonant (matra form)
-    _VOW_INIT  = {'a': 'अ', 'e': 'ए', 'i': 'इ', 'o': 'ओ', 'u': 'उ', 'y': 'य'}
-    _VOW_MATRA = {'a': 'ा', 'e': 'े', 'i': 'ि', 'o': 'ो', 'u': 'ु', 'y': 'ी'}
-    _CONS = {
-        'b': 'ब', 'c': 'क', 'd': 'ड', 'f': 'फ', 'g': 'ग', 'h': 'ह',
-        'j': 'ज', 'k': 'क', 'l': 'ल', 'm': 'म', 'n': 'न', 'p': 'प',
-        'q': 'क', 'r': 'र', 's': 'स', 't': 'ट', 'v': 'व', 'w': 'व',
-        'x': 'क्स', 'y': 'य', 'z': 'झ',
+    """Best-effort ASCII → Devanagari char-level mapping."""
+    _C2D = {
+        'a': 'अ', 'b': 'ब', 'c': 'क', 'd': 'ड', 'e': 'ए', 'f': 'फ',
+        'g': 'ग', 'h': 'ह', 'i': 'इ', 'j': 'ज', 'k': 'क', 'l': 'ल',
+        'm': 'म', 'n': 'न', 'o': 'ओ', 'p': 'प', 'q': 'क', 'r': 'र',
+        's': 'स', 't': 'ट', 'u': 'उ', 'v': 'व', 'w': 'व', 'x': 'क्स',
+        'y': 'य', 'z': 'झ',
     }
-    w = word.lower()
     out = []
-    i = 0
-    prev_was_cons = False
-    while i < len(w):
-        ch = w[i]
-        # Skip silent final 'e'
-        if ch == 'e' and i == len(w) - 1 and prev_was_cons:
-            i += 1
-            continue
-        if ch in _VOW_INIT:
-            out.append(_VOW_MATRA[ch] if prev_was_cons else _VOW_INIT[ch])
-            prev_was_cons = False
-        elif ch in _CONS:
-            out.append(_CONS[ch])
-            prev_was_cons = True
-        # else: skip unknown characters (digits, punct kept outside)
-        i += 1
-    return ''.join(out) if out else word
+    for ch in word.lower():
+        out.append(_C2D.get(ch, ch))
+    return ''.join(out)
 
 
 def _transliterate_english_words(text: str) -> str:
-    """Replace ASCII English words embedded in Devanagari text with Devanagari phonetics.
-
-    Only targets words that are purely ASCII alphabetic (no digits, no URLs).
-    Short words ≤ 2 chars (prepositions like 'a', 'of') are left as-is since
-    gTTS usually reads them acceptably and they're often OCR artefacts anyway.
-    """
-    import re
-
-    def replace_word(m: 're.Match') -> str:
-        w = m.group(0)
-        if len(w) <= 2:
-            return w  # leave short words
-        key = w.lower()
+    """Replace ASCII runs of 3+ chars with Devanagari equivalents."""
+    def _replace(m):
+        word = m.group(0)
+        key = word.lower()
         if key in _ENGLISH_TO_DEVNAGARI:
             return _ENGLISH_TO_DEVNAGARI[key]
-        return _transliterate_english_char_level(w)
-
-    # Match runs of ASCII letters only (not digits, not URLs)
-    return re.sub(r'[A-Za-z]{3,}', replace_word, text)
+        if len(key) >= 3:
+            return _transliterate_english_char_level(word)
+        return word
+    return _re_prose.sub(r'[A-Za-z]{3,}', _replace, text)
 
 
 def _preprocess_prose_text(text: str) -> str:
-    """Preprocess Marathi prose (book/document) text for natural TTS reading.
-
-    Applied before every TTS engine for non-verse book text:
-
-    1.  Expand honorific abbreviations: प. पू. → परमपूज्य, श्री. → श्री, etc.
-    2.  Remove mid-sentence pauses caused by abbreviation periods:
-        a single Devanagari word (≤4 chars) followed by '.' followed by
-        more text is an abbreviation, not a sentence end — remove the period
-        so gTTS doesn't pause there.
-    3.  Transliterate embedded English words to Devanagari phonetics so the
-        Marathi TTS voice doesn't switch to an English accent.
-    """
-    import re
-    import unicodedata
-    r = unicodedata.normalize('NFC', text)
-
-    # ── 1. Honorific / abbreviation expansion ───────────────────────────
-    for pattern, repl in _MARATHI_ABBREV:
-        r = re.sub(pattern, repl, r)
-
-    # ── 2. Remove pause-causing periods from remaining abbreviations ─────
-    # Only target genuinely short words (word-boundary + 1-2 Devanagari chars + period)
-    # that are followed by a space and more Devanagari — these are abbreviations.
-    # Deliberately conservative: 3+ char words keep their sentence-ending period.
-    # e.g. "मो. ९८..." → "मो ९८"    "kā. sā." type abbreviated honorifics → removed
-    r = re.sub(
+    """Expand Marathi abbreviations and transliterate embedded English words."""
+    r = text
+    # 1. Expand known Marathi abbreviations
+    for pat, replacement in _MARATHI_ABBREV:
+        r = pat.sub(replacement, r)
+    # 2. Remove stray dots after short 1-2-char Devanagari abbreviations
+    #    (only when followed by whitespace + more Devanagari/digits, to avoid
+    #    eating sentence-ending dots)
+    r = _re_prose.sub(
         r'(?<!\S)([\u0900-\u097F]{1,2})\.'
         r'(?=\s+[\u0900-\u097F\u0966-\u096F])',
-        r'\1',
-        r
+        r'\1', r
     )
-
-    # ── 3. English word transliteration ─────────────────────────────────
+    # 3. Transliterate embedded English words
     r = _transliterate_english_words(r)
-
-    # ── 4. Cleanup ───────────────────────────────────────────────────────
-    r = re.sub(r'[ \t]+', ' ', r)
-    return r.strip()
-
+    return r
 
 def _apply_grammar(text: str) -> str:
     """Apply MarathiGrammarEngine to clean/fix prose text.
@@ -1023,86 +877,6 @@ def _apply_grammar(text: str) -> str:
     except Exception as exc:
         log.info("[Grammar] Not available or failed: %s", exc)
         return text
-
-
-def _generate_verse_audio(text: str, speed: float, pitch: float, volume: float,
-                          output_path: str, language: str = "mr",
-                          original_language: str = "mr") -> dict:
-    """Generate TTS audio with verse/shloka treatment.
-
-    Uses ``original_language`` to choose the correct phonetic preprocessing:
-    - ``sa``     → apply_sanskrit_phonetics (ज्ञ kept, visarga sandhi, etc.)
-    - ``mr-old`` → apply_old_marathi_phonetics (no schwa deletion)
-    - ``mr``     → _preprocess_stotra_text (Sanskrit rules + structural cleanup)
-    ``language`` is the already-mapped gTTS language code (e.g. ``hi`` for Sanskrit).
-    """
-    try:
-        from gtts import gTTS  # type: ignore
-    except ImportError as exc:
-        log.warning("gTTS not available for verse mode: %s", exc)
-        return {}   # empty → caller falls back to bare gTTS
-
-    # Stage A: stotra-specific preprocessing — pick rules by original language.
-    # Sanskrit: _preprocess_stotra_text already calls apply_sanskrit_phonetics internally.
-    #   Call it directly — no separate apply_sanskrit_phonetics call needed.
-    # Old Marathi: apply old-Marathi phonetics first (no schwa deletion), then structural cleanup.
-    # Modern Marathi / default: full stotra preprocessing.
-    if original_language == "sa":
-        preprocessed = _preprocess_stotra_text(text)
-    elif original_language == "mr-old":
-        preprocessed = _preprocess_stotra_text(apply_old_marathi_phonetics(text))
-    else:
-        preprocessed = _preprocess_stotra_text(text)
-    # Stage B: full G2P pipeline (conjuncts, anusvara, schwa etc.)
-    preprocessed = _apply_g2p(preprocessed)
-    # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)
-    # AFTER G2P because G2P strips ZWNJ.
-    if gtts_language == 'mr':
-        preprocessed = apply_gtts_mr_fixes(preprocessed)
-    log.info("[Verse] Preprocessed stotra text | orig=%d  new=%d chars", len(text), len(preprocessed))
-    log.debug("[Verse] Preview: %.400s", preprocessed)
-
-    if not preprocessed.strip():
-        log.warning("[Verse] Preprocessed text is empty")
-        return {}
-
-    # Only use gTTS slow mode for very low speeds (it is *extremely* slow)
-    use_slow = speed < 0.75
-
-    fd, raw = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
-    os.close(fd)
-
-    t0 = time.time()
-    try:
-        gTTS(text=preprocessed, lang=language, slow=use_slow, lang_check=False).save(raw)
-    except Exception as exc:
-        log.error("[Verse] gTTS failed: %s", exc)
-        try: os.unlink(raw)
-        except OSError: pass
-        return {}
-
-    log.info("[Verse] gTTS saved in %.2fs (slow=%s)", time.time() - t0, use_slow)
-
-    # Optionally apply effects if pydub + ffmpeg are available
-    import shutil
-    needs_fx = (abs(speed - 1.0) > 0.05 or abs(pitch - 1.0) > 0.05 or
-                abs(volume - 1.0) > 0.05)
-    if needs_fx:
-        try:
-            _apply_pitch_speed(raw, speed, pitch, volume, output_path)
-            try: os.unlink(raw)
-            except OSError: pass
-        except Exception as exc:
-            log.warning("[Verse] pydub effects skipped (%s) — using raw gTTS output", exc)
-            shutil.move(raw, output_path)
-    else:
-        shutil.move(raw, output_path)
-
-    elapsed = time.time() - t0
-    log.info("[Verse] SUCCESS -> %s (%.2fs)", output_path, elapsed)
-    return {"success": True, "audio_path": output_path, "engine": "gtts_verse",
-            "elapsed_sec": round(elapsed, 2)}
-
 
 # ---------------------------------------------------------------------------
 # Prosody-segmented generation (FEAT-1)
@@ -1236,80 +1010,35 @@ def _generate_prosody_audio(text, speed, pitch, volume, output_path,
 # Main API
 # ---------------------------------------------------------------------------
 
-# gTTS-supported Devanagari languages → fallback mapping for unsupported ones.
-# Sanskrit (sa) → Hindi: same Devanagari script, phonologically much closer than Marathi.
-# Old Marathi → Marathi (same script, different phonology handled by preprocessing).
-_GTTS_LANG_MAP = {
-    "sa": "hi",      # Sanskrit → Hindi (phonologically closest available)
-    "mr-old": "mr",  # Old Marathi → Marathi (same script)
-    "ne": "hi",      # Nepali  → Hindi   (same script, close phonology)
-}
-
-
 def generate_tts(text: str,
                  speed: float = 1.0,
                  pitch: float = 1.0,
                  volume: float = 1.0,
                  output_path: str = None,
                  emotion: str = None,
+                 emotion_intensity: float = 1.0,
                  is_verse: bool = False,
                  language: str = "mr",
-                 engine: str = "auto",
-                 gender: str = "female") -> dict:
+                 gender: str = "female",
+                 accent: str = "standard") -> dict:
     """Generate Marathi TTS audio. Returns {success, audio_path} or {success:False, error}."""
     t0 = time.time()
-
-    # Preserve the *original* language for edge-tts (which has its own voice map).
-    # gTTS fallback mapping (sa→mr) is applied only when we actually reach gTTS.
-    gtts_language = _GTTS_LANG_MAP.get(language, language)
-
     log.info("=== generate_tts START | text_len=%d speed=%.2f pitch=%.2f "
-             "volume=%.2f emotion=%s verse=%s lang=%s engine=%s gender=%s ===",
-             len(text), speed, pitch, volume, emotion, is_verse, language, engine, gender)
-    log.debug("Input text preview: %.200s", text)
+             "volume=%.2f emotion=%s verse=%s lang=%s gender=%s accent=%s ===",
+             len(text), speed, pitch, volume, emotion, is_verse, language, gender, accent)
 
-    # Store original pitch for edge-tts (which has native male/female voices).
-    # gTTS is female-only, so male voice needs pitch down ~4 semitones (factor ~0.79).
-    original_pitch = pitch
-    gtts_pitch = pitch
-    if gender == 'male':
-        gtts_pitch = pitch * 0.79 if abs(pitch - 1.0) > 0.01 else 0.79
-        log.info("[Gender] Male voice: gTTS pitch=%.2f, edge-tts pitch=%.2f (native male voice)",
-                 gtts_pitch, original_pitch)
+    # Apply accent profile modifiers to speed and pitch
+    speed, pitch = _apply_accent(speed, pitch, accent)
 
-    if not text or not text.strip():
-        log.error("Empty input text")
-        return {"success": False, "error": "Empty text",
-                "error_code": "ERR_EMPTY_TEXT", "stage": "validation"}
-
-    if output_path is None:
-        fd, output_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
-        os.close(fd)
-
-    # ── Prose preprocessing (non-verse Marathi book/document text) ────────
-    # Applied before ALL engines.  Expands "प. पू." → "परमपूज्य", removes
-    # spurious abbreviation pauses, and transliterates embedded English words
-    # so the Marathi TTS voice doesn't switch accent mid-sentence.
-    # Verse text gets its own stotra preprocessing inside _generate_verse_audio.
-    if not is_verse:
-        preprocessed_text = _preprocess_prose_text(text)
-        if preprocessed_text != text:
-            log.info("[Prose] Preprocessed | orig=%d new=%d chars", len(text), len(preprocessed_text))
-            log.debug("[Prose] Preview: %.300s", preprocessed_text)
-        text = preprocessed_text
-
-    # ── Grammar engine (FEAT-3) — spelling, sandhi, vibhakti, punctuation ──
-    # Applied to Marathi prose only (not Sanskrit, not verse).
-    if not is_verse and language not in ("sa", "en"):
-        grammar_text = _apply_grammar(text)
-        if grammar_text != text:
-            log.info("[Grammar] Applied | orig=%d new=%d chars",
-                     len(text), len(grammar_text))
-        text = grammar_text
+    # Map unsupported gTTS languages to closest supported one.
+    # Sanskrit → Hindi (phonologically much closer than Marathi; same Devanagari TTS voice)
+    _gtts_lang_map = {"sa": "hi", "mr-old": "mr", "ne": "hi"}
+    gtts_language = _gtts_lang_map.get(language, language)
 
     # ── Custom Voice Engine (FEAT-50) ────────────────────────────────────
-    # Highest priority: try pre-recorded segment library and custom ONNX
-    # model BEFORE any network-dependent engine.  Works offline.
+    # Highest priority for verse content: try pre-recorded segment library
+    # and custom ONNX model BEFORE any network-dependent engine.
+    # Works offline — no internet required.
     try:
         from custom_voice_engine import generate_custom_voice
         custom_result = generate_custom_voice(
@@ -1326,50 +1055,8 @@ def generate_tts(text: str,
     except Exception as exc:
         log.warning("[Custom] Custom voice failed: %s", exc)
 
-    # Stage 0: Stotra library — pre-recorded audio for known stotras/mantras
-    if is_verse:
-        log.info("[Stage 0] Checking stotra library")
-        try:
-            result = _try_stotra_library(text, speed, pitch, volume, output_path)
-            if result.get("success"):
-                result["elapsed_sec"] = round(time.time() - t0, 2)
-                log.info("[Stage 0] Stotra library HIT: %s (%.2fs)",
-                         result.get('stotra_name', ''), result['elapsed_sec'])
-                return result
-            log.info("[Stage 0] No stotra match, proceeding to synthesis")
-        except Exception as exc:
-            log.warning("[Stage 0] Stotra library error: %s", exc)
-
-    # Stage 1: Full TTSEngine from web app
-    log.info("[Stage 1] Attempting full TTSEngine")
-    try:
-        from tts.utils.core.tts_engine import TTSEngine  # type: ignore
-        engine = TTSEngine()
-        log.info("[Stage 1] TTSEngine loaded OK")
-        voice_params = {"speed": speed, "pitch": pitch, "volume": volume}
-        if emotion:
-            voice_params["emotion"] = emotion
-        processed = engine.preprocess_verse_text(text) if is_verse \
-            else engine.preprocess_marathi_text(text)
-        log.debug("[Stage 1] Preprocessed: %.200s", processed)
-        audio = engine.generate_tts_audio(text=processed, voice_params=voice_params)
-        if audio and os.path.exists(audio):
-            if audio != output_path:
-                import shutil
-                shutil.move(audio, output_path)
-            elapsed = time.time() - t0
-            log.info("[Stage 1] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
-            return {"success": True, "audio_path": output_path, "engine": "full_tts_engine",
-                    "elapsed_sec": round(elapsed, 2)}
-        log.warning("[Stage 1] Engine returned no audio path")
-    except ImportError:
-        log.info("[Stage 1] TTSEngine not available (web app not on Python path)")
-    except Exception as exc:
-        log.warning("[Stage 1] TTSEngine failed: %s", exc)
-        log.debug(traceback.format_exc())
-
     # ── Network pre-check (BUG-21) ───────────────────────────────────────
-    # Stages 2+ (edge-tts, gTTS) require internet.  Fail fast with a clear
+    # Both edge-tts and gTTS require internet.  Fail fast with a clear
     # message instead of waiting 30 s for a socket timeout.
     if not _is_network_available():
         log.error("[Network] No internet connectivity — cannot reach TTS API")
@@ -1378,81 +1065,118 @@ def generate_tts(text: str,
                 "error_code": "ERR_NO_NETWORK",
                 "stage": "network_check"}
 
-    # Stage 2: edge-tts (Microsoft Edge neural voices)
-    # Supports Marathi natively and Sanskrit via Hindi voice (same Devanagari script)
+    # ── Stage 0: edge-tts — real male/female neural voices (requires internet) ──
+    # Tried first because it provides a genuine ManoharNeural male voice,
+    # unlike gTTS which is always female and only pitch-shifted for male.
     if _edge_tts_available():
-        log.info("[Stage 2] Attempting edge-tts | lang=%s gender=%s verse=%s", language, gender, is_verse)
+        _edge_output = output_path if output_path else \
+            tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
         # Try prosody-segmented edge-tts first
         if is_verse:
             # Verse-specific prosody with metre-aware pauses & pitch contour
-            try:
-                prosody_result = _generate_edge_verse_prosody(
-                    text, language, gender, speed, original_pitch, volume,
-                    output_path)
-                if prosody_result and prosody_result.get("success"):
-                    prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
-                    log.info("[Stage 2] edge-tts verse prosody SUCCESS "
-                             "(%d segments, %.2fs)",
-                             prosody_result.get("segments", 0),
-                             prosody_result["elapsed_sec"])
-                    return prosody_result
-            except Exception as exc:
-                log.warning("[Stage 2] edge-tts verse prosody failed: %s", exc)
-                log.debug(traceback.format_exc())
+            prosody_result = _generate_edge_verse_prosody(
+                text, language, gender, speed, pitch, volume, _edge_output,
+                emotion_intensity=emotion_intensity)
+            if prosody_result and prosody_result.get("success"):
+                prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
+                log.info("[Stage 0] edge-tts verse prosody SUCCESS "
+                         "(%d segments, %.2fs)",
+                         prosody_result.get("segments", 0),
+                         prosody_result["elapsed_sec"])
+                return prosody_result
         else:
             # Prose prosody (FEAT-8)
-            try:
-                prosody_result = _generate_edge_prosody(
-                    text, language, gender, speed, original_pitch, volume,
-                    output_path)
-                if prosody_result and prosody_result.get("success"):
-                    prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
-                    log.info("[Stage 2] edge-tts prosody SUCCESS (%d segments, %.2fs)",
-                             prosody_result.get("segments", 0),
-                             prosody_result["elapsed_sec"])
-                    return prosody_result
-            except Exception as exc:
-                log.warning("[Stage 2] edge-tts prosody failed: %s", exc)
-                log.debug(traceback.format_exc())
+            prosody_result = _generate_edge_prosody(
+                text, language, gender, speed, pitch, volume, _edge_output,
+                emotion_intensity=emotion_intensity)
+            if prosody_result and prosody_result.get("success"):
+                prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
+                log.info("[Stage 0] edge-tts prosody SUCCESS (%d segments, %.2fs)",
+                         prosody_result.get("segments", 0),
+                         prosody_result["elapsed_sec"])
+                return prosody_result
         # Single-call edge-tts (fallback)
-        try:
-            result = _generate_edge_tts(
-                text, language, gender, speed, original_pitch, volume,
-                output_path, is_verse=is_verse,
-            )
-            if result.get("success"):
-                result["elapsed_sec"] = round(time.time() - t0, 2)
-                log.info("[Stage 2] edge-tts SUCCESS (%.2fs) engine=%s",
-                         result["elapsed_sec"], result.get("engine"))
-                return result
-            log.info("[Stage 2] edge-tts returned empty, falling through to gTTS")
-        except Exception as exc:
-            log.warning("[Stage 2] edge-tts failed: %s", exc)
-            log.debug(traceback.format_exc())
-    else:
-        log.info("[Stage 2] edge-tts not installed, skipping")
+        result = _generate_edge_tts(text, language, gender, speed, pitch, volume,
+                                    _edge_output, is_verse)
+        if result.get("success"):
+            log.info("[Stage 0] edge-tts SUCCESS")
+            return result
+        log.warning("[Stage 0] edge-tts failed — falling back to gTTS")
 
-    # For gTTS stages, map unsupported languages (sa→mr) since gTTS has no Sanskrit
-    if gtts_language != language:
-        log.info("[Lang] Mapped '%s' → '%s' for gTTS fallback", language, gtts_language)
+    # Apply gender-based pitch shift for gTTS fallback only.
+    # gTTS is always female; lower pitch ~4 semitones to approximate male.
+    if gender == 'male':
+        pitch = pitch * 0.79 if abs(pitch - 1.0) > 0.01 else 0.79
+        log.info("[Gender/gTTS fallback] Male pitch adjusted to %.2f", pitch)
 
-    # Stage 3: gTTS + pydub
-    log.info("[Stage 3] gTTS + pydub effects | verse=%s", is_verse)
+    if not text or not text.strip():
+        log.error("Empty input text")
+        return {"success": False, "error": "Empty text",
+                "error_code": "ERR_EMPTY_TEXT", "stage": "validation"}
 
-    # 3a: Verse/shloka mode — stotra preprocessing + single gTTS call
+    if output_path is None:
+        fd, output_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        os.close(fd)
+
+    # ── Prose preprocessing (abbreviation expansion + English transliteration) ──
+    if not is_verse:
+        preprocessed_text = _preprocess_prose_text(text)
+        if preprocessed_text != text:
+            log.info("[Prose] Preprocessed | orig=%d new=%d chars",
+                     len(text), len(preprocessed_text))
+        text = preprocessed_text
+
+    # ── Grammar engine (FEAT-3) — spelling, sandhi, vibhakti, punctuation ──
+    # Applied to Marathi prose only (not Sanskrit, not verse).
+    if not is_verse and language not in ("sa", "en"):
+        grammar_text = _apply_grammar(text)
+        if grammar_text != text:
+            log.info("[Grammar] Applied | orig=%d new=%d chars",
+                     len(text), len(grammar_text))
+        text = grammar_text
+
+    # ── Verse / Shloka mode ──────────────────────────────────────────────
     if is_verse:
+        log.info("[Verse] Verse/Shloka mode enabled, lang=%s", language)
         try:
-            result = _generate_verse_audio(text, speed, gtts_pitch, volume, output_path,
-                                           language=gtts_language,
-                                           original_language=language)
-            if result.get("success"):
-                result["elapsed_sec"] = round(time.time() - t0, 2)
-                log.info("[Stage 3a] Verse audio SUCCESS (%.2fs)", result["elapsed_sec"])
-                return result
-            log.info("[Stage 3a] Verse audio returned empty, falling through to normal gTTS")
+            # Sanskrit: skip Marathi normalizer (corrupts Sanskrit sandhi/visarga).
+            # _preprocess_stotra_text already applies apply_sanskrit_phonetics internally.
+            # Marathi / Old-Marathi / others: normalise first, then stotra cleanup.
+            if language == "sa":
+                preprocessed = _preprocess_stotra_text(text)
+            elif language == "mr-old":
+                preprocessed = _preprocess_stotra_text(
+                    apply_old_marathi_phonetics(_normalize_marathi(text))
+                )
+            else:
+                preprocessed = _preprocess_stotra_text(_normalize_marathi(text))
+
+            preprocessed = _apply_g2p(preprocessed)
+            # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)
+            # AFTER G2P because G2P strips ZWNJ.
+            if gtts_language == 'mr':
+                preprocessed = apply_gtts_mr_fixes(preprocessed)
+            log.info("[Verse] Preprocessed stotra text | orig=%d  new=%d chars",
+                     len(text), len(preprocessed))
+            if preprocessed.strip():
+                from gtts import gTTS  # type: ignore
+                use_slow = speed <= 1.05
+                t_v = time.time()
+                gTTS(text=preprocessed, lang=gtts_language, slow=use_slow,
+                     lang_check=False).save(output_path)
+                log.info("[Verse] gTTS saved in %.2fs (slow=%s)", time.time() - t_v, use_slow)
+
+                needs_fx = (abs(speed - 1.0) > 0.05 or abs(pitch - 1.0) > 0.05
+                            or abs(volume - 1.0) > 0.05)
+                if needs_fx:
+                    _apply_pitch_speed(output_path, speed, pitch, volume, output_path)
+
+                elapsed = time.time() - t0
+                log.info("[Verse] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
+                return {"success": True, "audio_path": output_path,
+                        "engine": "gtts_verse", "elapsed_sec": round(elapsed, 2)}
         except Exception as exc:
-            log.warning("[Stage 3a] Verse mode failed: %s", exc)
-            log.debug(traceback.format_exc())
+            log.error("[Verse] Failed, falling back to normal: %s", exc)
 
     # ── Prosody-segmented generation (FEAT-1) ────────────────────────────
     # For prose text, use ProsodyEngine to split at natural clause/sentence
@@ -1460,7 +1184,7 @@ def generate_tts(text: str,
     # silence pauses.  Falls through to single-call if unavailable.
     if not is_verse:
         prosody_result = _generate_prosody_audio(
-            text, speed, gtts_pitch, volume, output_path, language, gtts_language)
+            text, speed, pitch, volume, output_path, language, gtts_language)
         if prosody_result and prosody_result.get("success"):
             prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
             log.info("[Prosody] SUCCESS -> %s (%d segments, %.2fs)",
@@ -1468,32 +1192,32 @@ def generate_tts(text: str,
                      prosody_result["elapsed_sec"])
             return prosody_result
 
-    # 3b: Normal gTTS (with G2P) — fallback if prosody unavailable
+    # Stage 1: gTTS + pydub effects (primary engine on mobile)
+    log.info("[Stage 1] gTTS + pydub effects, lang=%s", language)
     try:
-        normalized = text if language == "sa" else _normalize_marathi(text)
+        normalized = _normalize_marathi(text) if language not in ("sa",) else text
         if language == "sa":
             normalized = apply_sanskrit_phonetics(normalized)
         elif language == "mr-old":
             normalized = apply_old_marathi_phonetics(normalized)
         else:
             normalized = apply_marathi_phonetics(normalized)  # Modern Marathi rules
-        normalized = _apply_g2p(normalized)
+        normalized = _apply_g2p(normalized)  # G2P conjunct/anusvara/schwa rules
         # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)
         # AFTER G2P because G2P strips ZWNJ.
         if gtts_language == 'mr':
             normalized = apply_gtts_mr_fixes(normalized)
         fd, raw = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
         os.close(fd)
-        log.info("[Stage 3b] Calling gTTS | lang=%s text_len=%d slow=%s",
-                 gtts_language, len(normalized), speed < 0.75)
+        log.info("[Stage 1] Calling gTTS | text_len=%d slow=%s", len(normalized), speed < 0.75)
         t_gtts = time.time()
         from gtts import gTTS  # type: ignore
         gTTS(text=normalized, lang=gtts_language, slow=(speed < 0.75), lang_check=False).save(raw)
-        log.info("[Stage 3b] gTTS saved in %.2fs", time.time() - t_gtts)
+        log.info("[Stage 1] gTTS saved in %.2fs", time.time() - t_gtts)
 
-        needs_fx = abs(speed-1.0)>0.05 or abs(gtts_pitch-1.0)>0.05 or abs(volume-1.0)>0.05
+        needs_fx = abs(speed-1.0)>0.05 or abs(pitch-1.0)>0.05 or abs(volume-1.0)>0.05
         if needs_fx:
-            _apply_pitch_speed(raw, speed, gtts_pitch, volume, output_path)
+            _apply_pitch_speed(raw, speed, pitch, volume, output_path)
             try: os.unlink(raw)
             except OSError: pass
         else:
@@ -1501,23 +1225,23 @@ def generate_tts(text: str,
             shutil.move(raw, output_path)
 
         elapsed = time.time() - t0
-        log.info("[Stage 3b] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
+        log.info("[Stage 1] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
         return {"success": True, "audio_path": output_path, "engine": "gtts_pydub",
                 "elapsed_sec": round(elapsed, 2)}
     except Exception as exc:
-        log.error("[Stage 3b] gTTS+pydub failed: %s\n%s", exc, traceback.format_exc())
+        log.error("[Stage 1] gTTS+pydub failed: %s\n%s", exc, traceback.format_exc())
 
-    # Stage 4: Bare gTTS fallback
-    log.info("[Stage 4] Bare gTTS fallback")
+    # Stage 2: Bare gTTS fallback
+    log.info("[Stage 2] Bare gTTS fallback")
     try:
         from gtts import gTTS  # type: ignore
         gTTS(text=text, lang=gtts_language, slow=False, lang_check=False).save(output_path)
         elapsed = time.time() - t0
-        log.info("[Stage 4] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
+        log.info("[Stage 2] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
         return {"success": True, "audio_path": output_path, "engine": "gtts_bare",
                 "elapsed_sec": round(elapsed, 2)}
     except Exception as exc:
-        log.error("[Stage 4] All TTS stages failed: %s\n%s", exc, traceback.format_exc())
+        log.error("[Stage 2] All TTS stages failed: %s\n%s", exc, traceback.format_exc())
         return {"success": False, "error": str(exc),
                 "error_code": "ERR_ALL_ENGINES_FAILED", "stage": "all_failed"}
 
@@ -1579,7 +1303,8 @@ def compare_engines(text: str,
                     continue
 
             elif eng_name == "gtts":
-                gtts_lang = _GTTS_LANG_MAP.get(language, language)
+                _gtts_lang_map = {"sa": "hi", "mr-old": "mr", "ne": "hi"}
+                gtts_lang = _gtts_lang_map.get(language, language)
                 from gtts import gTTS  # type: ignore
                 gTTS(text=text, lang=gtts_lang, slow=False,
                      lang_check=False).save(out_path)
@@ -1618,7 +1343,8 @@ def compare_engines(text: str,
 def analyze_prosody(text: str,
                     language: str = "mr",
                     is_verse: bool = False,
-                    emotion: str = None) -> dict:
+                    emotion: str = None,
+                    emotion_intensity: float = 1.0) -> dict:
     """Analyze text and return prosody segments for preview.
 
     Returns:
@@ -1657,17 +1383,21 @@ def analyze_prosody(text: str,
         result_segments = []
         detected_verse = False
         detected_metre = ""
+        ei = max(0.0, min(1.0, emotion_intensity))
         for i, seg in enumerate(segments):
+            # Scale emotion-derived pitch_shift and tts_rate by intensity
+            scaled_pitch = seg.pitch_shift * ei
+            scaled_rate = 1.0 + (seg.tts_rate - 1.0) * ei
             result_segments.append({
                 "index": i,
                 "text": seg.text,
                 "pause_after_ms": seg.pause_after_ms,
                 "emotion": seg.emotion,
                 "emphasis": round(seg.emphasis, 2),
-                "pitch_shift": round(seg.pitch_shift, 2),
+                "pitch_shift": round(scaled_pitch, 2),
                 "is_verse": seg.is_verse,
                 "metre_name": seg.metre_name,
-                "tts_rate": round(seg.tts_rate, 2),
+                "tts_rate": round(scaled_rate, 2),
             })
             if seg.is_verse:
                 detected_verse = True
@@ -1684,6 +1414,208 @@ def analyze_prosody(text: str,
     except Exception as exc:
         log.error("[analyze_prosody] %s", exc)
         return {"success": False, "error": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# FEAT-55: Phonetic Explainer
+# ---------------------------------------------------------------------------
+def explain_phonetics(word: str, language: str = "mr") -> dict:
+    """Trace phonetic transformations applied to a single word.
+
+    Returns: {
+        "success": True,
+        "original": "दुःख",
+        "final": "दुख्ख",
+        "rules": [
+            {"stage": "Marathi Phonetics", "rule": "Visarga gemination",
+             "before": "दुःख", "after": "दुख्ख",
+             "description": "Visarga before ख becomes geminated ख्ख"}
+        ]
+    }
+    """
+    if not word or not word.strip():
+        return {"success": False, "error": "Empty word"}
+
+    word = word.strip()
+    rules = []
+    current = word
+
+    try:
+        # Stage 1: G2P exception lexicon check
+        try:
+            from tts.constants.g2p_constants import EXCEPTION_LEXICON
+            if word in EXCEPTION_LEXICON:
+                lex_result = EXCEPTION_LEXICON[word]
+                if lex_result != word:
+                    rules.append({
+                        "stage": "G2P Lexicon",
+                        "rule": "Exception lexicon match",
+                        "before": current,
+                        "after": lex_result,
+                        "description": f"'{word}' has a custom pronunciation entry"
+                    })
+                    current = lex_result
+                else:
+                    rules.append({
+                        "stage": "G2P Lexicon",
+                        "rule": "Exception lexicon (identity)",
+                        "before": current,
+                        "after": current,
+                        "description": f"'{word}' in lexicon — bypasses rule-based processing"
+                    })
+        except ImportError:
+            pass
+
+        # Stage 2: Sandhi engine (for Sanskrit or verse)
+        if language == "sa":
+            try:
+                from tts.utils.phonetic.sandhi_engine import SandhiEngine
+                sandhi = SandhiEngine()
+                after_sandhi = sandhi.process(current)
+                if after_sandhi != current:
+                    # Detect specific sandhi rules
+                    _detect_sandhi_rules(current, after_sandhi, rules)
+                    current = after_sandhi
+            except ImportError:
+                pass
+
+        # Stage 3: Language-specific phonetics
+        try:
+            if language == "sa":
+                after_phon = apply_sanskrit_phonetics(current)
+            elif language == "mr-old":
+                after_phon = apply_old_marathi_phonetics(current)
+            else:
+                after_phon = apply_marathi_phonetics(current)
+
+            if after_phon != current:
+                _detect_phonetic_rules(current, after_phon, language, rules)
+                current = after_phon
+        except Exception:
+            pass
+
+        # Stage 4: G2P engine
+        try:
+            after_g2p = _apply_g2p(current)
+            if after_g2p != current:
+                _detect_g2p_rules(current, after_g2p, rules)
+                current = after_g2p
+        except Exception:
+            pass
+
+        return {
+            "success": True,
+            "original": word,
+            "final": current,
+            "rules": rules,
+            "rule_count": len(rules),
+        }
+    except Exception as exc:
+        log.error("[explain_phonetics] %s", exc)
+        return {"success": False, "error": str(exc)}
+
+
+def _detect_sandhi_rules(before: str, after: str, rules: list):
+    """Detect which sandhi rules were applied."""
+    if 'ऽ' in before and 'ऽ' not in after:
+        rules.append({
+            "stage": "Sandhi", "rule": "Avagraha expansion",
+            "before": before, "after": after,
+            "description": "ऽ (avagraha) removed — represents elided vowel"
+        })
+    if 'ः' in before and 'र्' in after and 'र्' not in before:
+        rules.append({
+            "stage": "Sandhi", "rule": "Visarga → r-sandhi",
+            "before": before, "after": after,
+            "description": "Visarga (ः) before voiced sound becomes र्"
+        })
+    if 'ं' in before:
+        for src, dst in [('ंश', 'न्श'), ('ंष', 'न्ष'), ('ंस', 'न्स'), ('ंह', 'म्ह')]:
+            if src in before and dst in after:
+                rules.append({
+                    "stage": "Sandhi", "rule": "Anusvara + sibilant assimilation",
+                    "before": before, "after": after,
+                    "description": f"anusvara before sibilant: {src} → {dst}"
+                })
+                break
+    if not rules or rules[-1]["stage"] != "Sandhi":
+        rules.append({
+            "stage": "Sandhi", "rule": "Sandhi correction",
+            "before": before, "after": after,
+            "description": "Sanskrit sandhi rules applied"
+        })
+
+
+def _detect_phonetic_rules(before: str, after: str, language: str, rules: list):
+    """Detect which phonetic rules were applied."""
+    if 'ज्ञ' in before and 'द्न्य' in after:
+        rules.append({
+            "stage": "Phonetics", "rule": "Conjunct ज्ञ → द्न्य",
+            "before": before, "after": after,
+            "description": "Marathi pronunciation of ज्ञ is द्न्य (not gya)"
+        })
+    if 'ः' in before and 'ः' not in after:
+        # Visarga was resolved
+        if 'ख्ख' in after or 'स्स' in after or 'श्श' in after:
+            rules.append({
+                "stage": "Phonetics", "rule": "Visarga gemination",
+                "before": before, "after": after,
+                "description": "Visarga before consonant → geminated consonant"
+            })
+        elif 'र्' in after and 'र्' not in before:
+            rules.append({
+                "stage": "Phonetics", "rule": "Visarga → r",
+                "before": before, "after": after,
+                "description": "Visarga before voiced sound becomes r"
+            })
+        else:
+            rules.append({
+                "stage": "Phonetics", "rule": "Visarga resolution",
+                "before": before, "after": after,
+                "description": "Visarga (ः) resolved based on phonetic context"
+            })
+    if 'ॐ' in before and 'ओम' in after:
+        rules.append({
+            "stage": "Phonetics", "rule": "OM expansion",
+            "before": before, "after": after,
+            "description": "ॐ symbol expanded to ओम for TTS"
+        })
+    if 'ॠ' in before and 'री' in after:
+        rules.append({
+            "stage": "Phonetics", "rule": "Vocalic R → री",
+            "before": before, "after": after,
+            "description": "Rare vocalic ॠ converted to री"
+        })
+    # Generic catch-all if no specific rule detected
+    if not any(r["stage"] == "Phonetics" for r in rules):
+        rules.append({
+            "stage": "Phonetics",
+            "rule": f"{'Sanskrit' if language == 'sa' else 'Marathi'} phonetic rules",
+            "before": before, "after": after,
+            "description": "Language-specific pronunciation rules applied"
+        })
+
+
+def _detect_g2p_rules(before: str, after: str, rules: list):
+    """Detect which G2P rules were applied."""
+    if '\u200c' in after and '\u200c' not in before:
+        rules.append({
+            "stage": "G2P", "rule": "Morpheme boundary (ZWNJ)",
+            "before": before, "after": after,
+            "description": "Zero-width non-joiner inserted at stem/suffix boundary"
+        })
+    if '्' in after and after.count('्') > before.count('्'):
+        rules.append({
+            "stage": "G2P", "rule": "Schwa deletion",
+            "before": before, "after": after,
+            "description": "Inherent schwa removed at word-internal position"
+        })
+    if not any(r["stage"] == "G2P" for r in rules):
+        rules.append({
+            "stage": "G2P", "rule": "G2P processing",
+            "before": before, "after": after,
+            "description": "Grapheme-to-phoneme conversion applied"
+        })
 
 
 # ---------------------------------------------------------------------------
@@ -1745,37 +1677,16 @@ def regenerate_segment(text: str,
 
 def main():
     parser = argparse.ArgumentParser(description="Marathi TTS Bridge")
-    parser.add_argument("--text",   required=False, default=None)
-    parser.add_argument("--text-file", default=None,
-                        help="Read --text from a UTF-8 file (avoids CLI escaping issues)")
+    parser.add_argument("--text",   required=True)
     parser.add_argument("--speed",  type=float, default=1.0)
     parser.add_argument("--pitch",  type=float, default=1.0)
     parser.add_argument("--volume", type=float, default=1.0)
     parser.add_argument("--output", default=None)
     parser.add_argument("--emotion", default=None)
-    parser.add_argument("--lang",    default="mr",
-                        help="Language code: mr, hi, sa, en")
-    parser.add_argument("--engine",  default="auto",
-                        help="TTS engine: auto, google, system")
-    parser.add_argument("--gender",  default="female",
-                        help="Voice gender: female, male")
     parser.add_argument("--verse",  action="store_true")
-    parser.add_argument("--stotra-dir", default=None,
-                        help="Directory containing stotra_catalog.json + audio files")
     args = parser.parse_args()
-    if args.stotra_dir:
-        os.environ["STOTRA_AUDIO_DIR"] = args.stotra_dir
-    text = args.text
-    if args.text_file:
-        with open(args.text_file, "r", encoding="utf-8") as fh:
-            text = fh.read()
-    if not text:
-        print(json.dumps({"success": False, "error": "No --text or --text-file provided",
-                          "error_code": "ERR_EMPTY_TEXT"}))
-        sys.exit(1)
-    result = generate_tts(text, args.speed, args.pitch, args.volume,
-                          args.output, args.emotion, args.verse,
-                          args.lang, args.engine, args.gender)
+    result = generate_tts(args.text, args.speed, args.pitch, args.volume,
+                          args.output, args.emotion, args.verse)
     print(json.dumps(result, ensure_ascii=False))
 
 

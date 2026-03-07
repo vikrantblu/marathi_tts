@@ -88,7 +88,9 @@ class TtsEngineManager(private val context: Context) {
         pitch: Float = 1.0f,
         volume: Float = 1.0f,
         emotion: String? = null,
-        isVerse: Boolean = false
+        isVerse: Boolean = false,
+        emotionIntensity: Float = 1.0f,
+        accent: String = "standard"
     ): JSONObject {
         // Decide which engine(s) to try
         val engines = when (engineIndex) {
@@ -103,7 +105,7 @@ class TtsEngineManager(private val context: Context) {
                 val result = when (engine) {
                     ENGINE_SHERPA -> trySherpa(text, langCode, speed, pitch, volume, isVerse)
                     ENGINE_SYSTEM -> trySystemTts(text, langCode, gender, speed, pitch)
-                    ENGINE_GTTS -> tryGtts(text, langCode, gender, speed, pitch, volume, emotion, isVerse)
+                    ENGINE_GTTS -> tryGtts(text, langCode, gender, speed, pitch, volume, emotion, isVerse, emotionIntensity, accent)
                     else -> null
                 }
                 if (result != null && result.optBoolean("success", false)) {
@@ -170,7 +172,8 @@ class TtsEngineManager(private val context: Context) {
 
     private suspend fun tryGtts(
         text: String, langCode: String, gender: String, speed: Float, pitch: Float, volume: Float,
-        emotion: String?, isVerse: Boolean
+        emotion: String?, isVerse: Boolean, emotionIntensity: Float = 1.0f,
+        accent: String = "standard"
     ): JSONObject = withContext(Dispatchers.IO) {
         PythonBridge.init(context)
         val kwargs = mutableMapOf<String, Any?>(
@@ -180,7 +183,9 @@ class TtsEngineManager(private val context: Context) {
             "speed" to speed.toDouble(),
             "pitch" to pitch.toDouble(),
             "volume" to volume.toDouble(),
-            "is_verse" to isVerse
+            "is_verse" to isVerse,
+            "emotion_intensity" to emotionIntensity.toDouble(),
+            "accent" to accent
         )
         if (emotion != null) kwargs["emotion"] = emotion
         val result = PythonBridge.call("tts_bridge", "generate_tts", kwargs = kwargs)

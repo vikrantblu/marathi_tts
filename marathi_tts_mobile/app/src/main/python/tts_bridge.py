@@ -188,6 +188,64 @@ _EDGE_VOICE_MAP = {
     ("mr-old", "male"):   "mr-IN-ManoharNeural",
 }
 
+# ---------------------------------------------------------------------------
+# Accent Profiles (FEAT-57)
+# Each profile adjusts pitch, rate, and defines phonetic hints that are applied
+# as SSML phoneme-level tweaks via edge-tts prosody.
+# ---------------------------------------------------------------------------
+ACCENT_PROFILES = {
+    "standard": {
+        "label": "Standard (प्रमाण)",
+        "pitch_offset": 0.0,
+        "rate_offset": 0.0,
+        "description": "Standard Marathi accent (Pune/media)"
+    },
+    "mumbai": {
+        "label": "Mumbai (मुंबई)",
+        "pitch_offset": 0.03,
+        "rate_offset": 0.08,
+        "description": "Mumbai Marathi — faster pace, slightly higher pitch"
+    },
+    "northern": {
+        "label": "Northern (उत्तर महाराष्ट्र)",
+        "pitch_offset": -0.02,
+        "rate_offset": -0.05,
+        "description": "Khandesh/Vidarbha — slower, deeper tone"
+    },
+    "konkanastha": {
+        "label": "Konkanastha (कोकणस्थ)",
+        "pitch_offset": 0.05,
+        "rate_offset": -0.03,
+        "description": "Konkan region — higher pitch, measured pace"
+    },
+    "deccani": {
+        "label": "Deccani (दख्खनी)",
+        "pitch_offset": -0.04,
+        "rate_offset": 0.0,
+        "description": "Marathwada/Deccani — lower pitch, Urdu influence"
+    },
+}
+
+def get_accent_profiles():
+    """Return available accent profiles for UI population."""
+    return {
+        "success": True,
+        "profiles": {
+            k: {"label": v["label"], "description": v["description"]}
+            for k, v in ACCENT_PROFILES.items()
+        }
+    }
+
+def _apply_accent(speed: float, pitch: float, accent: str):
+    """Adjust speed and pitch based on accent profile. Returns (speed, pitch)."""
+    profile = ACCENT_PROFILES.get(accent)
+    if not profile:
+        return speed, pitch
+    return (
+        speed + profile["rate_offset"],
+        pitch + profile["pitch_offset"]
+    )
+
 def _edge_tts_available() -> bool:
     try:
         import edge_tts  # noqa: F401
@@ -270,7 +328,7 @@ def _generate_edge_tts(text: str, language: str, gender: str,
 # ---------------------------------------------------------------------------
 
 def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
-                           output_path):
+                           output_path, emotion_intensity=1.0):
     """Generate edge-tts audio with prosody-segmented pauses.
 
     Uses ProsodyEngine to determine natural pause points, generates
@@ -279,6 +337,8 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
 
     Edge-tts natively handles speed/pitch/volume via SSML, so no pydub
     post-processing is needed for those parameters.
+
+    emotion_intensity (0.0–1.0) scales the ProsodyEngine emotion modifiers.
 
     Returns result dict on success, None to fall through.
     """
@@ -337,8 +397,10 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
             if not processed.strip():
                 continue
 
-            # Per-segment pitch adjustment from ProsodyEngine emphasis
-            seg_pitch_hz = base_pitch_hz + int(seg.pitch_shift * 100)
+            # Per-segment pitch adjustment from ProsodyEngine emphasis,
+            # scaled by emotion_intensity
+            scaled_pitch_shift = seg.pitch_shift * emotion_intensity
+            seg_pitch_hz = base_pitch_hz + int(scaled_pitch_shift * 100)
             seg_pitch_str = f"{seg_pitch_hz:+d}Hz"
 
             # Chandrabindu (ँ U+0901) → reduce volume ~3 dB for soft nasal
@@ -414,13 +476,15 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
 # ---------------------------------------------------------------------------
 
 def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
-                                  output_path):
+                                  output_path, emotion_intensity=1.0):
     """Generate edge-tts audio with verse-specific prosody segmentation.
 
     Uses ProsodyEngine for metre-aware verse segmentation (pauses at ।/॥,
     pitch contour, tts_rate per metre), generates per-segment audio via
     edge-tts neural voice, and stitches with calibrated verse pauses for
     natural shloka recitation.
+
+    emotion_intensity (0.0–1.0) scales the ProsodyEngine emotion modifiers.
 
     Returns result dict on success, None to fall through.
     """
@@ -485,12 +549,17 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
             if not processed.strip():
                 continue
 
-            # Per-segment rate from ProsodyEngine (verse metre rate × user speed)
-            seg_rate = speed * seg.tts_rate if seg.tts_rate else speed
+            # Per-segment rate from ProsodyEngine (verse metre rate × user speed),
+            # scaled by emotion_intensity
+            effective_tts_rate = 1.0 + (seg.tts_rate - 1.0) * emotion_intensity \
+                if seg.tts_rate else 1.0
+            seg_rate = speed * effective_tts_rate
             rate_str = f"{int((seg_rate - 1.0) * 100):+d}%"
 
-            # Per-segment pitch: user pitch + ProsodyEngine contour
-            seg_pitch_hz = base_pitch_hz + int(seg.pitch_shift * 100)
+            # Per-segment pitch: user pitch + ProsodyEngine contour,
+            # scaled by emotion_intensity
+            scaled_pitch_shift = seg.pitch_shift * emotion_intensity
+            seg_pitch_hz = base_pitch_hz + int(scaled_pitch_shift * 100)
             seg_pitch_str = f"{seg_pitch_hz:+d}Hz"
 
             # Chandrabindu nasalization (FEAT-15)
@@ -947,14 +1016,19 @@ def generate_tts(text: str,
                  volume: float = 1.0,
                  output_path: str = None,
                  emotion: str = None,
+                 emotion_intensity: float = 1.0,
                  is_verse: bool = False,
                  language: str = "mr",
-                 gender: str = "female") -> dict:
+                 gender: str = "female",
+                 accent: str = "standard") -> dict:
     """Generate Marathi TTS audio. Returns {success, audio_path} or {success:False, error}."""
     t0 = time.time()
     log.info("=== generate_tts START | text_len=%d speed=%.2f pitch=%.2f "
-             "volume=%.2f emotion=%s verse=%s lang=%s gender=%s ===",
-             len(text), speed, pitch, volume, emotion, is_verse, language, gender)
+             "volume=%.2f emotion=%s verse=%s lang=%s gender=%s accent=%s ===",
+             len(text), speed, pitch, volume, emotion, is_verse, language, gender, accent)
+
+    # Apply accent profile modifiers to speed and pitch
+    speed, pitch = _apply_accent(speed, pitch, accent)
 
     # Map unsupported gTTS languages to closest supported one.
     # Sanskrit → Hindi (phonologically much closer than Marathi; same Devanagari TTS voice)
@@ -1001,7 +1075,8 @@ def generate_tts(text: str,
         if is_verse:
             # Verse-specific prosody with metre-aware pauses & pitch contour
             prosody_result = _generate_edge_verse_prosody(
-                text, language, gender, speed, pitch, volume, _edge_output)
+                text, language, gender, speed, pitch, volume, _edge_output,
+                emotion_intensity=emotion_intensity)
             if prosody_result and prosody_result.get("success"):
                 prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
                 log.info("[Stage 0] edge-tts verse prosody SUCCESS "
@@ -1012,7 +1087,8 @@ def generate_tts(text: str,
         else:
             # Prose prosody (FEAT-8)
             prosody_result = _generate_edge_prosody(
-                text, language, gender, speed, pitch, volume, _edge_output)
+                text, language, gender, speed, pitch, volume, _edge_output,
+                emotion_intensity=emotion_intensity)
             if prosody_result and prosody_result.get("success"):
                 prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
                 log.info("[Stage 0] edge-tts prosody SUCCESS (%d segments, %.2fs)",
@@ -1267,7 +1343,8 @@ def compare_engines(text: str,
 def analyze_prosody(text: str,
                     language: str = "mr",
                     is_verse: bool = False,
-                    emotion: str = None) -> dict:
+                    emotion: str = None,
+                    emotion_intensity: float = 1.0) -> dict:
     """Analyze text and return prosody segments for preview.
 
     Returns:
@@ -1306,17 +1383,21 @@ def analyze_prosody(text: str,
         result_segments = []
         detected_verse = False
         detected_metre = ""
+        ei = max(0.0, min(1.0, emotion_intensity))
         for i, seg in enumerate(segments):
+            # Scale emotion-derived pitch_shift and tts_rate by intensity
+            scaled_pitch = seg.pitch_shift * ei
+            scaled_rate = 1.0 + (seg.tts_rate - 1.0) * ei
             result_segments.append({
                 "index": i,
                 "text": seg.text,
                 "pause_after_ms": seg.pause_after_ms,
                 "emotion": seg.emotion,
                 "emphasis": round(seg.emphasis, 2),
-                "pitch_shift": round(seg.pitch_shift, 2),
+                "pitch_shift": round(scaled_pitch, 2),
                 "is_verse": seg.is_verse,
                 "metre_name": seg.metre_name,
-                "tts_rate": round(seg.tts_rate, 2),
+                "tts_rate": round(scaled_rate, 2),
             })
             if seg.is_verse:
                 detected_verse = True
@@ -1333,6 +1414,208 @@ def analyze_prosody(text: str,
     except Exception as exc:
         log.error("[analyze_prosody] %s", exc)
         return {"success": False, "error": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# FEAT-55: Phonetic Explainer
+# ---------------------------------------------------------------------------
+def explain_phonetics(word: str, language: str = "mr") -> dict:
+    """Trace phonetic transformations applied to a single word.
+
+    Returns: {
+        "success": True,
+        "original": "दुःख",
+        "final": "दुख्ख",
+        "rules": [
+            {"stage": "Marathi Phonetics", "rule": "Visarga gemination",
+             "before": "दुःख", "after": "दुख्ख",
+             "description": "Visarga before ख becomes geminated ख्ख"}
+        ]
+    }
+    """
+    if not word or not word.strip():
+        return {"success": False, "error": "Empty word"}
+
+    word = word.strip()
+    rules = []
+    current = word
+
+    try:
+        # Stage 1: G2P exception lexicon check
+        try:
+            from tts.constants.g2p_constants import EXCEPTION_LEXICON
+            if word in EXCEPTION_LEXICON:
+                lex_result = EXCEPTION_LEXICON[word]
+                if lex_result != word:
+                    rules.append({
+                        "stage": "G2P Lexicon",
+                        "rule": "Exception lexicon match",
+                        "before": current,
+                        "after": lex_result,
+                        "description": f"'{word}' has a custom pronunciation entry"
+                    })
+                    current = lex_result
+                else:
+                    rules.append({
+                        "stage": "G2P Lexicon",
+                        "rule": "Exception lexicon (identity)",
+                        "before": current,
+                        "after": current,
+                        "description": f"'{word}' in lexicon — bypasses rule-based processing"
+                    })
+        except ImportError:
+            pass
+
+        # Stage 2: Sandhi engine (for Sanskrit or verse)
+        if language == "sa":
+            try:
+                from tts.utils.phonetic.sandhi_engine import SandhiEngine
+                sandhi = SandhiEngine()
+                after_sandhi = sandhi.process(current)
+                if after_sandhi != current:
+                    # Detect specific sandhi rules
+                    _detect_sandhi_rules(current, after_sandhi, rules)
+                    current = after_sandhi
+            except ImportError:
+                pass
+
+        # Stage 3: Language-specific phonetics
+        try:
+            if language == "sa":
+                after_phon = apply_sanskrit_phonetics(current)
+            elif language == "mr-old":
+                after_phon = apply_old_marathi_phonetics(current)
+            else:
+                after_phon = apply_marathi_phonetics(current)
+
+            if after_phon != current:
+                _detect_phonetic_rules(current, after_phon, language, rules)
+                current = after_phon
+        except Exception:
+            pass
+
+        # Stage 4: G2P engine
+        try:
+            after_g2p = _apply_g2p(current)
+            if after_g2p != current:
+                _detect_g2p_rules(current, after_g2p, rules)
+                current = after_g2p
+        except Exception:
+            pass
+
+        return {
+            "success": True,
+            "original": word,
+            "final": current,
+            "rules": rules,
+            "rule_count": len(rules),
+        }
+    except Exception as exc:
+        log.error("[explain_phonetics] %s", exc)
+        return {"success": False, "error": str(exc)}
+
+
+def _detect_sandhi_rules(before: str, after: str, rules: list):
+    """Detect which sandhi rules were applied."""
+    if 'ऽ' in before and 'ऽ' not in after:
+        rules.append({
+            "stage": "Sandhi", "rule": "Avagraha expansion",
+            "before": before, "after": after,
+            "description": "ऽ (avagraha) removed — represents elided vowel"
+        })
+    if 'ः' in before and 'र्' in after and 'र्' not in before:
+        rules.append({
+            "stage": "Sandhi", "rule": "Visarga → r-sandhi",
+            "before": before, "after": after,
+            "description": "Visarga (ः) before voiced sound becomes र्"
+        })
+    if 'ं' in before:
+        for src, dst in [('ंश', 'न्श'), ('ंष', 'न्ष'), ('ंस', 'न्स'), ('ंह', 'म्ह')]:
+            if src in before and dst in after:
+                rules.append({
+                    "stage": "Sandhi", "rule": "Anusvara + sibilant assimilation",
+                    "before": before, "after": after,
+                    "description": f"anusvara before sibilant: {src} → {dst}"
+                })
+                break
+    if not rules or rules[-1]["stage"] != "Sandhi":
+        rules.append({
+            "stage": "Sandhi", "rule": "Sandhi correction",
+            "before": before, "after": after,
+            "description": "Sanskrit sandhi rules applied"
+        })
+
+
+def _detect_phonetic_rules(before: str, after: str, language: str, rules: list):
+    """Detect which phonetic rules were applied."""
+    if 'ज्ञ' in before and 'द्न्य' in after:
+        rules.append({
+            "stage": "Phonetics", "rule": "Conjunct ज्ञ → द्न्य",
+            "before": before, "after": after,
+            "description": "Marathi pronunciation of ज्ञ is द्न्य (not gya)"
+        })
+    if 'ः' in before and 'ः' not in after:
+        # Visarga was resolved
+        if 'ख्ख' in after or 'स्स' in after or 'श्श' in after:
+            rules.append({
+                "stage": "Phonetics", "rule": "Visarga gemination",
+                "before": before, "after": after,
+                "description": "Visarga before consonant → geminated consonant"
+            })
+        elif 'र्' in after and 'र्' not in before:
+            rules.append({
+                "stage": "Phonetics", "rule": "Visarga → r",
+                "before": before, "after": after,
+                "description": "Visarga before voiced sound becomes r"
+            })
+        else:
+            rules.append({
+                "stage": "Phonetics", "rule": "Visarga resolution",
+                "before": before, "after": after,
+                "description": "Visarga (ः) resolved based on phonetic context"
+            })
+    if 'ॐ' in before and 'ओम' in after:
+        rules.append({
+            "stage": "Phonetics", "rule": "OM expansion",
+            "before": before, "after": after,
+            "description": "ॐ symbol expanded to ओम for TTS"
+        })
+    if 'ॠ' in before and 'री' in after:
+        rules.append({
+            "stage": "Phonetics", "rule": "Vocalic R → री",
+            "before": before, "after": after,
+            "description": "Rare vocalic ॠ converted to री"
+        })
+    # Generic catch-all if no specific rule detected
+    if not any(r["stage"] == "Phonetics" for r in rules):
+        rules.append({
+            "stage": "Phonetics",
+            "rule": f"{'Sanskrit' if language == 'sa' else 'Marathi'} phonetic rules",
+            "before": before, "after": after,
+            "description": "Language-specific pronunciation rules applied"
+        })
+
+
+def _detect_g2p_rules(before: str, after: str, rules: list):
+    """Detect which G2P rules were applied."""
+    if '\u200c' in after and '\u200c' not in before:
+        rules.append({
+            "stage": "G2P", "rule": "Morpheme boundary (ZWNJ)",
+            "before": before, "after": after,
+            "description": "Zero-width non-joiner inserted at stem/suffix boundary"
+        })
+    if '्' in after and after.count('्') > before.count('्'):
+        rules.append({
+            "stage": "G2P", "rule": "Schwa deletion",
+            "before": before, "after": after,
+            "description": "Inherent schwa removed at word-internal position"
+        })
+    if not any(r["stage"] == "G2P" for r in rules):
+        rules.append({
+            "stage": "G2P", "rule": "G2P processing",
+            "before": before, "after": after,
+            "description": "Grapheme-to-phoneme conversion applied"
+        })
 
 
 # ---------------------------------------------------------------------------

@@ -41,12 +41,22 @@ Track feature requests and shipped features here.
   calibrated verse pauses. Previously verse text bypassed prosody pipeline and fell to
   robotic gTTS slow=True. Now: edge-tts verse prosody → single edge-tts → gTTS fallback.
 
-### Phase 4: Innovation Features (Medium)
-- FEAT-54 Emotion intensity slider (0-100% granularity)
-- FEAT-55 Phonetic explainer: tap word -> show sandhi/schwa rules
-- FEAT-56 Batch stotra playlist: select multiple -> generate all -> play in order
-- FEAT-57 Marathi accent profiles (Northern/Mumbai/Konkanastha variants)
-- FEAT-58 Smart text clipping: NLP-aware breakpoints for long texts
+### Phase 4: Innovation Features (Medium) — SHIPPED
+- FEAT-54 Emotion intensity slider (0-100% granularity) — SHIPPED
+  Slider in emotion card: scales pitch_shift and tts_rate modifiers proportionally.
+  Default 50%. Integrated into all prosody and edge-tts generation paths.
+- FEAT-55 Phonetic explainer: long-press word -> show sandhi/schwa rules — SHIPPED
+  Bridge function traces G2P lexicon, SandhiEngine, language phonetics, and G2P engine
+  stages. Shows applied rules in AlertDialog from prosody segment long-press.
+- FEAT-56 Batch stotra playlist: select multiple -> generate all -> play in order — SHIPPED
+  Long-press enters playlist mode. Multi-select with checkboxes. Batch TTS generation
+  with progress bar. Sequential playback via AudioPlayerService.playQueueAsync().
+- FEAT-57 Marathi accent profiles (Standard/Mumbai/Northern/Konkanastha/Deccani) — SHIPPED
+  Accent chip group in output screen. Each profile adjusts pitch and rate offsets.
+  Applied in tts_bridge before generation. 5 regional variants available.
+- FEAT-58 Smart text clipping: NLP-aware breakpoints for long texts — SHIPPED
+  Real-time clip preview in InputFragment when text exceeds 250 chars. Shows segment
+  count and first 6 segment previews. Same splitting logic as streaming generation.
 
 ### Backlog
 - FEAT-59 Community phonetic corrections: user-submitted pronunciation fixes

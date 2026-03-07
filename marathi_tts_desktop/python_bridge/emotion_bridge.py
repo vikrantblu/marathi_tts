@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Emotion Bridge - Marathi Text Emotion Analysis
 ================================================
@@ -27,9 +27,9 @@ log = get_logger("emotion_bridge")
 
 _PROJECT_ROOT = os.environ.get(
     "MARATHI_TTS_PROJECT_ROOT",
-    _BRIDGE_DIR
+    os.path.abspath(os.path.join(_BRIDGE_DIR, "..", "marathi_tts_web"))
 )
-if _PROJECT_ROOT not in sys.path:
+if _PROJECT_ROOT not in sys.path and os.path.isdir(_PROJECT_ROOT):
     sys.path.insert(0, _PROJECT_ROOT)
 os.environ.setdefault("MARATHI_TTS_STANDALONE", "1")
 
@@ -83,6 +83,27 @@ def _normalize_result(result: dict) -> dict:
     return result
 
 
+def get_scaled_voice_params(emotion: str, intensity: float = 1.0) -> dict:
+    """Return voice parameters scaled by the given intensity (0.0 to 1.0).
+
+    At intensity=1.0, returns full emotion params.
+    At intensity=0.0, returns neutral params.
+    Values in between are linearly interpolated.
+    """
+    base = _VOICE_PARAMS.get(emotion, _VOICE_PARAMS["neutral"])
+    neutral = _VOICE_PARAMS["neutral"]
+    intensity = max(0.0, min(1.0, intensity))
+    if intensity >= 1.0:
+        return dict(base)
+    if intensity <= 0.0:
+        return dict(neutral)
+    return {
+        "pitch": round(neutral["pitch"] + (base["pitch"] - neutral["pitch"]) * intensity, 3),
+        "speed": round(neutral["speed"] + (base["speed"] - neutral["speed"]) * intensity, 3),
+        "volume": round(neutral["volume"] + (base["volume"] - neutral["volume"]) * intensity, 3),
+    }
+
+
 def _keyword_analysis(text: str) -> dict:
     """Standalone keyword-based emotion analysis."""
     word_count = max(len(re.findall(r"\S+", text)), 1)
@@ -124,14 +145,13 @@ def analyze_emotion(text: str) -> dict:
     """
     t0 = time.time()
     log.info("=== analyze_emotion START | text_len=%d ===", len(text))
-    log.debug("Input text preview: %.200s", text)
 
     if not text or not text.strip():
         log.error("Empty input text")
         return {"success": False, "error": "Empty text"}
 
-    # Stage 1: Full EmotionAnalyzer
-    log.info("[Stage 1] Attempting EmotionAnalyzer")
+    # Stage 1: Full EmotionAnalyzer (from copied tts package)
+    log.info("[Stage 1] Attempting full EmotionAnalyzer")
     try:
         from tts.utils.emotion.emotion_analyzer import EmotionAnalyzer  # type: ignore
         analyzer = EmotionAnalyzer()
@@ -164,18 +184,9 @@ def analyze_emotion(text: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description="Marathi Emotion Analyser Bridge")
-    parser.add_argument("--text", required=False, default=None)
-    parser.add_argument("--text-file", default=None,
-                        help="Read --text from a UTF-8 file (avoids CLI escaping issues)")
+    parser.add_argument("--text", required=True)
     args = parser.parse_args()
-    text = args.text
-    if args.text_file:
-        with open(args.text_file, "r", encoding="utf-8") as fh:
-            text = fh.read()
-    if not text:
-        print(json.dumps({"success": False, "error": "No --text or --text-file provided"}))
-        sys.exit(1)
-    print(json.dumps(analyze_emotion(text), ensure_ascii=False))
+    print(json.dumps(analyze_emotion(args.text), ensure_ascii=False))
 
 
 if __name__ == "__main__":

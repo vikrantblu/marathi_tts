@@ -1,6 +1,7 @@
 package com.marathitts.mobile.ui.stotra
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -9,8 +10,17 @@ import com.marathitts.mobile.databinding.ItemStotraBinding
 import com.marathitts.mobile.service.StotraRepository
 
 class StotraAdapter(
-    private val onClick: (StotraRepository.Stotra) -> Unit
+    private val onClick: (StotraRepository.Stotra) -> Unit,
+    private val onLongClick: ((StotraRepository.Stotra) -> Unit)? = null
 ) : ListAdapter<StotraRepository.Stotra, StotraAdapter.VH>(DIFF) {
+
+    /** IDs of stotras selected for playlist (empty = not in playlist mode). */
+    var playlistSelection: Set<String> = emptySet()
+        set(value) { field = value; notifyDataSetChanged() }
+
+    /** Whether playlist mode is active (shows checkboxes). */
+    var isPlaylistMode: Boolean = false
+        set(value) { field = value; notifyDataSetChanged() }
 
     companion object {
         private val LANG_LABELS = mapOf(
@@ -45,7 +55,18 @@ class StotraAdapter(
             binding.langChip.text = LANG_LABELS[stotra.language] ?: stotra.language
             binding.categoryChip.text = CATEGORY_LABELS[stotra.category] ?: stotra.category
             binding.verseCount.text = "${stotra.verseCount} verses"
+
+            // Playlist mode: show check indicator
+            val isSelected = stotra.id in playlistSelection
+            binding.playlistCheck.visibility = if (isPlaylistMode) View.VISIBLE else View.GONE
+            binding.playlistCheck.text = if (isSelected) "✓" else ""
+            binding.root.isChecked = isPlaylistMode && isSelected
+
             binding.root.setOnClickListener { onClick(stotra) }
+            binding.root.setOnLongClickListener {
+                onLongClick?.invoke(stotra)
+                onLongClick != null
+            }
         }
     }
 

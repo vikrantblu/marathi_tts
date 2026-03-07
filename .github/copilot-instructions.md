@@ -1254,3 +1254,84 @@ Nav drawer header (`nav_header.xml`) has `nav_version_text` TextView.
 | `ic_settings.xml` | Material gear icon for drawer menu |
 | `ic_clear_cache.xml` | Calendar/clear icon for Clear Cache button |
 | `ic_reset.xml` | Circular arrow icon for Reset to Defaults |
+
+---
+
+## Phase 4: Innovation Features (FEAT-54 through FEAT-58)
+
+### Emotion Intensity Slider (FEAT-54)
+
+**UI:** `slider_emotion_intensity` (Slider, 0.0–1.0, stepSize=0.05) inside `emotion_card`
+in `fragment_output.xml`. Default 0.5 (50%).
+
+**Python:** `emotion_bridge.py` → `get_scaled_voice_params(emotion, intensity)` linearly
+interpolates between neutral `{pitch:1.0, speed:1.0, volume:0.0}` and full emotion params.
+`tts_bridge.py` → `generate_tts()` accepts `emotion_intensity` parameter; prosody functions
+scale `seg.pitch_shift * emotion_intensity` and `1.0 + (seg.tts_rate - 1.0) * emotion_intensity`.
+
+**Kotlin:** `OutputState.emotionIntensity`, `OutputViewModel.setEmotionIntensity()`,
+`TtsEngineManager.generate()` and `tryGtts()` pass `emotion_intensity` kwarg to bridge.
+
+### Phonetic Explainer (FEAT-55)
+
+**Trigger:** Long-press any segment in the prosody preview RecyclerView.
+
+**Python:** `tts_bridge.py` → `explain_phonetics(word, language)` traces 4 stages:
+1. G2P exception lexicon lookup
+2. SandhiEngine rules (Sanskrit text)
+3. Language-specific phonetics (marathi_phonetics / old_marathi / sanskrit)
+4. G2P engine transformations
+
+Returns `{original, final, rules: [{stage, rule, before, after, description}]}`.
+
+**Kotlin:** `OutputViewModel.PhoneticRule` / `PhoneticExplanation` data classes,
+`explainPhonetics()` calls bridge. `ProsodySegmentAdapter` has `onSegmentLongClick` callback.
+`OutputFragment.observePhoneticExplanation()` shows AlertDialog with formatted rules.
+
+### Batch Stotra Playlist (FEAT-56)
+
+**Activation:** Long-press any stotra in the list → enters playlist mode.
+
+**State:** `StotraListState` gains `isPlaylistMode`, `playlistSelection: Set<String>` (IDs),
+`playlistPaths`, `playlistProgress/Total`, `isPlaylistPlaying`, `playlistCurrentIndex`.
+
+**Adapter:** `StotraAdapter` shows `playlist_check` indicator (circle + ✓) in playlist mode.
+`MaterialCardView.isChecked` highlights selected cards.
+
+**Generation:** `StotraViewModel.generatePlaylist()` loops through selected stotras,
+tries pre-recorded audio first (Stage 0), falls back to TTS (Stage 1), collects paths.
+Progress bar updates during generation.
+
+**Playback:** `StotraFragment.startPlaylistPlayback()` calls `AudioPlayerService.playQueueAsync()`
+with `onChunkStart/onAllComplete/onError` callbacks for sequential playback.
+
+**Controls:** Playlist button, Select All, Play All, Stop, Cancel during generation.
+
+### Accent Profiles (FEAT-57)
+
+**Python:** `ACCENT_PROFILES` dict in `tts_bridge.py` with 5 profiles:
+
+| Profile | Pitch offset | Rate offset |
+|---------|-------------|-------------|
+| Standard (प्रमाण) | 0.0 | 0.0 |
+| Mumbai (मुंबई) | +0.03 | +0.08 |
+| Northern (उत्तर) | -0.02 | -0.05 |
+| Konkanastha (कोकणस्थ) | +0.05 | -0.03 |
+| Deccani (दख्खनी) | -0.04 | 0.0 |
+
+`_apply_accent(speed, pitch, accent)` adjusts params at the start of `generate_tts()`.
+`get_accent_profiles()` returns profile list for UI.
+
+**UI:** `accent_card` with `ChipGroup` (filter chips, singleSelection=true) in
+`fragment_output.xml`. `OutputFragment.setupAccentChips()` maps chip IDs to accent keys
+and updates description label. `OutputState.accent`, `OutputViewModel.setAccent()`.
+
+### Smart Text Clipping (FEAT-58)
+
+**UI:** `clip_preview_card` in `fragment_input.xml` — appears when text exceeds 250 chars.
+Shows segment count header and first 6 segment snippets.
+
+**Logic:** `InputFragment.setupSmartClipPreview()` adds a text watcher. `smartSplit(text)`
+uses NLP-aware sentence splitting (same algorithm as `OutputViewModel.splitSentences()`):
+splits at ।/॥/?!/.; merges fragments under 40 chars. `updateClipPreview()` shows/hides
+the card and formats the preview text.
