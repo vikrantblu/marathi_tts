@@ -8,6 +8,14 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ## [Unreleased]
 
+### Fixed
+- **BUG-43 [HIGH]**: TTS generation permanently locks after first attempt — `hasStartedGeneration`
+  flag never reset in `generateSingle()`/`generateStreaming()`. Wrapped both in `try/finally`;
+  also reset flag in `cancelGeneration()`. Verse mode was the most visible failure path.
+- **BUG-44 [MEDIUM]**: Long Marathi prose not streaming — `splitSentences()` regex required
+  trailing whitespace after `.`/`;`, causing no splits. Unified regex to `(?<=[।॥?!.;])\s*`;
+  added comma/newline fallback for unpunctuated prose.
+
 ### Security
 - **CRITICAL**: Fixed SSRF in web app `website_view.py` — URL validation via DNS resolution
   + IP range blocking before `requests.get()` (both `fetch_website_content` and

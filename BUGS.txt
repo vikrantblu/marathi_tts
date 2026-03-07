@@ -8,6 +8,17 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 (No open bugs at this time.)
 
+## Recently Fixed (Unreleased)
+
+- ~~BUG-43 [HIGH] TTS generation permanently locks after first attempt — hasStartedGeneration never reset~~
+  (fixed [Unreleased] — wrapped generateSingle() and generateStreaming() in try/finally to always
+  reset hasStartedGeneration flag; also reset in cancelGeneration(). Verse mode was most visibly
+  affected because complex prosody failures trigger the flag lockout immediately.)
+
+- ~~BUG-44 [MEDIUM] Long Marathi prose not streaming — splitSentences() regex fails on common punctuation~~
+  (fixed [Unreleased] — unified regex to `(?<=[।॥?!.;])\s*` so periods/semicolons split without
+  requiring trailing whitespace; added fallback comma/newline splitting for unpunctuated prose.)
+
 ## Fixed
 
 - ~~BUG-42 [HIGH] STT file transcription auto-starts microphone instead of processing audio file~~ (fixed [Unreleased] —

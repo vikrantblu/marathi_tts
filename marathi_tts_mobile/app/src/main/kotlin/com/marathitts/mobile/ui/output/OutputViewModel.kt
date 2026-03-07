@@ -87,6 +87,7 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelGeneration() {
         currentJob?.cancel()
         currentJob = null
+        hasStartedGeneration = false
         _state.value = _state.value?.copy(isLoading = false, status = "Cancelled")
     }
 
@@ -128,40 +129,44 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
         _state.value = OutputState(isLoading = true, status = "Generating audio…")
 
         currentJob = viewModelScope.launch {
-            // Auto-detect emotion
-            val emotion = detectEmotion(text)
-            val intensity = _state.value?.emotionIntensity ?: 0.5f
-            val accent = _state.value?.accent ?: "standard"
+            try {
+                // Auto-detect emotion
+                val emotion = detectEmotion(text)
+                val intensity = _state.value?.emotionIntensity ?: 0.5f
+                val accent = _state.value?.accent ?: "standard"
 
-            val gender = _state.value?.gender ?: "female"
-            val result = engineManager.generate(
-                text = text,
-                engineIndex = resolveEngineIndex(),
-                langCode = langCode,
-                gender = gender,
-                isVerse = isVerse,
-                emotion = emotion,
-                emotionIntensity = intensity,
-                accent = accent
-            )
+                val gender = _state.value?.gender ?: "female"
+                val result = engineManager.generate(
+                    text = text,
+                    engineIndex = resolveEngineIndex(),
+                    langCode = langCode,
+                    gender = gender,
+                    isVerse = isVerse,
+                    emotion = emotion,
+                    emotionIntensity = intensity,
+                    accent = accent
+                )
 
-            if (result.optBoolean("success", false)) {
-                val engineUsed = result.optString("engine", "")
-                recordSuccess(engineUsed)
-                _state.value = OutputState(
-                    audioPath = result.optString("audio_path"),
-                    engine = engineUsed,
-                    status = "Audio ready ✓",
-                    emotionLabel = emotion,
-                    emotionScore = 0f
-                )
-            } else {
-                _state.value = OutputState(
-                    error = result.optString("error", "TTS failed"),
-                    status = "Error: ${result.optString("error", "TTS failed")}"
-                )
+                if (result.optBoolean("success", false)) {
+                    val engineUsed = result.optString("engine", "")
+                    recordSuccess(engineUsed)
+                    _state.value = OutputState(
+                        audioPath = result.optString("audio_path"),
+                        engine = engineUsed,
+                        status = "Audio ready ✓",
+                        emotionLabel = emotion,
+                        emotionScore = 0f
+                    )
+                } else {
+                    _state.value = OutputState(
+                        error = result.optString("error", "TTS failed"),
+                        status = "Error: ${result.optString("error", "TTS failed")}"
+                    )
+                }
+            } finally {
+                hasStartedGeneration = false
+                currentJob = null
             }
-            currentJob = null
         }
     }
 
@@ -178,14 +183,15 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
         )
 
         currentJob = viewModelScope.launch {
-            val emotion = detectEmotion(text)
-            val intensity = _state.value?.emotionIntensity ?: 0.5f
-            val accent = _state.value?.accent ?: "standard"
+            try {
+                val emotion = detectEmotion(text)
+                val intensity = _state.value?.emotionIntensity ?: 0.5f
+                val accent = _state.value?.accent ?: "standard"
 
-            val gender = _state.value?.gender ?: "female"
-            // First chunk — determines which engine to lock
-            val firstResult = withContext(Dispatchers.IO) {
-                engineManager.generate(
+                val gender = _state.value?.gender ?: "female"
+                // First chunk — determines which engine to lock
+                val firstResult = withContext(Dispatchers.IO) {
+                    engineManager.generate(
                     text = sentences.first(),
                     engineIndex = resolveEngineIndex(),
                     langCode = langCode,
@@ -264,7 +270,10 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                     emotionLabel = emotion
                 )
             }
-            currentJob = null
+            } finally {
+                hasStartedGeneration = false
+                currentJob = null
+            }
         }
     }
 
@@ -283,14 +292,27 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun splitSentences(text: String): List<String> {
-        val raw = text.split(Regex("(?<=[।॥?!])\\s*|(?<=[.;])\\s+"))
+        // Split on Devanagari punctuation (danda, double-danda) and ASCII
+        // sentence-ending marks. Allow zero or more trailing whitespace.
+        val raw = text.split(Regex("(?<=[।॥?!.;])\\s*"))
             .map { it.trim() }
             .filter { it.isNotBlank() }
         if (raw.isEmpty()) return listOf(text)
 
+        // If no splits found (e.g. long prose without punctuation), force-split
+        // by comma or newline boundaries as a fallback
+        val parts = if (raw.size == 1 && text.length > STREAMING_THRESHOLD) {
+            text.split(Regex("[,，]\\ *|\\n+"))
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .ifEmpty { raw }
+        } else {
+            raw
+        }
+
         val merged = mutableListOf<String>()
         val buf = StringBuilder()
-        for (s in raw) {
+        for (s in parts) {
             buf.append(if (buf.isEmpty()) s else " $s")
             if (buf.length >= 40) {
                 merged.add(buf.toString())
