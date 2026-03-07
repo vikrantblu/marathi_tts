@@ -22,6 +22,11 @@ object PythonBridge {
             if (!Python.isStarted()) {
                 Python.start(AndroidPlatform(context))
             }
+            // FEAT-59: Tell Python where to find user phonetic corrections
+            val py = Python.getInstance()
+            val os = py.getModule("os")
+            os.callAttr("putenv", "USER_CORRECTIONS_PATH",
+                java.io.File(context.filesDir, "user_corrections.json").absolutePath)
             initialized = true
         }
     }

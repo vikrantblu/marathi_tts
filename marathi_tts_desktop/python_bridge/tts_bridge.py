@@ -138,6 +138,32 @@ except ImportError as _e:
 
 
 # ---------------------------------------------------------------------------
+# User phonetic corrections (FEAT-59) — loaded from JSON written by app
+# ---------------------------------------------------------------------------
+_user_corrections = None
+
+def _load_user_corrections():
+    """Load user-submitted pronunciation corrections from JSON file."""
+    global _user_corrections
+    path = os.environ.get("USER_CORRECTIONS_PATH", "")
+    if not path:
+        # Desktop default: look next to the bridge dir
+        path = os.path.join(_BRIDGE_DIR, "user_corrections.json")
+    if not os.path.isfile(path):
+        _user_corrections = {}
+        return _user_corrections
+    try:
+        import json
+        with open(path, 'r', encoding='utf-8') as f:
+            _user_corrections = json.load(f)
+        log.info("Loaded %d user corrections from %s", len(_user_corrections), path)
+    except Exception as exc:
+        log.warning("Failed to load user corrections: %s", exc)
+        _user_corrections = {}
+    return _user_corrections
+
+
+# ---------------------------------------------------------------------------
 # G2P Engine (lazy singleton)
 # ---------------------------------------------------------------------------
 _g2p_engine = None
@@ -146,15 +172,30 @@ def _get_g2p():
     """Lazy-load the G2P engine. Returns None if unavailable."""
     global _g2p_engine
     if _g2p_engine is not None:
+        # Refresh user corrections on each call (file may have changed)
+        _refresh_user_corrections()
         return _g2p_engine
     try:
         from tts.utils.phonetic.g2p_engine import MarathiG2PEngine
         _g2p_engine = MarathiG2PEngine()
+        # Load and apply user corrections on first init
+        corrections = _load_user_corrections()
+        if corrections:
+            _g2p_engine.add_lexicon_entries(corrections)
         log.info("G2P engine loaded OK")
         return _g2p_engine
     except Exception as exc:
         log.warning("G2P engine not available: %s", exc)
         return None
+
+
+def _refresh_user_corrections():
+    """Re-read user corrections file and update G2P lexicon if changed."""
+    global _user_corrections
+    old_corrections = _user_corrections
+    new_corrections = _load_user_corrections()
+    if new_corrections and new_corrections != old_corrections and _g2p_engine:
+        _g2p_engine.add_lexicon_entries(new_corrections)
 
 
 def _apply_g2p(text: str) -> str:

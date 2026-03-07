@@ -1,10 +1,17 @@
 package com.marathitts.mobile.ui.stotra
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -26,6 +33,26 @@ class StotraFragment : Fragment() {
     // Track which audio path we already started playing so state re-emissions
     // (e.g. status-text updates) don't restart playback from the beginning.
     private var lastPlayedPath: String? = null
+
+    // FEAT-60: Voice search via SpeechRecognizer
+    private val voiceSearchLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val text = matches?.firstOrNull()
+            if (!text.isNullOrBlank()) {
+                binding.searchInput.setText(text)
+                binding.searchInput.setSelection(text.length)
+            }
+        }
+    }
+
+    private val micPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) launchVoiceSearch()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -58,6 +85,16 @@ class StotraFragment : Fragment() {
 
         // Search
         binding.searchInput.addTextChangedListener { viewModel.search(it?.toString() ?: "") }
+
+        // FEAT-60: Voice search
+        binding.voiceSearchBtn.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED) {
+                launchVoiceSearch()
+            } else {
+                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        }
 
         // Deity filter chips
         val chipMap = mapOf(
@@ -117,6 +154,9 @@ class StotraFragment : Fragment() {
                 binding.detailContainer.visibility = View.GONE
                 adapter.submitList(state.filteredStotras)
                 binding.stotraCount.text = "${state.filteredStotras.size} stotras"
+
+                // FEAT-60: Content search results
+                updateContentSearch(state)
 
                 // Playlist mode UI
                 updatePlaylistUI(state)
@@ -232,6 +272,44 @@ class StotraFragment : Fragment() {
                 }
             }
         )
+    }
+
+    /** FEAT-60: Launch Android voice recognition for Marathi/Sanskrit. */
+    private fun launchVoiceSearch() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "mr-IN")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, getString(R.string.voice_search_listening))
+        }
+        try {
+            voiceSearchLauncher.launch(intent)
+        } catch (_: Exception) {
+            Toast.makeText(context, R.string.voice_search_error, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** FEAT-60: Display content search results card. */
+    private fun updateContentSearch(state: StotraListState) {
+        if (state.isContentSearchActive && state.contentMatches.isNotEmpty()) {
+            binding.contentSearchCard.visibility = View.VISIBLE
+            binding.contentSearchHeader.text =
+                getString(R.string.content_search_header, state.contentMatches.size)
+            val sb = StringBuilder()
+            for ((i, match) in state.contentMatches.withIndex()) {
+                if (i > 0) sb.append("\n\n")
+                sb.append("► ${match.stotra.title}\n")
+                sb.append(match.excerpt)
+                if (i >= 4) break  // show max 5 results
+            }
+            binding.contentSearchResults.text = sb.toString()
+            // Tap on the card navigates to the first match
+            binding.contentSearchCard.setOnClickListener {
+                val first = state.contentMatches.firstOrNull() ?: return@setOnClickListener
+                viewModel.selectStotra(first.stotra)
+            }
+        } else {
+            binding.contentSearchCard.visibility = View.GONE
+        }
     }
 
     private fun showDetail(state: StotraListState) {

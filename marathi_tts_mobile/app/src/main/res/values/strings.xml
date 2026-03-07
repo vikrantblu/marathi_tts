@@ -148,6 +148,21 @@
     <string name="emotion_intensity_value">%1$d%%</string>
     <string name="phonetic_explainer_title">Phonetic Rules</string>
 
+    <!-- Phonetic Corrections (FEAT-59) -->
+    <string name="suggest_correction">Correct</string>
+    <string name="correction_title">Suggest Pronunciation</string>
+    <string name="correction_message">Correct pronunciation for \"%1$s\":</string>
+    <string name="correction_hint">Type corrected Devanagari form</string>
+    <string name="correction_save">Save</string>
+    <string name="correction_saved">Pronunciation correction saved ✓</string>
+    <string name="correction_count">%1$d corrections</string>
+
+    <!-- Scripture Search (FEAT-60) -->
+    <string name="voice_search">Voice Search</string>
+    <string name="voice_search_listening">Listening…</string>
+    <string name="voice_search_error">Voice search failed. Try typing instead.</string>
+    <string name="content_search_header">Found in verse text (%1$d stotras)</string>
+
     <!-- Playlist (FEAT-56) -->
     <string name="playlist_mode">Playlist</string>
     <string name="playlist_mode_exit">Done</string>

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
@@ -49,6 +50,7 @@ class OutputFragment : Fragment() {
         applySmartSpeed(isVerse)
         observeState()
         observePhoneticExplanation()
+        observeCorrectionSaved()
 
         // Auto-trigger generation when text is provided
         if (inputText.isNotBlank()) {
@@ -296,8 +298,42 @@ class OutputFragment : Fragment() {
                 .setTitle(getString(R.string.phonetic_explainer_title))
                 .setMessage(sb.toString())
                 .setPositiveButton(android.R.string.ok, null)
+                .setNeutralButton(R.string.suggest_correction) { _, _ ->
+                    showCorrectionDialog(explanation.original, explanation.final)
+                }
                 .setOnDismissListener { viewModel.clearPhoneticExplanation() }
                 .show()
+        }
+    }
+
+    /** FEAT-59: Show dialog for user to submit a pronunciation correction. */
+    private fun showCorrectionDialog(word: String, currentPronunciation: String) {
+        val input = EditText(requireContext()).apply {
+            setText(currentPronunciation)
+            hint = getString(R.string.correction_hint)
+            setPadding(48, 24, 48, 24)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.correction_title))
+            .setMessage(getString(R.string.correction_message, word))
+            .setView(input)
+            .setPositiveButton(R.string.correction_save) { _, _ ->
+                val corrected = input.text.toString().trim()
+                if (corrected.isNotBlank() && corrected != word) {
+                    viewModel.submitCorrection(word, corrected)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /** FEAT-59: Observe correction save result. */
+    private fun observeCorrectionSaved() {
+        viewModel.correctionSaved.observe(viewLifecycleOwner) { saved ->
+            if (saved == true) {
+                Toast.makeText(requireContext(), R.string.correction_saved, Toast.LENGTH_SHORT).show()
+                viewModel.clearCorrectionSaved()
+            }
         }
     }
 

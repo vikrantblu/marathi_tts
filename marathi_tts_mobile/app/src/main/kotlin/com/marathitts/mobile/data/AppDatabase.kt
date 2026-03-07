@@ -10,9 +10,10 @@ import androidx.room.RoomDatabase
         HistoryEntry::class,
         StotraFavorite::class,
         UrlBookmark::class,
-        RecentTtsInput::class
+        RecentTtsInput::class,
+        PhoneticCorrection::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,6 +21,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun stotraFavoriteDao(): StotraFavoriteDao
     abstract fun urlBookmarkDao(): UrlBookmarkDao
     abstract fun recentTtsInputDao(): RecentTtsInputDao
+    abstract fun phoneticCorrectionDao(): PhoneticCorrectionDao
 
     companion object {
         @Volatile
@@ -31,7 +33,8 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "marathi_tts.db"
-                ).build().also { INSTANCE = it }
+                ).fallbackToDestructiveMigration()
+                .build().also { INSTANCE = it }
             }
         }
     }

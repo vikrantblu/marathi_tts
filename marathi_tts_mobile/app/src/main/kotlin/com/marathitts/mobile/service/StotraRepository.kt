@@ -130,6 +130,38 @@ class StotraRepository(private val context: Context) {
         }
     }
 
+    /**
+     * FEAT-60: Search inside stotra text content for a phrase.
+     * Returns a list of (Stotra, excerpt) pairs where the query appears in the body text.
+     * Excerpt shows the matching line with surrounding context.
+     */
+    data class ContentMatch(val stotra: Stotra, val excerpt: String, val lineNumber: Int)
+
+    fun searchContent(query: String): List<ContentMatch> {
+        if (query.isBlank() || query.length < 2) return emptyList()
+        val q = query.lowercase()
+        val results = mutableListOf<ContentMatch>()
+        for (stotra in getAll()) {
+            try {
+                val text = context.assets.open(stotra.textFile).bufferedReader().use { it.readText() }
+                val lines = text.lines()
+                for ((idx, line) in lines.withIndex()) {
+                    if (line.lowercase().contains(q)) {
+                        // Build excerpt: matching line + 1 surrounding line for context
+                        val start = maxOf(0, idx - 1)
+                        val end = minOf(lines.size - 1, idx + 1)
+                        val excerpt = lines.subList(start, end + 1).joinToString("\n")
+                        results.add(ContentMatch(stotra, excerpt, idx + 1))
+                        break  // one match per stotra is enough
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Content search skip ${stotra.id}: ${e.message}")
+            }
+        }
+        return results
+    }
+
     /** Load the full text of a stotra from its asset file. */
     fun loadText(stotra: Stotra): String {
         return try {

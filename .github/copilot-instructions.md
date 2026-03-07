@@ -1335,3 +1335,72 @@ Shows segment count header and first 6 segment snippets.
 uses NLP-aware sentence splitting (same algorithm as `OutputViewModel.splitSentences()`):
 splits at ।/॥/?!/.; merges fragments under 40 chars. `updateClipPreview()` shows/hides
 the card and formats the preview text.
+
+---
+
+## Community Phonetic Corrections (FEAT-59)
+
+Users can submit pronunciation corrections from the phonetic explainer dialog.
+
+### Room DB
+
+- **Entity:** `data/PhoneticCorrection.kt` — `@Entity(tableName = "phonetic_corrections")`,
+  PK = `word: String`, `correctedForm: String`, `timestamp: Long`
+- **DAO:** `data/PhoneticCorrectionDao.kt` — `getAll()`, `insert(REPLACE)`, `deleteByWord()`,
+  `deleteAll()`, `count()`
+- **AppDatabase** v2: added `PhoneticCorrection` entity + `phoneticCorrectionDao()`,
+  `fallbackToDestructiveMigration()` (OK for unreleased v4)
+
+### JSON Sync
+
+`util/PhoneticCorrectionSync.kt`: after each Room insert, writes all corrections to
+`user_corrections.json` in `context.filesDir`. Format: `{"word": "correctedForm", ...}`.
+`getFilePath(context)` returns the path.
+
+### Python Bridge Integration
+
+- **Mobile `PythonBridge.kt`:** sets `os.putenv("USER_CORRECTIONS_PATH", filePath)` at init
+- **Mobile `tts_bridge.py`:** `_load_user_corrections()` reads JSON from `USER_CORRECTIONS_PATH`
+  env var, `_refresh_user_corrections()` re-reads on each `_get_g2p()` call, loaded into
+  G2P engine via `add_lexicon_entries()`
+- **Desktop `tts_bridge.py`:** same pattern, default path: `os.path.join(_BRIDGE_DIR, "user_corrections.json")`
+
+### UI Flow
+
+1. Long-press prosody segment → phonetic explainer dialog (FEAT-55)
+2. Dialog now has "Correct" neutral button
+3. Tap → `showCorrectionDialog(word, currentPronunciation)` — EditText pre-filled
+4. Save → `OutputViewModel.submitCorrection()` → Room insert + `PhoneticCorrectionSync.sync()`
+5. Toast "Correction saved" via `correctionSaved` LiveData
+
+---
+
+## Live Scripture Search (FEAT-60)
+
+Full-text search across stotra content with optional voice input.
+
+### Content Search
+
+- **`StotraRepository.searchContent(query)`:** scans all stotra text files line by line.
+  Returns `List<ContentMatch>` (stotra, excerpt with ±1 line context, lineNumber).
+  One match per stotra, minimum 2-char query.
+- **`StotraViewModel`:** `searchContent()` triggered for queries ≥ 3 chars. Results stored
+  in `StotraListState.contentMatches` and `isContentSearchActive`.
+- **`StotraFragment.updateContentSearch(state)`:** shows/hides `content_search_card`,
+  displays up to 5 results (stotra title bold + excerpt). Tap navigates to first match.
+
+### Voice Search
+
+- `voice_search_btn` (ImageButton, `ic_mic`) next to search TextInputLayout in
+  `fragment_stotra.xml`
+- `voiceSearchLauncher`: `ActivityResultContracts.StartActivityForResult()`, extracts
+  recognized text and fills search EditText
+- `micPermissionLauncher`: requests `RECORD_AUDIO` permission, then launches voice search
+- `launchVoiceSearch()`: `ACTION_RECOGNIZE_SPEECH` intent with `mr-IN` locale
+
+### Layout
+
+`fragment_stotra.xml` changes:
+- Search bar wrapped in horizontal `LinearLayout` with voice search button
+- `content_search_card` MaterialCardView (visibility=gone) with `content_search_header`
+  and `content_search_results` TextViews
