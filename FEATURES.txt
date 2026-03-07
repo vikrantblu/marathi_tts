@@ -136,6 +136,38 @@ Track feature requests and shipped features here.
 
 ---
 
+## Planned — v4.1.0
+
+### Offline TTS (Critical)
+- FEAT-70 Offline Piper TTS integration: run Piper VITS model on-device via ONNX Runtime
+  for fully offline Marathi TTS. No network required. Uses fine-tuned Hindi base model.
+- FEAT-71 On-device Whisper STT: replace playback-loopback hack with Whisper.cpp or
+  whisper-onnx for accurate offline speech-to-text on audio files.
+
+### Voice Quality
+- FEAT-72 Pre-recorded stotra audio on mobile: bundle desktop stotra recordings into
+  APK assets. Fingerprint-match already exists in tts_bridge — just needs audio files.
+- FEAT-73 G2P anusvara assimilation: implement _process_anusvara() using ANUSVARA_ASSIMILATION
+  dict from g2p_constants.py. Gate behind mode flag (preserve/assimilate).
+- FEAT-74 Multi-speaker voice selection: allow switching between Aarohi (female) and
+  Manohar (male) Edge-TTS voices from the UI. Currently hardcoded.
+
+### User Experience
+- FEAT-75 Word-level playback highlighting: highlight current word/segment in prosody
+  preview as audio plays. Sync via segment duration tracking.
+- FEAT-76 Export to MP3/WAV with metadata: save generated audio with proper ID3 tags
+  (title, artist, language) for music player compatibility.
+- FEAT-77 Widget for quick TTS: Android home screen widget with text input and one-tap
+  generate. Uses AppPreferences defaults.
+- FEAT-78 Accessibility: TalkBack support audit, content descriptions for all interactive
+  elements, minimum touch target sizes.
+
+### Code Quality
+- FEAT-79 Dead code cleanup: remove unreachable code in prosody_engine.py
+  _segment_verse_block() (lines after early return).
+- FEAT-80 Per-verse metre detection: detect metre changes within mixed-metre stotras
+  (e.g., Meghaduta opens Mandakranta then shifts). Currently only per-paragraph.
+
 ## Shipped — v1.0.0 (2026-02)
 
 - Core Marathi TTS engine (Web/Django, Desktop/JavaFX, Mobile/Android)
