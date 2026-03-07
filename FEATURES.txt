@@ -58,9 +58,16 @@ Track feature requests and shipped features here.
   Real-time clip preview in InputFragment when text exceeds 250 chars. Shows segment
   count and first 6 segment previews. Same splitting logic as streaming generation.
 
-### Backlog
-- FEAT-59 Community phonetic corrections: user-submitted pronunciation fixes
-- FEAT-60 Live scripture search: voice-search for stotra phrases
+### Backlog Features — SHIPPED
+- FEAT-59 Community phonetic corrections — SHIPPED
+  Long-press phonetic explainer → "Correct" button → submit corrected pronunciation.
+  Room DB entity + DAO, JSON sync to Python bridge via USER_CORRECTIONS_PATH env var.
+  G2P engine loads user corrections as lexicon overrides at runtime. Desktop bridge
+  also supports corrections via user_corrections.json.
+- FEAT-60 Live scripture search with voice — SHIPPED
+  Full-text search across all stotra content files (not just titles). Voice search
+  button with SpeechRecognizer (mr-IN locale). Results show stotra title + matching
+  excerpt with ±1 line context. Tap result navigates to stotra detail.
 
 ---
 

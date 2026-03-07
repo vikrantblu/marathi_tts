@@ -96,6 +96,17 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
   text exceeds 250 chars. Shows segment count and first 6 segment snippets. Uses same
   sentence-splitting logic as streaming generation (splits at ।/॥/?!/.; merges short runs).
 
+### Added — Backlog Features (FEAT-59, FEAT-60)
+- FEAT-59 Community phonetic corrections: long-press phonetic explainer dialog now has
+  "Correct" button. Users submit corrected pronunciation via EditText dialog. Corrections
+  stored in Room DB (PhoneticCorrection entity, v2 schema), synced to user_corrections.json.
+  Python bridge reads corrections via USER_CORRECTIONS_PATH env var and loads into G2P
+  lexicon as overrides. Desktop bridge also supports corrections file.
+- FEAT-60 Live scripture search with voice: full-text search across all stotra content
+  files (not just titles). Voice search button with Android SpeechRecognizer (mr-IN locale).
+  Content matches shown with stotra title + ±1 line context excerpt. Tap navigates to
+  matching stotra detail. Triggered for queries ≥ 3 characters.
+
 ---
 
 ## [3.0.0] — 2026-03

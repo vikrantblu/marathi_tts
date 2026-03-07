@@ -5,9 +5,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.marathitts.mobile.data.AppDatabase
+import com.marathitts.mobile.data.PhoneticCorrection
 import com.marathitts.mobile.service.PythonBridge
 import com.marathitts.mobile.service.TtsEngineManager
 import com.marathitts.mobile.util.AppPreferences
+import com.marathitts.mobile.util.PhoneticCorrectionSync
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -485,5 +488,28 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearPhoneticExplanation() {
         _phoneticExplanation.value = null
+    }
+
+    // -----------------------------------------------------------------
+    // FEAT-59: Community Phonetic Corrections
+    // -----------------------------------------------------------------
+
+    private val _correctionSaved = MutableLiveData<Boolean?>()
+    val correctionSaved: LiveData<Boolean?> get() = _correctionSaved
+
+    fun submitCorrection(word: String, correctedForm: String) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val ctx = getApplication<Application>()
+                val dao = AppDatabase.getInstance(ctx).phoneticCorrectionDao()
+                dao.insert(PhoneticCorrection(word = word, correctedForm = correctedForm))
+                PhoneticCorrectionSync.sync(ctx)
+            }
+            _correctionSaved.value = true
+        }
+    }
+
+    fun clearCorrectionSaved() {
+        _correctionSaved.value = null
     }
 }

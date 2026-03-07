@@ -21,6 +21,9 @@ data class StotraListState(
     val audioPath: String? = null,
     val statusMessage: String? = null,
     val hasPreRecordedAudio: Boolean = false,
+    // Content search (FEAT-60)
+    val contentMatches: List<StotraRepository.ContentMatch> = emptyList(),
+    val isContentSearchActive: Boolean = false,
     // Playlist mode (FEAT-56)
     val isPlaylistMode: Boolean = false,
     val playlistSelection: Set<String> = emptySet(),  // stotra IDs
@@ -61,6 +64,25 @@ class StotraViewModel(app: Application) : AndroidViewModel(app) {
     fun search(query: String) {
         currentQuery = query
         applyFilters()
+        // FEAT-60: Content search for longer queries
+        if (query.length >= 3) {
+            searchContent(query)
+        } else {
+            _state.value = _state.value?.copy(contentMatches = emptyList(), isContentSearchActive = false)
+        }
+    }
+
+    /** FEAT-60: Search inside stotra text bodies (runs on IO). */
+    private fun searchContent(query: String) {
+        viewModelScope.launch {
+            val matches = withContext(Dispatchers.IO) {
+                repo.searchContent(query)
+            }
+            _state.value = _state.value?.copy(
+                contentMatches = matches,
+                isContentSearchActive = matches.isNotEmpty()
+            )
+        }
     }
 
     private fun applyFilters() {
