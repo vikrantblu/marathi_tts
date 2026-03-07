@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.marathitts.mobile.R
@@ -23,6 +24,7 @@ class InputFragment : Fragment() {
     companion object {
         private val LANGUAGES = listOf("Auto-detect", "Marathi", "Sanskrit", "Hindi")
         private val LANG_CODES = listOf("auto", "mr", "sa", "hi")
+        private const val CLIP_THRESHOLD = 250
     }
 
     override fun onCreateView(
@@ -40,6 +42,7 @@ class InputFragment : Fragment() {
         setupSourceChips()
         setupGenerateButton()
         setupOptionsToggle()
+        setupSmartClipPreview()
 
         // Accept text passed from other screens (Correction, Emotion, History, Modi, Stotra)
         val argText = arguments?.getString("tts_text")
@@ -147,6 +150,62 @@ class InputFragment : Fragment() {
                 if (optionsExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
             )
         }
+    }
+
+    /** FEAT-58: Show smart clip preview when text exceeds streaming threshold. */
+    private fun setupSmartClipPreview() {
+        binding.textInput.addTextChangedListener { editable ->
+            val text = editable?.toString().orEmpty()
+            updateClipPreview(text)
+        }
+    }
+
+    private fun updateClipPreview(text: String) {
+        if (text.length < CLIP_THRESHOLD) {
+            binding.clipPreviewCard.visibility = View.GONE
+            return
+        }
+        val clips = smartSplit(text)
+        if (clips.size <= 1) {
+            binding.clipPreviewCard.visibility = View.GONE
+            return
+        }
+        binding.clipPreviewCard.visibility = View.VISIBLE
+        binding.clipPreviewHeader.text =
+            getString(R.string.clip_preview_header, clips.size)
+        val preview = clips.take(6).mapIndexed { i, clip ->
+            val snippet = if (clip.length > 60) clip.take(57) + "…" else clip
+            "${i + 1}. $snippet"
+        }.joinToString("\n")
+        binding.clipPreviewText.text = preview
+    }
+
+    /**
+     * NLP-aware sentence splitting — splits at Devanagari sentence enders,
+     * merges short fragments, and ensures no clip is below minimum length.
+     */
+    private fun smartSplit(text: String): List<String> {
+        val raw = text.split(Regex("(?<=[।॥?!])\\s*|(?<=[.;])\\s+"))
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+        if (raw.isEmpty()) return listOf(text)
+
+        val merged = mutableListOf<String>()
+        val buf = StringBuilder()
+        for (s in raw) {
+            buf.append(if (buf.isEmpty()) s else " $s")
+            if (buf.length >= 40) {
+                merged.add(buf.toString())
+                buf.clear()
+            }
+        }
+        if (buf.isNotEmpty()) {
+            if (merged.isNotEmpty() && buf.length < 40)
+                merged[merged.lastIndex] = "${merged.last()} $buf"
+            else
+                merged.add(buf.toString())
+        }
+        return merged.ifEmpty { listOf(text) }
     }
 
     /**

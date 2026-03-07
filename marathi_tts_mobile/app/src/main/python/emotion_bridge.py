@@ -83,6 +83,27 @@ def _normalize_result(result: dict) -> dict:
     return result
 
 
+def get_scaled_voice_params(emotion: str, intensity: float = 1.0) -> dict:
+    """Return voice parameters scaled by the given intensity (0.0 to 1.0).
+
+    At intensity=1.0, returns full emotion params.
+    At intensity=0.0, returns neutral params.
+    Values in between are linearly interpolated.
+    """
+    base = _VOICE_PARAMS.get(emotion, _VOICE_PARAMS["neutral"])
+    neutral = _VOICE_PARAMS["neutral"]
+    intensity = max(0.0, min(1.0, intensity))
+    if intensity >= 1.0:
+        return dict(base)
+    if intensity <= 0.0:
+        return dict(neutral)
+    return {
+        "pitch": round(neutral["pitch"] + (base["pitch"] - neutral["pitch"]) * intensity, 3),
+        "speed": round(neutral["speed"] + (base["speed"] - neutral["speed"]) * intensity, 3),
+        "volume": round(neutral["volume"] + (base["volume"] - neutral["volume"]) * intensity, 3),
+    }
+
+
 def _keyword_analysis(text: str) -> dict:
     """Standalone keyword-based emotion analysis."""
     word_count = max(len(re.findall(r"\S+", text)), 1)

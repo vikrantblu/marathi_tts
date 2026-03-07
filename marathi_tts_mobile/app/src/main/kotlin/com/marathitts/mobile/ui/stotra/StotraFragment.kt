@@ -38,7 +38,21 @@ class StotraFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // ── List setup ──
-        adapter = StotraAdapter { stotra -> viewModel.selectStotra(stotra) }
+        adapter = StotraAdapter(
+            onClick = { stotra ->
+                val s = viewModel.state.value
+                if (s?.isPlaylistMode == true) {
+                    viewModel.togglePlaylistSelection(stotra.id)
+                } else {
+                    viewModel.selectStotra(stotra)
+                }
+            },
+            onLongClick = { _ ->
+                if (viewModel.state.value?.isPlaylistMode != true) {
+                    viewModel.togglePlaylistMode()
+                }
+            }
+        )
         binding.stotraList.layoutManager = LinearLayoutManager(requireContext())
         binding.stotraList.adapter = adapter
 
@@ -59,6 +73,9 @@ class StotraFragment : Fragment() {
             val chipId = checkedIds.firstOrNull() ?: R.id.chip_all
             viewModel.filterByDeity(chipMap[chipId])
         }
+
+        // ── Playlist controls ──
+        setupPlaylistControls()
 
         // ── Detail controls ──
         binding.backBtn.setOnClickListener {
@@ -100,8 +117,121 @@ class StotraFragment : Fragment() {
                 binding.detailContainer.visibility = View.GONE
                 adapter.submitList(state.filteredStotras)
                 binding.stotraCount.text = "${state.filteredStotras.size} stotras"
+
+                // Playlist mode UI
+                updatePlaylistUI(state)
             }
         }
+    }
+
+    private fun setupPlaylistControls() {
+        binding.playlistToggleBtn.setOnClickListener {
+            viewModel.togglePlaylistMode()
+        }
+
+        binding.playlistSelectAllBtn.setOnClickListener {
+            viewModel.selectAllForPlaylist()
+        }
+
+        binding.playlistGenerateBtn.setOnClickListener {
+            viewModel.generatePlaylist()
+        }
+
+        binding.playlistStopBtn.setOnClickListener {
+            val s = viewModel.state.value ?: return@setOnClickListener
+            if (s.isGenerating) {
+                viewModel.cancelPlaylist()
+            } else if (s.isPlaylistPlaying) {
+                audioPlayer.stop()
+                viewModel.setPlaylistPlaying(false)
+            }
+        }
+    }
+
+    private fun updatePlaylistUI(state: StotraListState) {
+        val inPlaylist = state.isPlaylistMode
+        adapter.isPlaylistMode = inPlaylist
+        adapter.playlistSelection = state.playlistSelection
+
+        // Toggle button text
+        binding.playlistToggleBtn.text = if (inPlaylist) {
+            getString(R.string.playlist_mode_exit)
+        } else {
+            getString(R.string.playlist_mode)
+        }
+
+        // Action bar visibility
+        binding.playlistActionBar.visibility = if (inPlaylist) View.VISIBLE else View.GONE
+
+        if (inPlaylist) {
+            val count = state.playlistSelection.size
+            binding.playlistSelectionCount.text = getString(R.string.playlist_selected, count)
+            binding.playlistGenerateBtn.isEnabled = count > 0 && !state.isGenerating
+        }
+
+        // Status bar: visible during generation or playback
+        val showStatus = state.isGenerating || state.isPlaylistPlaying ||
+                         state.playlistPaths.isNotEmpty()
+        binding.playlistStatusBar.visibility = if (showStatus) View.VISIBLE else View.GONE
+
+        if (state.isGenerating) {
+            binding.playlistStatus.text = getString(
+                R.string.playlist_generating,
+                state.playlistProgress,
+                state.playlistTotal
+            )
+            binding.playlistProgress.max = state.playlistTotal
+            binding.playlistProgress.progress = state.playlistProgress
+            binding.playlistProgress.visibility = View.VISIBLE
+            binding.playlistStopBtn.text = getString(R.string.playlist_stop)
+            binding.playlistStopBtn.visibility = View.VISIBLE
+        } else if (state.playlistPaths.isNotEmpty() && !state.isPlaylistPlaying) {
+            // Ready to play — auto-start
+            startPlaylistPlayback(state.playlistPaths)
+        }
+
+        if (state.isPlaylistPlaying) {
+            val current = state.playlistCurrentIndex + 1
+            val total = state.playlistPaths.size
+            binding.playlistStatus.text = getString(R.string.playlist_playing, current, total)
+            binding.playlistProgress.max = total
+            binding.playlistProgress.progress = current
+            binding.playlistProgress.visibility = View.VISIBLE
+            binding.playlistStopBtn.text = getString(R.string.playlist_stop)
+            binding.playlistStopBtn.visibility = View.VISIBLE
+        }
+    }
+
+    private var playlistStarted = false
+
+    private fun startPlaylistPlayback(paths: List<String>) {
+        if (playlistStarted) return
+        playlistStarted = true
+        viewModel.setPlaylistPlaying(true, 0)
+
+        audioPlayer.playQueueAsync(
+            paths = paths,
+            onChunkStart = { index ->
+                requireActivity().runOnUiThread {
+                    viewModel.setPlaylistPlaying(true, index)
+                }
+            },
+            onAllComplete = {
+                requireActivity().runOnUiThread {
+                    viewModel.setPlaylistPlaying(false)
+                    playlistStarted = false
+                    binding.playlistStopBtn.visibility = View.GONE
+                    binding.playlistStatus.text = "Playlist complete"
+                }
+            },
+            onError = { msg ->
+                requireActivity().runOnUiThread {
+                    viewModel.setPlaylistPlaying(false)
+                    playlistStarted = false
+                    Toast.makeText(context, "Playback error: $msg", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
     }
 
     private fun showDetail(state: StotraListState) {
@@ -156,6 +286,7 @@ class StotraFragment : Fragment() {
 
     override fun onDestroyView() {
         audioPlayer.stop()
+        playlistStarted = false
         _binding = null
         super.onDestroyView()
     }

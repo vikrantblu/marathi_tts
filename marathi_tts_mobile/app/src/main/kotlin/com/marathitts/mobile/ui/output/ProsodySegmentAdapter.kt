@@ -14,9 +14,11 @@ import com.marathitts.mobile.R
  * RecyclerView adapter for FEAT-51 prosody preview segments.
  * Each item shows the segment text, verse/prose badge, metre, pause, and rate.
  * Tap triggers FEAT-52 per-sentence regeneration via [onSegmentClick].
+ * Long-press triggers FEAT-55 phonetic explainer via [onSegmentLongClick].
  */
 class ProsodySegmentAdapter(
-    private val onSegmentClick: (ProsodySegment) -> Unit
+    private val onSegmentClick: (ProsodySegment) -> Unit,
+    private val onSegmentLongClick: ((ProsodySegment) -> Unit)? = null
 ) : ListAdapter<ProsodySegment, ProsodySegmentAdapter.ViewHolder>(DIFF) {
 
     var regeneratingIndex: Int = -1
@@ -35,7 +37,7 @@ class ProsodySegmentAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val segment = getItem(position)
-        holder.bind(segment, regeneratingIndex == position, onSegmentClick)
+        holder.bind(segment, regeneratingIndex == position, onSegmentClick, onSegmentLongClick)
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -49,7 +51,8 @@ class ProsodySegmentAdapter(
         fun bind(
             segment: ProsodySegment,
             isRegenerating: Boolean,
-            onClick: (ProsodySegment) -> Unit
+            onClick: (ProsodySegment) -> Unit,
+            onLongClick: ((ProsodySegment) -> Unit)? = null
         ) {
             val ctx = itemView.context
             txtText.text = segment.text
@@ -84,6 +87,14 @@ class ProsodySegmentAdapter(
 
             // FEAT-52: tap to regenerate
             itemView.setOnClickListener { onClick(segment) }
+
+            // FEAT-55: long-press for phonetic explainer
+            if (onLongClick != null) {
+                itemView.setOnLongClickListener {
+                    onLongClick(segment)
+                    true
+                }
+            }
         }
     }
 

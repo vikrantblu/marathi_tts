@@ -143,6 +143,38 @@
     <string name="action_share">Share</string>
     <string name="action_save">Save</string>
     <string name="emotion_title">Emotion Analysis</string>
+    <string name="emotion_intensity_label">Emotion Intensity</string>
+    <string name="emotion_intensity_default">50%</string>
+    <string name="emotion_intensity_value">%1$d%%</string>
+    <string name="phonetic_explainer_title">Phonetic Rules</string>
+
+    <!-- Playlist (FEAT-56) -->
+    <string name="playlist_mode">Playlist</string>
+    <string name="playlist_mode_exit">Done</string>
+    <string name="playlist_select_all">Select All</string>
+    <string name="playlist_generate">Play All</string>
+    <string name="playlist_stop">Stop</string>
+    <string name="playlist_selected">%1$d selected</string>
+    <string name="playlist_generating">Generating: %1$d / %2$d</string>
+    <string name="playlist_ready">Playlist ready — %1$d stotras</string>
+    <string name="playlist_playing">Playing: %1$d / %2$d</string>
+
+    <!-- Accents (FEAT-57) -->
+    <string name="accent_label">Accent Profile</string>
+    <string name="accent_standard">प्रमाण</string>
+    <string name="accent_mumbai">मुंबई</string>
+    <string name="accent_northern">उत्तर</string>
+    <string name="accent_konkanastha">कोकणस्थ</string>
+    <string name="accent_deccani">दख्खनी</string>
+    <string name="accent_standard_desc">Standard Marathi (Pune/media)</string>
+    <string name="accent_mumbai_desc">Mumbai — faster pace, higher pitch</string>
+    <string name="accent_northern_desc">Khandesh/Vidarbha — slower, deeper tone</string>
+    <string name="accent_konkanastha_desc">Konkan region — higher pitch, measured pace</string>
+    <string name="accent_deccani_desc">Marathwada/Deccani — lower pitch</string>
+
+    <!-- Smart Clip (FEAT-58) -->
+    <string name="clip_preview_header">Smart Clip: %1$d segments</string>
+
     <string name="output_input_text_label">Input Text</string>
     <string name="output_generating">Generating audio…</string>
     <string name="output_cancel">Cancel</string>
@@ -159,7 +191,7 @@
     <string name="prosody_pause_label">Pause: %dms</string>
     <string name="prosody_rate_label">Rate: %.2f×</string>
     <string name="prosody_metre_label">Metre: %s</string>
-    <string name="prosody_tap_hint">Tap segment to regenerate</string>
+    <string name="prosody_tap_hint">Tap to regenerate · Long-press for phonetic rules</string>
     <string name="prosody_regenerating">Regenerating segment…</string>
     <string name="prosody_regen_done">Segment regenerated ✓</string>
     <string name="prosody_analyzing">Analyzing prosody…</string>

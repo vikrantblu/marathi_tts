@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -43,8 +44,11 @@ class OutputFragment : Fragment() {
         setupProsodyPreview()
         setupPlaybackControls()
         setupOutputActions()
+        setupEmotionIntensity()
+        setupAccentChips()
         applySmartSpeed(isVerse)
         observeState()
+        observePhoneticExplanation()
 
         // Auto-trigger generation when text is provided
         if (inputText.isNotBlank()) {
@@ -53,17 +57,23 @@ class OutputFragment : Fragment() {
     }
 
     private fun setupProsodyPreview() {
-        prosodyAdapter = ProsodySegmentAdapter { segment ->
-            // FEAT-52: tap to regenerate this segment
-            val speed = binding.sliderSpeed.value
-            viewModel.regenerateSegment(
-                segmentIndex = segment.index,
-                text = segment.text,
-                speed = speed,
-                language = language,
-                isVerse = segment.isVerse
-            )
-        }
+        prosodyAdapter = ProsodySegmentAdapter(
+            onSegmentClick = { segment ->
+                // FEAT-52: tap to regenerate this segment
+                val speed = binding.sliderSpeed.value
+                viewModel.regenerateSegment(
+                    segmentIndex = segment.index,
+                    text = segment.text,
+                    speed = speed,
+                    language = language,
+                    isVerse = segment.isVerse
+                )
+            },
+            onSegmentLongClick = { segment ->
+                // FEAT-55: long-press to explain phonetics
+                viewModel.explainPhonetics(segment.text, language)
+            }
+        )
         binding.rvProsodySegments.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = prosodyAdapter
@@ -97,10 +107,13 @@ class OutputFragment : Fragment() {
                 binding.txtInputPreview.text = inputText
             }
 
-            // Emotion card
+            // Emotion card + FEAT-54 intensity slider
             if (state.emotionLabel != null && !state.isLoading) {
                 binding.emotionCard.visibility = View.VISIBLE
                 binding.txtEmotion.text = state.emotionLabel.replaceFirstChar { it.uppercase() }
+                binding.sliderEmotionIntensity.value = state.emotionIntensity
+                binding.txtIntensityValue.text =
+                    getString(R.string.emotion_intensity_value, (state.emotionIntensity * 100).toInt())
             } else {
                 binding.emotionCard.visibility = View.GONE
             }
@@ -223,6 +236,68 @@ class OutputFragment : Fragment() {
             } else {
                 Toast.makeText(requireContext(), "No audio to save", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    /** FEAT-54: Emotion intensity slider wiring. */
+    private fun setupEmotionIntensity() {
+        binding.sliderEmotionIntensity.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                viewModel.setEmotionIntensity(value)
+                binding.txtIntensityValue.text =
+                    getString(R.string.emotion_intensity_value, (value * 100).toInt())
+            }
+        }
+    }
+
+    /** FEAT-57: Accent profile chip wiring. */
+    private fun setupAccentChips() {
+        val chipToAccent = mapOf(
+            R.id.chip_accent_standard to "standard",
+            R.id.chip_accent_mumbai to "mumbai",
+            R.id.chip_accent_northern to "northern",
+            R.id.chip_accent_konkanastha to "konkanastha",
+            R.id.chip_accent_deccani to "deccani"
+        )
+        val accentToDesc = mapOf(
+            "standard" to R.string.accent_standard_desc,
+            "mumbai" to R.string.accent_mumbai_desc,
+            "northern" to R.string.accent_northern_desc,
+            "konkanastha" to R.string.accent_konkanastha_desc,
+            "deccani" to R.string.accent_deccani_desc
+        )
+        binding.accentChips.setOnCheckedStateChangeListener { _, checkedIds ->
+            val chipId = checkedIds.firstOrNull() ?: R.id.chip_accent_standard
+            val accent = chipToAccent[chipId] ?: "standard"
+            viewModel.setAccent(accent)
+            binding.accentDescription.text =
+                getString(accentToDesc[accent] ?: R.string.accent_standard_desc)
+        }
+    }
+
+    /** FEAT-55: Observe phonetic explanation results and show dialog. */
+    private fun observePhoneticExplanation() {
+        viewModel.phoneticExplanation.observe(viewLifecycleOwner) { explanation ->
+            if (explanation == null) return@observe
+            val sb = StringBuilder()
+            sb.append("\"${explanation.original}\" → \"${explanation.final}\"\n")
+            if (explanation.rules.isEmpty()) {
+                sb.append("\nNo transformations applied — word passes through unchanged.")
+            } else {
+                for (rule in explanation.rules) {
+                    sb.append("\n━ ${rule.stage}: ${rule.rule}\n")
+                    sb.append("  ${rule.description}\n")
+                    if (rule.before != rule.after) {
+                        sb.append("  ${rule.before} → ${rule.after}\n")
+                    }
+                }
+            }
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.phonetic_explainer_title))
+                .setMessage(sb.toString())
+                .setPositiveButton(android.R.string.ok, null)
+                .setOnDismissListener { viewModel.clearPhoneticExplanation() }
+                .show()
         }
     }
 

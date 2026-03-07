@@ -11,14 +11,35 @@
     app:cardElevation="0dp"
     app:strokeColor="?attr/colorOutline"
     app:strokeWidth="1dp"
+    android:checkable="true"
     android:clickable="true"
     android:focusable="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:padding="14dp">
+
+        <!-- Playlist check indicator (visible only in playlist mode) -->
+        <TextView
+            android:id="@+id/playlist_check"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="?attr/colorPrimary"
+            android:background="@drawable/playlist_check_bg"
+            android:visibility="gone"
+            android:layout_marginEnd="10dp"
+            tools:text="✓"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
 
         <!-- Row 1: title + deity badge -->
         <LinearLayout
@@ -97,6 +118,8 @@
                 tools:text="29 verses"/>
         </LinearLayout>
 
-    </LinearLayout>
+        </LinearLayout>  <!-- end content column -->
+
+    </LinearLayout>  <!-- end horizontal wrapper -->
 
 </com.google.android.material.card.MaterialCardView>

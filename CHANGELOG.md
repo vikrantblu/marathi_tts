@@ -79,6 +79,23 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - FEAT-53 Dual-engine A/B comparison: `compare_engines()` function in both bridge scripts,
   runs text through gTTS/Edge-TTS/Custom and returns all audio paths for comparison
 
+### Added — Phase 4: Innovation Features (FEAT-54 through FEAT-58)
+- FEAT-54 Emotion intensity slider: 0–100% granularity slider in emotion card. Scales
+  ProsodyEngine pitch_shift and tts_rate modifiers proportionally. Default 50%. Integrated
+  into generate_tts, edge-tts prosody, and verse prosody paths.
+- FEAT-55 Phonetic explainer: long-press any prosody segment to see applied rules. Bridge
+  function traces 4 stages (G2P lexicon → SandhiEngine → language phonetics → G2P engine)
+  and returns rule list. AlertDialog displays stage, rule name, before/after text.
+- FEAT-56 Batch stotra playlist: long-press to enter playlist mode with multi-select
+  checkboxes. Select All button. Batch TTS generation with progress bar. Sequential
+  playback via AudioPlayerService.playQueueAsync(). Cancel during generation.
+- FEAT-57 Accent profiles: 5 Marathi regional variants (Standard/Mumbai/Northern/
+  Konkanastha/Deccani). Chip group in output screen. Each profile adjusts pitch and rate
+  offsets applied in tts_bridge before TTS generation.
+- FEAT-58 Smart text clipping: real-time NLP-aware segment preview in InputFragment when
+  text exceeds 250 chars. Shows segment count and first 6 segment snippets. Uses same
+  sentence-splitting logic as streaming generation (splits at ।/॥/?!/.; merges short runs).
+
 ---
 
 ## [3.0.0] — 2026-03
