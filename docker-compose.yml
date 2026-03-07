@@ -1,0 +1,23 @@
+# Docker Compose — Marathi TTS Web
+# Usage:
+#   docker compose up --build
+#   docker compose down
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/app/media
+      - db_data:/app/db
+    environment:
+      - DJANGO_SETTINGS_MODULE=marathi_tts.settings
+      - DEBUG=0
+    restart: unless-stopped
+
+volumes:
+  media_data:
+  db_data:

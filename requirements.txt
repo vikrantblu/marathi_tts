@@ -1,0 +1,44 @@
+# Root requirements — Marathi TTS project
+#
+# This file lists dependencies for local development across all platforms.
+# Platform-specific requirements:
+#   Web (Django):   marathi_tts_web/requirements.txt   (full server deps)
+#   CI (tests):     .github/ci-requirements.txt        (minimal, stdlib-only)
+#   Mobile/Desktop: managed by Chaquopy plugin in build.gradle.kts
+#
+# Install:  pip install -r requirements.txt
+
+# ─── TTS core ────────────────────────────────────────────────────────────────
+gTTS==2.5.1
+edge-tts>=6.1.0
+pydub==0.25.1
+
+# ─── Audio processing ────────────────────────────────────────────────────────
+librosa>=0.10.0
+scipy>=1.11.2
+soundfile>=0.12.0
+
+# ─── NLP / text processing ───────────────────────────────────────────────────
+Morfessor>=2.0.6
+indic-nlp-library>=0.92
+indic-transliteration>=2.3.0
+
+# ─── OCR + PDF ───────────────────────────────────────────────────────────────
+pytesseract>=0.3.13
+Pillow>=10.0.0
+PyPDF2>=3.0.1
+
+# ─── Web scraping ────────────────────────────────────────────────────────────
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+
+# ─── Speech-to-text ──────────────────────────────────────────────────────────
+openai-whisper
+
+# ─── ML (optional — needed for emotion analysis / correction models) ────────
+torch>=2.0.0
+transformers>=4.30.0
+sentencepiece>=0.1.99
+
+# ─── Testing ─────────────────────────────────────────────────────────────────
+pytest>=7.0.0
