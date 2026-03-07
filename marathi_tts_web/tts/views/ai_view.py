@@ -8,7 +8,7 @@ import time
 import pandas as pd
 from pathlib import Path
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from ..utils.text.text_normalizer import MarathiTextNormalizer
 from ..utils.ai.dictionary import MarathiDictionary
@@ -526,7 +526,7 @@ def get_correction_service():
         _correction_service = TextCorrectionService()
     return _correction_service
 
-@csrf_exempt
+@csrf_protect
 @require_POST
 def correct_text_para(request):
     """Handle word correction requests"""
@@ -552,7 +552,7 @@ def correct_text_para(request):
             'message': str(e)
         }, status=500)
 
-@csrf_exempt
+@csrf_protect
 @require_POST
 def format_text(request):
     """API endpoint for text formatting"""
@@ -581,7 +581,7 @@ def format_text(request):
             'hasChanges': False
         }, status=500)
 
-@csrf_exempt
+@csrf_protect
 def suggest_correction(request):
     if request.method == 'POST':
         data = json.loads(request.body)

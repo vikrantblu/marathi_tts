@@ -336,8 +336,15 @@ class MarathiTextCorrector:
         """Load or create Marathi word frequency dictionary"""
         freq_path = os.path.join(_BASE_DIR, 'data', 'marathi_word_freq.pkl')
         if os.path.exists(freq_path):
+            # Use restricted unpickler — only allow builtins (dict, str, int)
+            import io
+            class _SafeUnpickler(pickle.Unpickler):
+                def find_class(self, module, name):
+                    if module == 'builtins' and name in ('dict', 'set', 'list', 'str', 'int', 'float', 'tuple', 'bool'):
+                        return getattr(__import__('builtins'), name)
+                    raise pickle.UnpicklingError(f"Blocked: {module}.{name}")
             with open(freq_path, 'rb') as f:
-                return pickle.load(f)
+                return _SafeUnpickler(f).load()
         return {}
         
     def correct_text(self, text: str) -> str:

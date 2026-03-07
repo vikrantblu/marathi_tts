@@ -5,7 +5,7 @@ import logging
 import tempfile
 from pathlib import Path
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
-@csrf_exempt
+@csrf_protect
 @require_http_methods(["POST"])
 def transcribe_audio(request):
     """
@@ -27,6 +27,12 @@ def transcribe_audio(request):
 
         if not audio_file:
             return JsonResponse({"success": False, "error": "Audio file is required"}, status=400)
+
+        # Validate audio upload: size limit (100 MB)
+        from ..utils.security import validate_audio_upload
+        is_valid, err_msg = validate_audio_upload(audio_file)
+        if not is_valid:
+            return JsonResponse({"success": False, "error": err_msg}, status=400)
 
         # Save uploaded file to a temp location
         suffix = os.path.splitext(audio_file.name)[1] or ".wav"

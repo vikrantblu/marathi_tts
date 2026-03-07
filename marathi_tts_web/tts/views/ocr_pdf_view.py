@@ -27,6 +27,12 @@ def extract_pdf_text(request):
     if request.method == 'POST' and request.FILES.get('pdf_file'):
         pdf_file = request.FILES['pdf_file']
 
+        # Validate PDF upload: header check + size limit (50 MB)
+        from ..utils.security import validate_pdf_upload
+        is_valid, err_msg = validate_pdf_upload(pdf_file)
+        if not is_valid:
+            return JsonResponse({'success': False, 'error': err_msg}, status=400)
+
         try:
             pdf_bytes = pdf_file.read()
             candidates = []  # list of (text, score, method_name)

@@ -81,6 +81,9 @@ def stotra_text(request, stotra_id):
     text_path = os.path.join(_STOTRAS_DIR, text_filename) if text_filename else ''
 
     if text_path and os.path.isfile(text_path):
+        # Verify the resolved path is within the stotras directory
+        if not os.path.realpath(text_path).startswith(os.path.realpath(_STOTRAS_DIR)):
+            return JsonResponse({'success': False, 'error': 'Invalid stotra path'}, status=400)
         with open(text_path, 'r', encoding='utf-8') as f:
             text_content = f.read()
     else:
@@ -88,6 +91,9 @@ def stotra_text(request, stotra_id):
         for fname in os.listdir(_STOTRAS_DIR):
             if fname.endswith('.txt'):
                 fpath = os.path.join(_STOTRAS_DIR, fname)
+                # Skip symlinks and paths escaping the stotras directory
+                if os.path.islink(fpath) or not os.path.realpath(fpath).startswith(os.path.realpath(_STOTRAS_DIR)):
+                    continue
                 with open(fpath, 'r', encoding='utf-8') as f:
                     content = f.read()
                 # Simple heuristic: if the stotra name appears in the file content

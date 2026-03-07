@@ -8,6 +8,43 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ## [Unreleased]
 
+### Security
+- **CRITICAL**: Fixed SSRF in web app `website_view.py` — URL validation via DNS resolution
+  + IP range blocking before `requests.get()` (both `fetch_website_content` and
+  `extract_text_from_image_url`)
+- **CRITICAL**: Fixed path traversal in `tts_views.py` `stream_status()` — session_id now
+  validated as UUID pattern before use in file paths
+- **CRITICAL**: Fixed path traversal in MCP `sync_tts_file()` — rejects `..` components
+  and verifies resolved path stays within `tts/` directory
+- **CRITICAL**: Fixed SQL injection patterns in `db_id_reset.py`, `db_table_rename.py`,
+  `rename_app.py` — added table name validation (regex whitelist)
+- **HIGH**: Replaced `@csrf_exempt` with `@csrf_protect` on 6 Django views (OCR, STT,
+  script convert, AI correction × 3)
+- **HIGH**: Added upload validation with magic byte checks and size limits: images (10MB),
+  PDFs (50MB), audio (100MB) via new `tts/utils/security.py` module
+- **HIGH**: Fixed SSRF in mobile + desktop `web_bridge.py` — added `_is_safe_url()` with
+  DNS resolution and private IP rejection
+- **HIGH**: Fixed unsafe `pickle.load()` in `text_processor.py` (all 3 platforms) —
+  replaced with `RestrictedUnpickler` allowing only builtin types
+- **HIGH**: Restricted Android `FileProvider` scope from `path="/"` to specific subdirs
+- **HIGH**: Created `network_security_config.xml` with `cleartextTrafficPermitted="false"`
+- **HIGH**: Fixed path traversal in `stotra_view.py` — added `realpath` containment check
+  and symlink rejection
+- **MEDIUM**: Changed Django `DEBUG` default from `True` to `False` (env var override)
+- **MEDIUM**: Enabled `SECURE_CONTENT_TYPE_NOSNIFF` and `SECURE_BROWSER_XSS_FILTER` always
+- **MEDIUM**: Removed `urllib3.disable_warnings(InsecureRequestWarning)` from settings.py
+  and mobile `web_bridge.py`
+- **MEDIUM**: Added `X-Content-Type-Options: nosniff` header in JS middleware
+- **MEDIUM**: Set `android:allowBackup="false"` in AndroidManifest.xml
+- **MEDIUM**: Added `level` enum validation in MCP `bump_version()` tool
+- **MEDIUM**: Removed unsafe runtime `pip install` in `audio_processor.py`
+- **MEDIUM**: Fixed symlink-following attack in `_cleanup_output_dir()` (mobile + desktop
+  `tts_bridge.py`) — added `os.path.islink()` check and `realpath` containment
+- **MEDIUM**: Sanitized error messages in HTTP responses (no `str(e)` exposure)
+- Created shared security utility module `tts/utils/security.py` with `is_safe_url()`,
+  `is_safe_session_id()`, `validate_image_upload()`, `validate_pdf_upload()`,
+  `validate_audio_upload()`, `is_path_within()`
+
 ### Added
 - FEAT-74: Voice gender selection chips (Female/Male) in Output screen — wires
   existing TtsEngineManager gender support to UI via ChipGroup

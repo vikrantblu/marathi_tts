@@ -30,8 +30,7 @@ from django.core.servers.basehttp import WSGIServer, WSGIRequestHandler
 from django.contrib.messages import constants as messages
 import tempfile
 import logging
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# urllib3 warning suppression removed for security — TLS errors should be visible
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -45,7 +44,11 @@ os.makedirs(LOGS_DIR, exist_ok=True)
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.getenv('DJANGO_DEBUG', 'True') == 'True' else False
+DEBUG = True if os.getenv('DJANGO_DEBUG', 'False') == 'True' else False
+
+# Security headers — always enabled (safe in both dev and prod)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
 
 if DEBUG:
     SECURE_HSTS_SECONDS = 0
@@ -53,8 +56,6 @@ if DEBUG:
     SECURE_HSTS_PRELOAD = False
     SECURE_SSL_REDIRECT = False
     CSRF_COOKIE_SECURE = False
-    SECURE_BROWSER_XSS_FILTER = False
-    SECURE_CONTENT_TYPE_NOSNIFF = False
     SECURE_PROXY_SSL_HEADER = None
     SSL_CERTIFICATE = str(BASE_DIR / 'cert.pem')
     SSL_KEY = str(BASE_DIR / 'key.pem')

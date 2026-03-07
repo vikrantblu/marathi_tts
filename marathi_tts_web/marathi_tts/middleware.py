@@ -15,6 +15,7 @@ class JavaScriptModuleMiddleware:
         response = self.get_response(request)
         if request.path.endswith('.js'):
             response['Content-Type'] = 'application/javascript'
+            response['X-Content-Type-Options'] = 'nosniff'
         return response
 
 class LoggingInitMiddleware:

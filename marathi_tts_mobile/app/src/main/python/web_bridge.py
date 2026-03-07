@@ -11,8 +11,7 @@ Returns: JSON { success, text, title, image_texts_count }
 """
 
 import sys, os, json, argparse, traceback, time, re
-import urllib3  # type: ignore
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+# urllib3 warning suppression removed for security — TLS errors should be visible
 
 _BRIDGE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _BRIDGE_DIR)
@@ -36,6 +35,30 @@ if _PROJECT_ROOT not in sys.path and os.path.isdir(_PROJECT_ROOT):
 os.environ.setdefault("MARATHI_TTS_STANDALONE", "1")
 
 log.info("Web Bridge initialised | bridge_dir=%s", _BRIDGE_DIR)
+
+
+def _is_safe_url(url: str) -> bool:
+    """Reject private/internal IPs and non-HTTP schemes to prevent SSRF."""
+    try:
+        from urllib.parse import urlparse
+        import ipaddress, socket
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        try:
+            resolved = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            for _fam, _type, _proto, _canon, addr in resolved:
+                ip = ipaddress.ip_address(addr[0])
+                if ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_link_local:
+                    return False
+        except (socket.gaierror, ValueError):
+            return False
+        return True
+    except Exception:
+        return False
 
 _HEADERS = {
     "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -174,6 +197,11 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
     """
     t0 = time.time()
     log.info("=== fetch_url START | url=%s process_images=%s ===", url, process_images)
+
+    # SSRF prevention: reject private/internal IPs
+    if not _is_safe_url(url):
+        log.warning("Blocked unsafe URL: %s", url[:100])
+        return {"success": False, "error": "URL is blocked (private/internal address)"}
 
     try:
         import requests  # type: ignore

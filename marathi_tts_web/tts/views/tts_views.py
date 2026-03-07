@@ -336,12 +336,17 @@ def analyze_emotion_realtime(request):
         
     except Exception as e:
         logger.error(f"Error in emotion analysis: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': 'Emotion analysis failed'}, status=500)
 
 @require_http_methods(["GET"])
 def stream_status(request, session_id):
     """Get status of a streaming TTS session"""
     try:
+        # Path traversal prevention: validate session_id is a safe UUID-like string
+        from ..utils.security import is_safe_session_id
+        if not is_safe_session_id(session_id):
+            return JsonResponse({'success': False, 'error': 'Invalid session ID'}, status=400)
+
         status_path = os.path.join(settings.MEDIA_ROOT, 'tts', 'temp', session_id, 'status.json')
         
         if not os.path.exists(status_path):
@@ -363,7 +368,7 @@ def stream_status(request, session_id):
         
     except Exception as e:
         logger.error(f"Error getting stream status: {str(e)}", exc_info=True)
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': 'Internal error'}, status=500)
 
 
 # Create a cache for recent requests

@@ -1,7 +1,7 @@
 import os
 import logging
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
 from ..utils.text.text_processor import clean_text, is_marathi_text
@@ -25,7 +25,7 @@ def check_tesseract_installation():
         logger.error(f"Error checking Tesseract installation: {e}")
         raise
 
-@csrf_exempt
+@csrf_protect
 @require_http_methods(["POST"])
 def extract_text_from_image(request):
     """Extract Marathi text from uploaded images using OCR"""
@@ -36,15 +36,12 @@ def extract_text_from_image(request):
         image_data = request.FILES.get('image')
         if not image_data:
             return JsonResponse({'success': False, 'error': 'छायाचित्र आवश्यक आहे'}, status=400)
-            
-        # Check file type by extension
-        filename = image_data.name.lower()
-        if not (filename.endswith('.jpg') or filename.endswith('.jpeg') or 
-                filename.endswith('.png') or filename.endswith('.bmp')):
-            return JsonResponse({
-                'success': False, 
-                'error': 'अवैध फाइल प्रकार. फक्त JPG, PNG आणि BMP फाइल्स स्वीकारल्या जातील'
-            }, status=400)
+
+        # Validate image upload: magic bytes + size limit (10 MB)
+        from ..utils.security import validate_image_upload
+        is_valid, err_msg = validate_image_upload(image_data)
+        if not is_valid:
+            return JsonResponse({'success': False, 'error': err_msg}, status=400)
         
         # Open and preprocess the image for better Devanagari OCR
         image = Image.open(image_data)

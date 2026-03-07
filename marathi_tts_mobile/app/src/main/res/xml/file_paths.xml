@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <cache-path name="cache" path="/"/>
+    <cache-path name="tts_output" path="tts_output/"/>
+    <files-path name="files_output" path="output/"/>
+    <external-files-path name="ext_output" path="output/"/>
 </paths>

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sqlite3
+import re
 import os
 #old_app_name = 'tts'
 #new_app_name = 'ss_app'
@@ -12,6 +13,11 @@ models_path = '{app_new_name}/models.py'  # Update this path
 # Old table name and new table name
 old_table_name = 'old_app_name_userinput'  # Replace with the current table name
 new_table_name = '{app_new_name}_userinput'  # Replace with the new table name
+
+# Validate table names (alphanumeric + underscore only)
+for tname in (old_table_name, new_table_name):
+    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', tname):
+        raise ValueError(f"Invalid table name: {tname}")
 
 # Connect to the database
 conn = sqlite3.connect(db_path)

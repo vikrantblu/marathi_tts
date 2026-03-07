@@ -340,8 +340,15 @@ def tool_sync_tts_file(args: dict) -> str:
     rel = args.get("relative_path", "").strip().replace("\\", "/").lstrip("/")
     if not rel:
         return "ERROR: relative_path is required"
+    # Path traversal prevention: reject .. components
+    if '..' in rel.split('/'):
+        return "ERROR: relative_path must not contain '..'"
     import shutil
     web  = ROOT / "marathi_tts_web" / "tts" / Path(rel)
+    # Verify resolved path stays within the tts directory
+    web_tts_root = (ROOT / "marathi_tts_web" / "tts").resolve()
+    if not str(web.resolve()).startswith(str(web_tts_root)):
+        return "ERROR: relative_path escapes tts/ directory"
     desk = ROOT / "marathi_tts_desktop" / "python_bridge" / "tts" / Path(rel)
     mob  = ROOT / "marathi_tts_mobile" / "app" / "src" / "main" / "python" / "tts" / Path(rel)
     if not web.exists():
@@ -405,6 +412,8 @@ def tool_list_connected_adb_devices(_args: dict) -> str:
 
 def tool_bump_version(args: dict) -> str:
     level = args.get("level", "patch")
+    if level not in ("major", "minor", "patch"):
+        return "ERROR: level must be 'major', 'minor', or 'patch'"
     vj_path = ROOT / "version.json"
     gradle_path = ROOT / "marathi_tts_mobile" / "app" / "build.gradle.kts"
     try:

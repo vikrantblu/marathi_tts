@@ -1,7 +1,7 @@
 import json
 import logging
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ _MODI_TO_DEVA = {
 }
 
 
-@csrf_exempt
+@csrf_protect
 @require_http_methods(["POST"])
 def convert_script(request):
     """

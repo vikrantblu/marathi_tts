@@ -44,7 +44,13 @@ def secure_db_operation(db_path: Path, old_name: str, new_name: str) -> None:
     """Securely update database"""
     if not db_path.exists():
         raise FileNotFoundError(f"Database {db_path} not found")
-        
+
+    # Re-validate names inside this function (defense in depth)
+    import re
+    for name in (old_name, new_name):
+        if not re.match(r'^[a-z][a-z0-9_]*$', name):
+            raise ValueError(f"Invalid app name for DB operation: {name}")
+
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         old_table = f"{old_name}_userinput"

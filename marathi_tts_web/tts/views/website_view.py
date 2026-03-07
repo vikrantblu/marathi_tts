@@ -108,6 +108,11 @@ def fetch_website_content(request):
         
         if not url:
             return JsonResponse({'success': False, 'error': 'URL is required'})
+
+        # SSRF prevention: validate URL scheme and reject private/internal IPs
+        from ..utils.security import is_safe_url
+        if not is_safe_url(url):
+            return JsonResponse({'success': False, 'error': 'Invalid or blocked URL'}, status=400)
         
         try:
             # Use a realistic User-Agent — some sites block bare requests
@@ -207,6 +212,12 @@ def fetch_website_content(request):
 def extract_text_from_image_url(img_url):
     """Download image from URL and extract text using OCR"""
     try:
+        # SSRF prevention: validate image URL before fetching
+        from ..utils.security import is_safe_url
+        if not is_safe_url(img_url):
+            logger.warning("Blocked unsafe image URL: %s", img_url[:100])
+            return ""
+
         # Lazy imports — only needed for OCR, avoids startup crash if Tesseract/cv2 not installed
         from PIL import Image
         try:

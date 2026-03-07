@@ -70,7 +70,11 @@ def _cleanup_output_dir():
         total_size = 0
         for name in os.listdir(_OUTPUT_DIR):
             fpath = os.path.join(_OUTPUT_DIR, name)
-            if not os.path.isfile(fpath):
+            # Skip symlinks to prevent symlink-following attacks
+            if os.path.islink(fpath) or not os.path.isfile(fpath):
+                continue
+            # Verify path stays within output directory
+            if not os.path.realpath(fpath).startswith(os.path.realpath(_OUTPUT_DIR)):
                 continue
             stat = os.stat(fpath)
             age = now - stat.st_mtime

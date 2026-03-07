@@ -10,18 +10,8 @@ try:
     import soundfile as sf
     AUDIO_PROCESSING_AVAILABLE = True
 except ImportError:
-    logger.warning("Advanced audio processing unavailable. Installing dependencies...")
-    import subprocess
-    import sys
-    
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "librosa", "soundfile"])
-        import librosa
-        import soundfile as sf
-        AUDIO_PROCESSING_AVAILABLE = True
-    except Exception as e:
-        logger.error(f"Failed to install audio processing dependencies: {e}")
-        AUDIO_PROCESSING_AVAILABLE = False
+    logger.warning("Advanced audio processing unavailable. Install: pip install librosa soundfile")
+    AUDIO_PROCESSING_AVAILABLE = False
 
 class AudioProcessor:
     def __init__(self):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sqlite3
+import re
 import os
 
 # Path to the SQLite3 database file
@@ -11,6 +12,15 @@ cursor = conn.cursor()
 
 # Table to reset IDs for
 table = 'tts_userinput'
+
+# Validate table name (alphanumeric + underscore only)
+if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', table):
+    raise ValueError(f"Invalid table name: {table}")
+
+# Verify table exists in the database
+cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table,))
+if not cursor.fetchone():
+    raise ValueError(f"Table does not exist: {table}")
 
 # Get the table schema
 cursor.execute(f"PRAGMA table_info({table})")
