@@ -24,6 +24,12 @@ object AppPreferences {
     // Draft persistence
     const val KEY_TTS_DRAFT = "tts_draft_text"
 
+    // Developer mode
+    const val KEY_DEV_MODE = "dev_mode_enabled"
+
+    // Engine success tracking (FEAT-49)
+    private const val KEY_ENGINE_SUCCESS_PREFIX = "engine_success_"
+
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -88,6 +94,57 @@ object AppPreferences {
 
     fun setTtsDraft(context: Context, text: String) {
         prefs(context).edit().putString(KEY_TTS_DRAFT, text).apply()
+    }
+
+    // ── Developer mode ──────────────────────────────────────────────────
+
+    fun isDevModeEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_DEV_MODE, false)
+
+    fun setDevMode(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_DEV_MODE, enabled).apply()
+    }
+
+    // ── Engine preference learning (FEAT-49) ────────────────────────────
+
+    /**
+     * Record a successful TTS generation for the given engine name.
+     * Called after every successful generate() result.
+     */
+    fun recordEngineSuccess(context: Context, engineName: String) {
+        val key = KEY_ENGINE_SUCCESS_PREFIX + engineName.lowercase().replace(" ", "_")
+        val current = prefs(context).getInt(key, 0)
+        prefs(context).edit().putInt(key, current + 1).apply()
+    }
+
+    /**
+     * Returns the engine name that has succeeded most often,
+     * or null if no history exists (= use Auto).
+     */
+    fun getLearnedPreferredEngine(context: Context): String? {
+        val p = prefs(context)
+        val engines = listOf("gtts", "edge", "system_tts", "sherpa")
+        var bestEngine: String? = null
+        var bestCount = 0
+        for (eng in engines) {
+            val count = p.getInt(KEY_ENGINE_SUCCESS_PREFIX + eng, 0)
+            if (count > bestCount) {
+                bestCount = count
+                bestEngine = eng
+            }
+        }
+        // Only recommend if we have at least 3 data points
+        return if (bestCount >= 3) bestEngine else null
+    }
+
+    /**
+     * Returns the engine success counts for display (e.g. in Settings).
+     */
+    fun getEngineStats(context: Context): Map<String, Int> {
+        val p = prefs(context)
+        return listOf("gtts", "edge", "system_tts", "sherpa").associateWith { eng ->
+            p.getInt(KEY_ENGINE_SUCCESS_PREFIX + eng, 0)
+        }
     }
 
     // ── Cache / data management ─────────────────────────────────────────

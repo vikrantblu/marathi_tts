@@ -1,8 +1,9 @@
 package com.marathitts.mobile
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.ActionBarDrawerToggle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.NavHostFragment
@@ -33,34 +34,34 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Register ALL fragments as top-level destinations so drawer opens from each
+        // Three bottom tabs are top-level (no Up arrow)
         val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.ttsFragment, R.id.emotionFragment, R.id.ocrFragment,
-                R.id.correctionFragment, R.id.pdfFragment, R.id.webFetchFragment,
-                R.id.sttFragment, R.id.modiFragment, R.id.stotraFragment,
-                R.id.bookReaderFragment, R.id.testDashboardFragment
-            ),
-            binding.drawerLayout
+            setOf(R.id.inputFragment, R.id.outputFragment, R.id.meFragment)
         )
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration)
 
-        // Drawer toggle (hamburger icon)
-        val toggle = ActionBarDrawerToggle(
-            this,
-            binding.drawerLayout,
-            binding.toolbar,
-            R.string.navigation_drawer_open,
-            R.string.navigation_drawer_close
-        )
-        binding.drawerLayout.addDrawerListener(toggle)
-        toggle.syncState()
+        // Wire BottomNavigationView to Navigation Component
+        NavigationUI.setupWithNavController(binding.bottomNav, navController)
 
-        // Wire NavigationView items to Navigation Component
-        NavigationUI.setupWithNavController(binding.navView, navController)
+        // Hide bottom nav on child destinations, show on tabs
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            val isTopLevel = destination.id in setOf(
+                R.id.inputFragment, R.id.outputFragment, R.id.meFragment
+            )
+            binding.bottomNav.visibility = if (isTopLevel) View.VISIBLE else View.VISIBLE
+        }
 
         // ── Intent-driven automation (adb am start extras) ─────────────────
         handleLaunchIntent(navController)
+
+        // ── Handle share intents (URLs and images from other apps) ──────────
+        handleShareIntent(navController)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        return navHostFragment.navController.navigateUp() || super.onSupportNavigateUp()
     }
 
     private fun handleLaunchIntent(navController: androidx.navigation.NavController) {
@@ -75,6 +76,47 @@ class MainActivity : AppCompatActivity() {
                         R.id.testDashboardFragment,
                         bundleOf("autoRun" to autoRun)
                     )
+                }
+            }
+        }
+    }
+
+    private fun handleShareIntent(navController: androidx.navigation.NavController) {
+        val action = intent?.action ?: return
+        if (action != Intent.ACTION_SEND) return
+
+        val mimeType = intent.type.orEmpty()
+        Log.i(TAG, "Share intent: action=$action  type=$mimeType")
+
+        binding.root.post {
+            when {
+                // Shared image → OCR screen
+                mimeType.startsWith("image/") -> {
+                    val imageUri = intent.getParcelableExtra<android.net.Uri>(Intent.EXTRA_STREAM)
+                    if (imageUri != null) {
+                        navController.navigate(
+                            R.id.ocrFragment,
+                            bundleOf("shared_image_uri" to imageUri.toString())
+                        )
+                    }
+                }
+                // Shared text/URL → Web Fetch screen
+                mimeType == "text/plain" -> {
+                    val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty()
+                    if (sharedText.isNotBlank()) {
+                        // If it looks like a URL, open web fetch; otherwise put in input
+                        if (sharedText.startsWith("http://") || sharedText.startsWith("https://")) {
+                            navController.navigate(
+                                R.id.webFetchFragment,
+                                bundleOf("shared_url" to sharedText)
+                            )
+                        } else {
+                            navController.navigate(
+                                R.id.inputFragment,
+                                bundleOf("tts_text" to sharedText)
+                            )
+                        }
+                    }
                 }
             }
         }

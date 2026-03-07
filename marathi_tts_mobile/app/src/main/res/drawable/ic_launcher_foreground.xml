@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Launcher foreground: Devanagari "म" (Ma — for Marathi) in white,
-    centred on the 108 dp adaptive-icon safe zone.
-    A speech-bubble arc sits behind the letter to hint at TTS.
+    Launcher foreground: वाणी (Vani — "Voice/Speech") branding
+    Purple speech bubble with microphone + sound waves + gold "वाणी" text
+    Centred on the 108dp adaptive-icon safe zone.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -10,39 +10,169 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Speech-bubble arc (subtle, behind the letter) -->
+    <!-- Outer glow ring (soft purple) -->
     <path
-        android:pathData="M30,72 Q24,72 24,66 L24,42 Q24,36 30,36 L78,36 Q84,36 84,42 L84,66 Q84,72 78,72 L60,72 L54,80 L50,72 Z"
-        android:fillColor="#BBFFFFFF"/>
-
-    <!-- Devanagari म  — hand-tuned to ~28dp cap-height, centered -->
-    <!-- Shirorekha (top headline bar) -->
-    <path
-        android:pathData="M36,42 L72,42 L72,44.5 L36,44.5 Z"
-        android:fillColor="#FFFFFF"/>
-
-    <!-- Left vertical stem -->
-    <path
-        android:pathData="M40,44.5 L42.5,44.5 L42.5,66 L40,66 Z"
-        android:fillColor="#FFFFFF"/>
-
-    <!-- Right vertical stem -->
-    <path
-        android:pathData="M65.5,44.5 L68,44.5 L68,66 L65.5,66 Z"
-        android:fillColor="#FFFFFF"/>
-
-    <!-- Curved belly of म (connecting arc) -->
-    <path
-        android:pathData="M42.5,52 Q54,64 65.5,52"
-        android:strokeWidth="2.5"
-        android:strokeColor="#FFFFFF"
+        android:pathData="M54,20 A34,34,0,1,1,53.99,20"
+        android:strokeWidth="1.5"
+        android:strokeColor="#9966CC"
         android:fillColor="#00000000"/>
 
-    <!-- Small inner loop on left shoulder -->
+    <!-- Inner glow ring -->
     <path
-        android:pathData="M42.5,44.5 Q46,48 42.5,52"
-        android:strokeWidth="2"
-        android:strokeColor="#FFFFFF"
+        android:pathData="M54,24 A30,30,0,1,1,53.99,24"
+        android:strokeWidth="0.8"
+        android:strokeColor="#7744AA"
+        android:fillColor="#00000000"/>
+
+    <!-- Speech bubble background (lighter purple) -->
+    <path
+        android:pathData="M32,60 Q28,60 28,56 L28,34 Q28,30 32,30 L76,30 Q80,30 80,34 L80,56 Q80,60 76,60 L60,60 L54,68 L50,60 Z"
+        android:fillColor="#8855BB"/>
+
+    <!-- Speech bubble inner fill (gradient simulation — lighter center) -->
+    <path
+        android:pathData="M34,58 Q30,58 30,54 L30,36 Q30,32 34,32 L74,32 Q78,32 78,36 L78,54 Q78,58 74,58 L60,58 L54,66 L50,58 Z"
+        android:fillColor="#9966CC"/>
+
+    <!-- Microphone body (vertical pill shape) -->
+    <path
+        android:pathData="M49,34 L59,34 Q62,34 62,37 L62,47 Q62,50 59,50 L49,50 Q46,50 46,47 L46,37 Q46,34 49,34 Z"
+        android:fillColor="#DDEEFF"/>
+
+    <!-- Microphone grille lines -->
+    <path
+        android:pathData="M48,38 L60,38"
+        android:strokeWidth="0.6"
+        android:strokeColor="#9999CC"/>
+    <path
+        android:pathData="M48,41 L60,41"
+        android:strokeWidth="0.6"
+        android:strokeColor="#9999CC"/>
+    <path
+        android:pathData="M48,44 L60,44"
+        android:strokeWidth="0.6"
+        android:strokeColor="#9999CC"/>
+    <path
+        android:pathData="M48,47 L60,47"
+        android:strokeWidth="0.6"
+        android:strokeColor="#9999CC"/>
+
+    <!-- Microphone stand -->
+    <path
+        android:pathData="M54,50 L54,54"
+        android:strokeWidth="1.8"
+        android:strokeColor="#CCCCEE"/>
+
+    <!-- Microphone base arc -->
+    <path
+        android:pathData="M44,47 Q44,54 54,54 Q64,54 64,47"
+        android:strokeWidth="1.5"
+        android:strokeColor="#CCCCEE"
+        android:fillColor="#00000000"/>
+
+    <!-- Sound wave left (small) -->
+    <path
+        android:pathData="M40,38 Q37,42 40,46"
+        android:strokeWidth="1.2"
+        android:strokeColor="#DDCC88"
+        android:fillColor="#00000000"/>
+
+    <!-- Sound wave left (large) -->
+    <path
+        android:pathData="M36,35 Q31,42 36,49"
+        android:strokeWidth="1.0"
+        android:strokeColor="#CC9944"
+        android:fillColor="#00000000"/>
+
+    <!-- Sound wave right (small) -->
+    <path
+        android:pathData="M68,38 Q71,42 68,46"
+        android:strokeWidth="1.2"
+        android:strokeColor="#DDCC88"
+        android:fillColor="#00000000"/>
+
+    <!-- Sound wave right (large) -->
+    <path
+        android:pathData="M72,35 Q77,42 72,49"
+        android:strokeWidth="1.0"
+        android:strokeColor="#CC9944"
+        android:fillColor="#00000000"/>
+
+    <!-- Small scroll icon (top-right of bubble) -->
+    <path
+        android:pathData="M66,32 L72,32 Q74,32 74,34 L74,42 Q74,44 72,44 L66,44 Q64,44 64,42 L64,34 Q64,32 66,32 Z"
+        android:fillColor="#DDBB66"/>
+    <!-- Scroll top curl -->
+    <path
+        android:pathData="M64,33 Q66,30 68,33"
+        android:strokeWidth="1.0"
+        android:strokeColor="#CC9944"
+        android:fillColor="#00000000"/>
+    <!-- Scroll text lines -->
+    <path
+        android:pathData="M66,36 L72,36"
+        android:strokeWidth="0.5"
+        android:strokeColor="#886633"/>
+    <path
+        android:pathData="M66,38.5 L72,38.5"
+        android:strokeWidth="0.5"
+        android:strokeColor="#886633"/>
+    <path
+        android:pathData="M66,41 L71,41"
+        android:strokeWidth="0.5"
+        android:strokeColor="#886633"/>
+
+    <!-- "वाणी" text in gold — positioned below speech bubble -->
+    <!-- व -->
+    <!-- Shirorekha -->
+    <path
+        android:pathData="M32,72 L50,72 L50,73.5 L32,73.5 Z"
+        android:fillColor="#DDAA44"/>
+    <!-- व left stroke -->
+    <path
+        android:pathData="M35,73.5 L35,82"
+        android:strokeWidth="2.0"
+        android:strokeColor="#DDAA44"/>
+    <!-- व curve -->
+    <path
+        android:pathData="M35,76 Q42,84 42,73.5"
+        android:strokeWidth="1.8"
+        android:strokeColor="#DDAA44"
+        android:fillColor="#00000000"/>
+
+    <!-- ा matra (long vertical) -->
+    <path
+        android:pathData="M44,73.5 L44,82"
+        android:strokeWidth="1.8"
+        android:strokeColor="#DDAA44"/>
+
+    <!-- णी -->
+    <!-- ण stem -->
+    <path
+        android:pathData="M48,73.5 L48,82"
+        android:strokeWidth="1.8"
+        android:strokeColor="#DDAA44"/>
+    <!-- ण lower curve -->
+    <path
+        android:pathData="M48,78 Q52,82 52,73.5"
+        android:strokeWidth="1.5"
+        android:strokeColor="#DDAA44"
+        android:fillColor="#00000000"/>
+
+    <!-- Shirorekha for णी -->
+    <path
+        android:pathData="M46,72 L76,72 L76,73.5 L46,73.5 Z"
+        android:fillColor="#DDAA44"/>
+
+    <!-- ी matra -->
+    <path
+        android:pathData="M54,73.5 L54,70"
+        android:strokeWidth="1.5"
+        android:strokeColor="#DDAA44"/>
+    <path
+        android:pathData="M54,70 Q56,68 56,70"
+        android:strokeWidth="1.2"
+        android:strokeColor="#DDAA44"
         android:fillColor="#00000000"/>
 
 </vector>

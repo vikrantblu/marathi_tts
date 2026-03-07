@@ -21,6 +21,32 @@
     <string name="tab_modi">Script</string>
     <string name="tab_stotra">Stotra</string>
 
+    <!-- Bottom tab labels (v4 redesign) -->
+    <string name="tab_input">Input</string>
+    <string name="tab_output">Output</string>
+    <string name="tab_me">Me</string>
+    <string name="tab_history">History</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Input tab -->
+    <string name="input_hint">येथे मराठी मजकूर टाइप करा किंवा पेस्ट करा…</string>
+    <string name="input_from_label">From:</string>
+    <string name="input_recent_label">Recent:</string>
+    <string name="btn_paste">Paste</string>
+    <string name="btn_generate_audio">Generate Audio</string>
+
+    <!-- Output tab -->
+    <string name="output_title">Audio Output</string>
+    <string name="output_no_audio">Generate audio from the Input tab first</string>
+    <string name="label_advanced_options">Advanced Options</string>
+
+    <!-- Me tab -->
+    <string name="me_favorites_label">Favorites</string>
+    <string name="me_stotra_library_label">Stotra Library</string>
+    <string name="me_recent_history_label">Recent History</string>
+    <string name="me_no_favorites">No favorites yet</string>
+    <string name="me_no_history">No history yet</string>
+
     <!-- TTS screen -->
     <string name="label_tts_engine">TTS Engine</string>
     <string name="label_language">Language</string>
@@ -97,4 +123,58 @@
     <string name="test_dashboard_title">Mobile Test Dashboard</string>
     <string name="btn_run_all">Run All</string>
     <string name="btn_stop">Stop</string>
+
+    <!-- Input tab chips & labels -->
+    <string name="input_sources_label">Import from</string>
+    <string name="chip_camera_ocr">Camera</string>
+    <string name="chip_pdf">PDF</string>
+    <string name="chip_web">Web</string>
+    <string name="chip_mic">Mic</string>
+    <string name="chip_book">Book</string>
+    <string name="switch_verse_mode">Verse mode</string>
+    <string name="input_options">Options</string>
+    <string name="lang_auto_detect">Auto-detect</string>
+
+    <!-- Output tab -->
+    <string name="output_empty_hint">Enter text on the Input tab and tap Generate</string>
+    <string name="btn_play">Play</string>
+    <string name="slider_speed">Speed</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_share">Share</string>
+    <string name="action_save">Save</string>
+    <string name="emotion_title">Emotion Analysis</string>
+    <string name="output_input_text_label">Input Text</string>
+    <string name="output_generating">Generating audio…</string>
+    <string name="output_cancel">Cancel</string>
+    <string name="output_streaming">Streaming: %1$d of %2$d ✓</string>
+    <string name="output_ready">Audio ready ✓</string>
+    <string name="output_error">Generation failed</string>
+    <string name="output_playing">Playing…</string>
+    <string name="output_stopped">Stopped</string>
+    <string name="output_playback_done">Playback complete</string>
+    <string name="prosody_preview_title">Prosody Preview</string>
+    <string name="prosody_segment_count">%d segments</string>
+    <string name="prosody_verse_badge">Verse</string>
+    <string name="prosody_prose_badge">Prose</string>
+    <string name="prosody_pause_label">Pause: %dms</string>
+    <string name="prosody_rate_label">Rate: %.2f×</string>
+    <string name="prosody_metre_label">Metre: %s</string>
+    <string name="prosody_tap_hint">Tap segment to regenerate</string>
+    <string name="prosody_regenerating">Regenerating segment…</string>
+    <string name="prosody_regen_done">Segment regenerated ✓</string>
+    <string name="prosody_analyzing">Analyzing prosody…</string>
+
+    <!-- Me tab cards -->
+    <string name="me_stotra_title">Stotra Library</string>
+    <string name="me_stotra_subtitle">Browse and listen to stotras</string>
+    <string name="me_history_title">History</string>
+    <string name="me_history_subtitle">View past generations</string>
+    <string name="me_modi_title">Script Converter</string>
+    <string name="me_modi_subtitle">Convert between Modi and Devanagari</string>
+    <string name="me_settings_title">Settings</string>
+    <string name="me_settings_subtitle">Theme, defaults, data management</string>
+    <string name="me_test_title">Test Dashboard</string>
+    <string name="me_test_subtitle">Run feature tests (developer)</string>
+    <string name="settings_dev_mode">Developer mode</string>
+    <string name="settings_dev_mode_desc">Show Test Dashboard in Me tab</string>
 </resources>

@@ -191,3 +191,13 @@ marathi_tts_mobile/.gradle/
 marathi_tts_desktop/.gradle/
 **/build/
 local.properties
+
+# Audio data and recordings (large binary files)
+data/processed/
+data/piper_dataset/
+recordings/
+
+# Leftover icon generation files
+generate_app_icon.py
+icon_*.png
+logo.png

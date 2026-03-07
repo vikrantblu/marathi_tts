@@ -394,6 +394,161 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
 
 
 # ---------------------------------------------------------------------------
+# Verse-specific prosody-segmented edge-tts
+# ---------------------------------------------------------------------------
+
+def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
+                                  output_path):
+    """Generate edge-tts audio with verse-specific prosody segmentation.
+
+    Uses ProsodyEngine for metre-aware verse segmentation (pauses at ।/॥,
+    pitch contour, tts_rate per metre), generates per-segment audio via
+    edge-tts neural voice, and stitches with calibrated verse pauses for
+    natural shloka recitation.
+
+    Returns result dict on success, None to fall through.
+    """
+    try:
+        from tts.utils.audio.prosody_engine import MarathiProsodyEngine
+        from pydub import AudioSegment as PydubSegment
+        import edge_tts
+        import asyncio
+    except ImportError as e:
+        log.info("[edge-verse-prosody] Not available: %s", e)
+        return None
+
+    seg_files = []
+    try:
+        prosody = MarathiProsodyEngine(speaking_rate=1.0)
+        segments = prosody.segment_text(text)
+
+        if not segments or len(segments) < 2:
+            log.info("[edge-verse-prosody] < 2 segments (%d), using single-call",
+                     len(segments) if segments else 0)
+            return None
+
+        # Verse stotras can be longer than prose; cap at 40 segments
+        if len(segments) > 40:
+            log.info("[edge-verse-prosody] %d segments exceeds cap (40)",
+                     len(segments))
+            return None
+
+        voice = _EDGE_VOICE_MAP.get((language, gender)) \
+            or _EDGE_VOICE_MAP.get((language, "female"))
+        if not voice:
+            return None
+
+        base_pitch_hz = int((pitch - 1.0) * 100)
+        vol_str = f"{int((volume - 1.0) * 100):+d}%"
+
+        log.info("[edge-verse-prosody] %d segments, voice=%s lang=%s",
+                 len(segments), voice, language)
+
+        combined = PydubSegment.empty()
+        generated = 0
+
+        for i, seg in enumerate(segments):
+            seg_text = seg.text.strip()
+            if not seg_text:
+                continue
+
+            # Verse-specific preprocessing per language
+            if language == "sa":
+                processed = _preprocess_stotra_text(seg_text)
+            elif language == "mr-old":
+                if _phonetic_old_marathi is not None:
+                    processed = _preprocess_stotra_text(
+                        _phonetic_old_marathi(seg_text))
+                else:
+                    processed = _preprocess_stotra_text(
+                        apply_old_marathi_phonetics(seg_text))
+            else:
+                processed = _preprocess_stotra_text(seg_text)
+
+            processed = _apply_g2p(processed)
+            if not processed.strip():
+                continue
+
+            # Per-segment rate from ProsodyEngine (verse metre rate × user speed)
+            seg_rate = speed * seg.tts_rate if seg.tts_rate else speed
+            rate_str = f"{int((seg_rate - 1.0) * 100):+d}%"
+
+            # Per-segment pitch: user pitch + ProsodyEngine contour
+            seg_pitch_hz = base_pitch_hz + int(seg.pitch_shift * 100)
+            seg_pitch_str = f"{seg_pitch_hz:+d}Hz"
+
+            # Chandrabindu nasalization (FEAT-15)
+            if '\u0901' in processed:
+                raw_vol = int((volume - 1.0) * 100)
+                seg_vol_str = f"{max(raw_vol - 25, -50):+d}%"
+            else:
+                seg_vol_str = vol_str
+
+            fd, seg_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
+            os.close(fd)
+            seg_files.append(seg_path)
+
+            async def _run_seg(p=processed, sp=seg_path, ps=seg_pitch_str,
+                               sv=seg_vol_str, rs=rate_str):
+                comm = edge_tts.Communicate(
+                    text=p, voice=voice,
+                    rate=rs, volume=sv, pitch=ps)
+                await comm.save(sp)
+
+            loop = asyncio.new_event_loop()
+            try:
+                loop.run_until_complete(_run_seg())
+            finally:
+                loop.close()
+
+            if not os.path.exists(seg_path) or os.path.getsize(seg_path) < 500:
+                continue
+
+            seg_audio = PydubSegment.from_mp3(seg_path)
+            combined += seg_audio
+            generated += 1
+
+            # Insert verse-calibrated pause from ProsodyEngine
+            if seg.pause_after_ms > 0 and i < len(segments) - 1:
+                combined += PydubSegment.silent(duration=seg.pause_after_ms)
+
+            log.debug("[edge-verse-prosody] Seg %d/%d OK (%d chars, "
+                      "pause=%dms, rate=%s, pitch=%s)",
+                      i + 1, len(segments), len(processed),
+                      seg.pause_after_ms, rate_str, seg_pitch_str)
+
+        if generated < 2 or len(combined) < 500:
+            log.info("[edge-verse-prosody] Too few segments (%d), "
+                     "falling through", generated)
+            return None
+
+        combined.export(output_path, format="mp3")
+
+        log.info("[edge-verse-prosody] Combined %d segments -> %s "
+                 "(%.1fs audio)", generated, output_path,
+                 len(combined) / 1000)
+
+        return {
+            "success": True,
+            "audio_path": output_path,
+            "engine": "edge_tts_verse_prosody",
+            "segments": generated,
+        }
+
+    except Exception as exc:
+        log.warning("[edge-verse-prosody] Failed: %s", exc)
+        log.debug(traceback.format_exc())
+        return None
+
+    finally:
+        for f in seg_files:
+            try:
+                os.unlink(f)
+            except OSError:
+                pass
+
+
+# ---------------------------------------------------------------------------
 # G2P Engine (lazy singleton)
 # ---------------------------------------------------------------------------
 _g2p_engine = None
@@ -1152,6 +1307,25 @@ def generate_tts(text: str,
                      len(text), len(grammar_text))
         text = grammar_text
 
+    # ── Custom Voice Engine (FEAT-50) ────────────────────────────────────
+    # Highest priority: try pre-recorded segment library and custom ONNX
+    # model BEFORE any network-dependent engine.  Works offline.
+    try:
+        from custom_voice_engine import generate_custom_voice
+        custom_result = generate_custom_voice(
+            text, speed=speed, pitch=pitch, volume=volume,
+            output_path=output_path, is_verse=is_verse, language=language)
+        if custom_result and custom_result.get("success"):
+            custom_result["elapsed_sec"] = round(time.time() - t0, 2)
+            log.info("[Custom] SUCCESS engine=%s (%.2fs)",
+                     custom_result.get("engine", "custom"),
+                     custom_result["elapsed_sec"])
+            return custom_result
+    except ImportError:
+        log.debug("[Custom] custom_voice_engine not available")
+    except Exception as exc:
+        log.warning("[Custom] Custom voice failed: %s", exc)
+
     # Stage 0: Stotra library — pre-recorded audio for known stotras/mantras
     if is_verse:
         log.info("[Stage 0] Checking stotra library")
@@ -1208,8 +1382,25 @@ def generate_tts(text: str,
     # Supports Marathi natively and Sanskrit via Hindi voice (same Devanagari script)
     if _edge_tts_available():
         log.info("[Stage 2] Attempting edge-tts | lang=%s gender=%s verse=%s", language, gender, is_verse)
-        # Try prosody-enhanced edge-tts first (FEAT-8) for prose
-        if not is_verse:
+        # Try prosody-segmented edge-tts first
+        if is_verse:
+            # Verse-specific prosody with metre-aware pauses & pitch contour
+            try:
+                prosody_result = _generate_edge_verse_prosody(
+                    text, language, gender, speed, original_pitch, volume,
+                    output_path)
+                if prosody_result and prosody_result.get("success"):
+                    prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
+                    log.info("[Stage 2] edge-tts verse prosody SUCCESS "
+                             "(%d segments, %.2fs)",
+                             prosody_result.get("segments", 0),
+                             prosody_result["elapsed_sec"])
+                    return prosody_result
+            except Exception as exc:
+                log.warning("[Stage 2] edge-tts verse prosody failed: %s", exc)
+                log.debug(traceback.format_exc())
+        else:
+            # Prose prosody (FEAT-8)
             try:
                 prosody_result = _generate_edge_prosody(
                     text, language, gender, speed, original_pitch, volume,
@@ -1329,6 +1520,227 @@ def generate_tts(text: str,
         log.error("[Stage 4] All TTS stages failed: %s\n%s", exc, traceback.format_exc())
         return {"success": False, "error": str(exc),
                 "error_code": "ERR_ALL_ENGINES_FAILED", "stage": "all_failed"}
+
+
+# ---------------------------------------------------------------------------
+# FEAT-53: A/B Engine Comparison
+# ---------------------------------------------------------------------------
+def compare_engines(text: str,
+                    speed: float = 1.0,
+                    pitch: float = 1.0,
+                    volume: float = 1.0,
+                    is_verse: bool = False,
+                    language: str = "mr",
+                    gender: str = "female",
+                    engines: list = None) -> dict:
+    """Generate audio with multiple engines for A/B comparison.
+
+    Returns:
+        {
+            "success": True,
+            "results": [
+                {"engine": "custom_segment_library", "audio_path": "...", "elapsed_sec": 1.2},
+                {"engine": "edge_tts", "audio_path": "...", "elapsed_sec": 2.5},
+                {"engine": "gtts_pydub", "audio_path": "...", "elapsed_sec": 3.1},
+            ],
+            "engine_count": 3
+        }
+    """
+    log.info("=== compare_engines START | engines=%s ===", engines)
+    all_engines = engines or ["custom", "edge_tts", "gtts"]
+    results = []
+
+    for eng_name in all_engines:
+        fd, out_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        os.close(fd)
+        t0 = time.time()
+
+        try:
+            if eng_name == "custom":
+                try:
+                    from custom_voice_engine import generate_custom_voice
+                    r = generate_custom_voice(
+                        text, speed=speed, pitch=pitch, volume=volume,
+                        output_path=out_path, is_verse=is_verse, language=language)
+                    if r and r.get("success"):
+                        r["elapsed_sec"] = round(time.time() - t0, 2)
+                        results.append(r)
+                        continue
+                except ImportError:
+                    pass
+
+            elif eng_name == "edge_tts" and _edge_tts_available():
+                r = _generate_edge_tts(
+                    text, language, gender, speed, pitch, volume,
+                    out_path, is_verse=is_verse)
+                if r.get("success"):
+                    r["elapsed_sec"] = round(time.time() - t0, 2)
+                    results.append(r)
+                    continue
+
+            elif eng_name == "gtts":
+                gtts_lang = _GTTS_LANG_MAP.get(language, language)
+                from gtts import gTTS  # type: ignore
+                gTTS(text=text, lang=gtts_lang, slow=False,
+                     lang_check=False).save(out_path)
+                if os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+                    results.append({
+                        "success": True,
+                        "audio_path": out_path,
+                        "engine": "gtts_bare",
+                        "elapsed_sec": round(time.time() - t0, 2),
+                    })
+                    continue
+
+            # Engine didn't produce output — clean up
+            try:
+                os.unlink(out_path)
+            except OSError:
+                pass
+
+        except Exception as exc:
+            log.warning("[Compare] %s failed: %s", eng_name, exc)
+            try:
+                os.unlink(out_path)
+            except OSError:
+                pass
+
+    return {
+        "success": len(results) > 0,
+        "results": results,
+        "engine_count": len(results),
+    }
+
+
+# ---------------------------------------------------------------------------
+# FEAT-51: Prosody Analysis (preview before generation)
+# ---------------------------------------------------------------------------
+def analyze_prosody(text: str,
+                    language: str = "mr",
+                    is_verse: bool = False,
+                    emotion: str = None) -> dict:
+    """Analyze text and return prosody segments for preview.
+
+    Returns:
+        {
+            "success": True,
+            "segments": [
+                {
+                    "index": 0,
+                    "text": "...",
+                    "pause_after_ms": 600,
+                    "emotion": "neutral",
+                    "emphasis": 1.0,
+                    "pitch_shift": 0.0,
+                    "is_verse": False,
+                    "metre_name": "",
+                    "tts_rate": 1.0
+                },
+                ...
+            ],
+            "segment_count": N,
+            "is_verse_detected": True/False,
+            "metre": "Anushtubh" or ""
+        }
+    """
+    try:
+        from tts.utils.audio.prosody_engine import MarathiProsodyEngine
+
+        detected_emotion = emotion or "neutral"
+        prosody = MarathiProsodyEngine(speaking_rate=1.0, emotion=detected_emotion)
+        segments = prosody.segment_text(text)
+
+        if not segments:
+            return {"success": True, "segments": [], "segment_count": 0,
+                    "is_verse_detected": False, "metre": ""}
+
+        result_segments = []
+        detected_verse = False
+        detected_metre = ""
+        for i, seg in enumerate(segments):
+            result_segments.append({
+                "index": i,
+                "text": seg.text,
+                "pause_after_ms": seg.pause_after_ms,
+                "emotion": seg.emotion,
+                "emphasis": round(seg.emphasis, 2),
+                "pitch_shift": round(seg.pitch_shift, 2),
+                "is_verse": seg.is_verse,
+                "metre_name": seg.metre_name,
+                "tts_rate": round(seg.tts_rate, 2),
+            })
+            if seg.is_verse:
+                detected_verse = True
+            if seg.metre_name and not detected_metre:
+                detected_metre = seg.metre_name
+
+        return {
+            "success": True,
+            "segments": result_segments,
+            "segment_count": len(result_segments),
+            "is_verse_detected": detected_verse,
+            "metre": detected_metre,
+        }
+    except Exception as exc:
+        log.error("[analyze_prosody] %s", exc)
+        return {"success": False, "error": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# FEAT-52: Per-Sentence Regeneration
+# ---------------------------------------------------------------------------
+def regenerate_segment(text: str,
+                       speed: float = 1.0,
+                       pitch: float = 1.0,
+                       volume: float = 1.0,
+                       language: str = "mr",
+                       gender: str = "female",
+                       is_verse: bool = False,
+                       emotion: str = None) -> dict:
+    """Regenerate a single text segment with given parameters.
+
+    Lighter than generate_tts() — skips custom voice and uses the fastest
+    available engine for a single short segment.
+
+    Returns: {"success": True, "audio_path": "...", "engine": "..."} or error.
+    """
+    t0 = time.time()
+    log.info("[regen] text_len=%d speed=%.2f pitch=%.2f vol=%.2f",
+             len(text), speed, pitch, volume)
+
+    _gtts_lang_map = {"sa": "hi", "mr-old": "mr", "ne": "hi"}
+    gtts_language = _gtts_lang_map.get(language, language)
+
+    if not _is_network_available():
+        return {"success": False, "error": "No internet connection.",
+                "error_code": "ERR_NO_NETWORK"}
+
+    # Try edge-tts first (best quality, single segment = fast)
+    if _edge_tts_available():
+        out = tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        try:
+            r = _generate_edge_tts(text, language, gender, speed, pitch,
+                                   volume, out, is_verse=is_verse)
+            if r and r.get("success"):
+                r["elapsed_sec"] = round(time.time() - t0, 2)
+                return r
+        except Exception as exc:
+            log.warning("[regen][edge] %s", exc)
+
+    # Fallback: gTTS
+    try:
+        from gtts import gTTS
+        out = tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        gTTS(text=text, lang=gtts_language, slow=is_verse,
+             lang_check=False).save(out)
+        if os.path.exists(out) and os.path.getsize(out) > 0:
+            return {"success": True, "audio_path": out, "engine": "gtts_regen",
+                    "elapsed_sec": round(time.time() - t0, 2)}
+    except Exception as exc:
+        log.warning("[regen][gtts] %s", exc)
+
+    return {"success": False, "error": "All engines failed for segment regeneration.",
+            "error_code": "ERR_REGEN_FAILED"}
 
 
 def main():

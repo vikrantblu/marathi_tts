@@ -7,24 +7,39 @@ Track feature requests and shipped features here.
 ## Planned — v4.0.0 UX Redesign
 
 ### Phase 1: UX Simplification (Critical)
-- FEAT-40 Navigation pivot: 13-item drawer -> 3 bottom tabs (INPUT / OUTPUT / ME)
-- FEAT-41 INPUT tab: unified text entry + inline OCR/PDF/Web/Voice chip actions
-- FEAT-42 OUTPUT tab: playback + emotion selector + speed/pitch + Copy/Share/Save
-- FEAT-43 ME tab: history + favorites + stotra library + settings
-- FEAT-44 Developer mode: hide TestDashboard behind Settings -> Developer toggle
-- FEAT-45 Progressive disclosure: collapse advanced options by default
+- FEAT-40 ✅ Navigation pivot: 13-item drawer -> 3 bottom tabs (INPUT / OUTPUT / ME)
+- FEAT-41 ✅ INPUT tab: unified text entry + inline OCR/PDF/Web/Voice chip actions
+- FEAT-42 ✅ OUTPUT tab: playback + emotion + speed + Copy/Share/Save + auto-generation
+- FEAT-43 ✅ ME tab: history + favorites + stotra library + settings
+- FEAT-44 ✅ Developer mode: hide TestDashboard behind Settings -> Developer toggle
+- FEAT-45 ✅ Progressive disclosure: collapse advanced options by default
 
 ### Phase 2: Intelligent Defaults (High)
-- FEAT-46 Auto-detect input language (Marathi/Hindi/Sanskrit/English)
-- FEAT-47 Sentiment-driven emotion auto-suggestion on text input
-- FEAT-48 Smart playback speed recommendation (verse vs prose)
-- FEAT-49 User preference learning: track preferred engines/settings
+- FEAT-46 ✅ Auto-detect input language (Marathi/Hindi/Sanskrit/English)
+- FEAT-47 ✅ Sentiment-driven emotion auto-suggestion on text input
+- FEAT-48 ✅ Smart playback speed recommendation (verse vs prose)
+- FEAT-49 ✅ User preference learning: track preferred engines/settings
 
 ### Phase 3: Best-in-Class Voice (High)
-- FEAT-50 Kokoro TTS integration (open-source, offline, Indian voices)
-- FEAT-51 Real-time waveform/prosody preview before generation
-- FEAT-52 Per-sentence regeneration from preview
-- FEAT-53 Dual-engine A/B comparison (gTTS vs Edge-TTS vs Kokoro side-by-side)
+- FEAT-50 ✅ Custom Stotra Voice Model — training pipeline (preprocess, align, validate,
+  Piper config) built and run on 3 stotra recordings (36 min, 155 utterances).
+  Phase A segment library + Phase B Piper VITS fine-tuning. Custom voice engine
+  integrated as highest-priority in both mobile + desktop bridge fallback chains.
+  Adaptive silence detection (auto-retries with progressively sensitive thresholds).
+- FEAT-51 ✅ Real-time prosody preview — analyze_prosody() bridge returns ProsodyEngine
+  segments (text, pause, pitch, rate, metre, emotion) displayed in RecyclerView card
+  on Output screen before/during generation. Runs concurrently with TTS (no network).
+- FEAT-52 ✅ Per-sentence regeneration — tap any prosody segment to regenerate just that
+  chunk via regenerate_segment() (edge-tts → gTTS fallback). Replaces the corresponding
+  stream chunk in-place; progress indicator on regenerating segment.
+- FEAT-53 ✅ Dual-engine A/B comparison — compare_engines() in both mobile + desktop
+  bridges. Runs text through gTTS, Edge-TTS, and custom voice, returns all results
+  for side-by-side quality comparison.
+- FEAT-VQ ✅ Verse voice quality — new _generate_edge_verse_prosody() in both mobile +
+  desktop bridges. Uses ProsodyEngine metre-aware segmentation (pauses at ।/॥, pitch
+  contour, per-metre tts_rate) to generate per-segment edge-tts neural audio with
+  calibrated verse pauses. Previously verse text bypassed prosody pipeline and fell to
+  robotic gTTS slow=True. Now: edge-tts verse prosody → single edge-tts → gTTS fallback.
 
 ### Phase 4: Innovation Features (Medium)
 - FEAT-54 Emotion intensity slider (0-100% granularity)
@@ -40,6 +55,37 @@ Track feature requests and shipped features here.
 ---
 
 ## Shipped — v3.0.0 (2026-03)
+
+### Share-to-App
+- FEAT-61 Share-to-app: share URLs from browser → Web Fetch, share images from gallery → OCR (v4.0.0)
+
+### v4.0.0 Phase 1 — UX Simplification
+- FEAT-40 Navigation pivot: 13-item drawer → 3 bottom tabs (INPUT/OUTPUT/ME)
+- FEAT-41 INPUT tab: text entry + source chips + language/verse toggle + Generate
+- FEAT-42 OUTPUT tab: auto-generates audio on navigate, progress + auto-play + streaming
+- FEAT-43 ME tab: hub cards for Stotra/History/Modi/Settings
+- FEAT-44 Developer mode: hidden Test Dashboard card, toggled from Settings
+- FEAT-45 Progressive disclosure: language/verse options collapsed behind expandable toggle
+
+### v4.0.0 Phase 2 — Intelligent Defaults
+- FEAT-46 Auto-detect language heuristic: Sanskrit/Hindi markers → auto-route, default Marathi
+- FEAT-47 Emotion auto-suggestion: OutputViewModel auto-detects emotion before TTS generation
+- FEAT-48 Smart verse speed: slider defaults to 0.85x in verse mode with hint label
+- FEAT-49 User preference learning: engine success counters in SharedPreferences,
+  auto-selects best engine after 3+ uses. Stats visible in Settings under dev mode.
+
+### v4.0.0 Phase 3 — Best-in-Class Voice
+- FEAT-50 Custom Stotra Voice Model: pipeline (preprocess → align → validate → Piper config),
+  3 recordings (36 min, 155 utterances), custom_voice_engine.py deployed to mobile+desktop,
+  highest-priority in bridge fallback chains. Adaptive silence detection.
+- FEAT-51 Prosody preview: analyze_prosody() in both bridges → ProsodySegment data model,
+  ProsodySegmentAdapter RecyclerView, prosody_preview_card in Output screen. Shows segment
+  text, verse/prose badge, metre name, pause duration, TTS rate before audio is generated.
+- FEAT-52 Per-sentence regeneration: regenerate_segment() in both bridges, tap-to-regen
+  in ProsodySegmentAdapter. Replaces individual stream chunks with re-generated audio.
+- FEAT-53 Dual-engine A/B comparison: compare_engines() in both bridge scripts.
+- FEAT-VQ Verse voice quality: _generate_edge_verse_prosody() in both bridges, edge-tts
+  neural voice with metre-aware prosody segmentation for verse/stotra content.
 
 ### Mobile UX
 - FEAT-37 Settings screen + Dark Mode + Draft Persistence (v3.0.0)

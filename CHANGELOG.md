@@ -11,25 +11,73 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 **Branch:** `feature/ux-redesign-v4`  
 **Baseline:** `v3.0.0-stable` tag
 
-### Planned — Phase 1: UX Simplification
-- Navigation: 13-item drawer → 3 bottom tabs (INPUT / OUTPUT / ME)
-- Consolidate OCR/PDF/Web/STT into INPUT tab as inline chip actions
-- OUTPUT tab: unified playback + emotion selector + speed/pitch controls
-- ME tab: history + favorites + stotra library + settings
-- Hide TestDashboard behind developer mode
-- Progressive disclosure: advanced options collapsed by default
+### Added — Phase 1: UX Simplification (FEAT-40 through FEAT-45, FEAT-61)
+- FEAT-40 Navigation pivot: 13-item drawer → 3 bottom tabs (INPUT/OUTPUT/ME)
+- FEAT-41 INPUT tab: text entry + source chips (Camera/PDF/Web/Mic/Book) + Generate
+- FEAT-42 OUTPUT tab: auto-generates on navigate, progress card, auto-play, streaming
+- FEAT-43 ME tab: hub cards for Stotra/History/Modi/Settings
+- FEAT-44 Developer mode: Test Dashboard hidden, toggled from Settings switch
+- FEAT-45 Progressive disclosure: language/verse options collapsed behind expandable toggle
+- FEAT-61 Share-to-app: URLs → WebFetch, images → OCR, text → Input
 
-### Planned — Phase 2: Intelligent Defaults
-- Auto-detect language (Marathi/Hindi/Sanskrit/English)
-- Sentiment-driven emotion auto-suggestion
-- Optimal playback speed recommendation (verse vs prose)
-- Smart engine fallback based on user preferences
+### Added — Phase 2: Intelligent Defaults (FEAT-46 through FEAT-48)
+- FEAT-46 Auto-detect language: Sanskrit markers (॥, ॐ, नमः) and Hindi markers analyzed;
+  default Marathi. "Auto-detect" is the first spinner option.
+- FEAT-47 Emotion auto-suggestion: OutputViewModel auto-detects emotion via emotion_bridge
+  before TTS generation; emotion card displays result.
+- FEAT-48 Smart verse speed: speed slider defaults to 0.85x in verse mode with hint label.
+- FEAT-49 User preference learning: engine success counters in SharedPreferences;
+  auto-selects most successful engine after 3+ generations when user is on Auto.
+  Engine usage stats visible in Settings under dev mode.
 
 ### Planned — Phase 3: Best-in-Class Voice
 - Kokoro TTS integration (open-source, offline, Indian voices)
-- Real-time waveform/prosody preview before generation
-- Per-sentence regeneration from preview
-- Dual-engine A/B comparison
+
+### Added — Phase 3: Prosody Preview + Per-Sentence Regen (FEAT-51, FEAT-52)
+- FEAT-51 Real-time prosody preview on Output screen:
+  - `analyze_prosody()` bridge function (mobile + desktop) calls ProsodyEngine.segment_text()
+    and returns segment list with text, pause_after_ms, emotion, emphasis, pitch_shift,
+    is_verse, metre_name, tts_rate
+  - `ProsodySegment` Kotlin data class, `ProsodySegmentAdapter` RecyclerView adapter
+  - `prosody_preview_card` in fragment_output.xml with segment count, tap-to-regen hint
+  - Each segment shows: text content, Verse/Prose badge, metre name, pause duration, TTS rate
+  - Runs concurrently with TTS generation (pure text analysis, no network needed)
+- FEAT-52 Per-sentence regeneration from prosody preview:
+  - `regenerate_segment()` bridge function (mobile + desktop) — lightweight single-segment
+    TTS via edge-tts → gTTS fallback chain (skips custom voice for speed)
+  - Tap any prosody segment to regenerate just that chunk with current speed setting
+  - Replaces corresponding stream chunk audio path in-place
+  - Progress indicator on regenerating segment, status update on completion
+
+### Added — Phase 3: Verse Voice Quality (FEAT-VQ)
+- `_generate_edge_verse_prosody()` in both mobile + desktop tts_bridge.py:
+  - Uses ProsodyEngine metre-aware segmentation (pauses at ।/॥, pitch contour, tts_rate)
+  - Edge-tts neural voice generates per-segment audio with SSML rate/pitch/volume per segment
+  - pydub stitches with calibrated verse pauses (800ms half, 1200ms full, 1600ms stanza)
+  - Previously verse text bypassed prosody and fell to robotic gTTS slow=True
+  - Chandrabindu nasalization (FEAT-15) applied per segment
+  - Segment cap: 40 (verse segments are shorter than prose)
+  - Transparent fallthrough: returns None → single-call edge-tts → gTTS verse
+
+### Added — Phase 3: Custom Stotra Voice (FEAT-50, FEAT-53)
+- FEAT-50 Custom Stotra Voice Model training pipeline:
+  - `preprocess_audio.py` — Audio normalization + adaptive silence-based segmentation
+    (auto-retries at -28/-25/-22/-20 dB thresholds when default -35 dB finds no gaps)
+  - `align_transcript.py` — Transcript-to-audio alignment via shloka numbers (॥N॥) or
+    double-danda parsing, proportional character-count mapping
+  - `validate_dataset.py` — Quality validation (SNR, duration ranges, silence ratio,
+    Piper-readiness check)
+  - `generate_piper_config.py` — Piper-compatible dataset: wav/ dir, metadata.csv,
+    config.json, training_config.json
+  - `train_piper.py` — Colab-ready Piper VITS fine-tuning (Hindi base model)
+  - `run_pipeline.py` — Master pipeline orchestrator (subprocess-based)
+  - `custom_voice_engine.py` deployed to mobile + desktop: Phase A (segment library
+    fingerprint matching) + Phase B (ONNX model inference via Sherpa-ONNX)
+  - Integrated as highest-priority engine in both mobile + desktop bridge fallback chains
+  - Processed 3 recordings: Chandrashekhar (44 segs), Vishnu Sahasranama (143 segs),
+    Ram Raksha (42 segs) — total 155 utterances, 36.1 min
+- FEAT-53 Dual-engine A/B comparison: `compare_engines()` function in both bridge scripts,
+  runs text through gTTS/Edge-TTS/Custom and returns all audio paths for comparison
 
 ---
 
