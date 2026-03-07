@@ -26,8 +26,12 @@ Track feature requests and shipped features here.
   Phase A segment library + Phase B Piper VITS fine-tuning. Custom voice engine
   integrated as highest-priority in both mobile + desktop bridge fallback chains.
   Adaptive silence detection (auto-retries with progressively sensitive thresholds).
-- FEAT-51 Real-time waveform/prosody preview before generation
-- FEAT-52 Per-sentence regeneration from preview
+- FEAT-51 ✅ Real-time prosody preview — analyze_prosody() bridge returns ProsodyEngine
+  segments (text, pause, pitch, rate, metre, emotion) displayed in RecyclerView card
+  on Output screen before/during generation. Runs concurrently with TTS (no network).
+- FEAT-52 ✅ Per-sentence regeneration — tap any prosody segment to regenerate just that
+  chunk via regenerate_segment() (edge-tts → gTTS fallback). Replaces the corresponding
+  stream chunk in-place; progress indicator on regenerating segment.
 - FEAT-53 ✅ Dual-engine A/B comparison — compare_engines() in both mobile + desktop
   bridges. Runs text through gTTS, Edge-TTS, and custom voice, returns all results
   for side-by-side quality comparison.
@@ -69,6 +73,11 @@ Track feature requests and shipped features here.
 - FEAT-50 Custom Stotra Voice Model: pipeline (preprocess → align → validate → Piper config),
   3 recordings (36 min, 155 utterances), custom_voice_engine.py deployed to mobile+desktop,
   highest-priority in bridge fallback chains. Adaptive silence detection.
+- FEAT-51 Prosody preview: analyze_prosody() in both bridges → ProsodySegment data model,
+  ProsodySegmentAdapter RecyclerView, prosody_preview_card in Output screen. Shows segment
+  text, verse/prose badge, metre name, pause duration, TTS rate before audio is generated.
+- FEAT-52 Per-sentence regeneration: regenerate_segment() in both bridges, tap-to-regen
+  in ProsodySegmentAdapter. Replaces individual stream chunks with re-generated audio.
 - FEAT-53 Dual-engine A/B comparison: compare_engines() in both bridge scripts.
 
 ### Mobile UX

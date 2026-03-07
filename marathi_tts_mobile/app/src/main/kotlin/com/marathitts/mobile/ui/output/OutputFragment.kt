@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.marathitts.mobile.R
 import com.marathitts.mobile.databinding.FragmentOutputBinding
 import com.marathitts.mobile.service.AudioPlayerService
@@ -20,6 +21,10 @@ class OutputFragment : Fragment() {
     private val viewModel: OutputViewModel by viewModels()
     private val audioPlayer = AudioPlayerService()
     private var inputText: String = ""
+    private var language: String = "mr"
+    private var isVerse: Boolean = false
+
+    private lateinit var prosodyAdapter: ProsodySegmentAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -32,9 +37,10 @@ class OutputFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         inputText = arguments?.getString("input_text").orEmpty()
-        val language = arguments?.getString("language") ?: "mr"
-        val isVerse = arguments?.getBoolean("is_verse", false) ?: false
+        language = arguments?.getString("language") ?: "mr"
+        isVerse = arguments?.getBoolean("is_verse", false) ?: false
 
+        setupProsodyPreview()
         setupPlaybackControls()
         setupOutputActions()
         applySmartSpeed(isVerse)
@@ -43,6 +49,24 @@ class OutputFragment : Fragment() {
         // Auto-trigger generation when text is provided
         if (inputText.isNotBlank()) {
             viewModel.generate(inputText, language, isVerse)
+        }
+    }
+
+    private fun setupProsodyPreview() {
+        prosodyAdapter = ProsodySegmentAdapter { segment ->
+            // FEAT-52: tap to regenerate this segment
+            val speed = binding.sliderSpeed.value
+            viewModel.regenerateSegment(
+                segmentIndex = segment.index,
+                text = segment.text,
+                speed = speed,
+                language = language,
+                isVerse = segment.isVerse
+            )
+        }
+        binding.rvProsodySegments.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = prosodyAdapter
         }
     }
 
@@ -79,6 +103,17 @@ class OutputFragment : Fragment() {
                 binding.txtEmotion.text = state.emotionLabel.replaceFirstChar { it.uppercase() }
             } else {
                 binding.emotionCard.visibility = View.GONE
+            }
+
+            // FEAT-51: Prosody preview card
+            if (state.prosodySegments.isNotEmpty()) {
+                binding.prosodyPreviewCard.visibility = View.VISIBLE
+                binding.txtSegmentCount.text =
+                    getString(R.string.prosody_segment_count, state.prosodySegments.size)
+                prosodyAdapter.submitList(state.prosodySegments)
+                prosodyAdapter.regeneratingIndex = state.regeneratingIndex
+            } else {
+                binding.prosodyPreviewCard.visibility = View.GONE
             }
 
             // Error — show as toast

@@ -27,7 +27,11 @@ data class OutputState(
     val error: String? = null,
     val status: String = "",
     val emotionLabel: String? = null,
-    val emotionScore: Float = 0f
+    val emotionScore: Float = 0f,
+    val prosodySegments: List<ProsodySegment> = emptyList(),
+    val isVerseDetected: Boolean = false,
+    val detectedMetre: String = "",
+    val regeneratingIndex: Int = -1
 )
 
 private const val STREAMING_THRESHOLD = 250
@@ -87,6 +91,10 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
     fun generate(text: String, langCode: String, isVerse: Boolean) {
         if (hasStartedGeneration) return
         hasStartedGeneration = true
+
+        // FEAT-51: launch prosody analysis concurrently (fast, no network)
+        val emotion = null // will be detected below; prosody starts with neutral
+        analyzeProsody(text, langCode, isVerse, emotion)
 
         if (langCode == "mr" && !isVerse && text.length > STREAMING_THRESHOLD) {
             generateStreaming(text, langCode)
@@ -266,5 +274,133 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
         super.onCleared()
         currentJob?.cancel()
         engineManager.shutdown()
+    }
+
+    // -----------------------------------------------------------------
+    // FEAT-51: Prosody analysis (runs before/during generation)
+    // -----------------------------------------------------------------
+
+    /**
+     * Analyze prosody segments for the given text.
+     * Called automatically at the start of generate(); results are fast
+     * (pure text analysis, no network) so they appear before audio is ready.
+     */
+    fun analyzeProsody(text: String, language: String, isVerse: Boolean, emotion: String?) {
+        viewModelScope.launch {
+            val segments = withContext(Dispatchers.IO) {
+                try {
+                    val result = PythonBridge.call(
+                        "tts_bridge", "analyze_prosody",
+                        kwargs = mapOf(
+                            "text" to text,
+                            "language" to language,
+                            "is_verse" to isVerse,
+                            "emotion" to emotion
+                        )
+                    )
+                    if (PythonBridge.isSuccess(result)) {
+                        parseProsodySegments(result)
+                    } else null
+                } catch (_: Exception) { null }
+            } ?: return@launch
+
+            _state.value = _state.value?.copy(
+                prosodySegments = segments.first,
+                isVerseDetected = segments.second,
+                detectedMetre = segments.third
+            )
+        }
+    }
+
+    private fun parseProsodySegments(json: JSONObject): Triple<List<ProsodySegment>, Boolean, String> {
+        val arr = json.optJSONArray("segments") ?: return Triple(emptyList(), false, "")
+        val segments = mutableListOf<ProsodySegment>()
+        for (i in 0 until arr.length()) {
+            val s = arr.getJSONObject(i)
+            segments.add(ProsodySegment(
+                index = s.optInt("index", i),
+                text = s.optString("text", ""),
+                pauseAfterMs = s.optInt("pause_after_ms", 0),
+                emotion = s.optString("emotion", "neutral"),
+                emphasis = s.optDouble("emphasis", 1.0).toFloat(),
+                pitchShift = s.optDouble("pitch_shift", 0.0).toFloat(),
+                isVerse = s.optBoolean("is_verse", false),
+                metreName = s.optString("metre_name", ""),
+                ttsRate = s.optDouble("tts_rate", 1.0).toFloat(),
+            ))
+        }
+        val isVerse = json.optBoolean("is_verse_detected", false)
+        val metre = json.optString("metre", "")
+        return Triple(segments, isVerse, metre)
+    }
+
+    // -----------------------------------------------------------------
+    // FEAT-52: Per-sentence regeneration
+    // -----------------------------------------------------------------
+
+    /**
+     * Regenerate a single segment at [segmentIndex] using the given params.
+     * Replaces the corresponding streamChunk audio path in-place.
+     */
+    fun regenerateSegment(
+        segmentIndex: Int,
+        text: String,
+        speed: Float = 1.0f,
+        pitch: Float = 1.0f,
+        volume: Float = 1.0f,
+        language: String = "mr",
+        isVerse: Boolean = false
+    ) {
+        _state.value = _state.value?.copy(regeneratingIndex = segmentIndex)
+
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    PythonBridge.call(
+                        "tts_bridge", "regenerate_segment",
+                        kwargs = mapOf(
+                            "text" to text,
+                            "speed" to speed.toDouble(),
+                            "pitch" to pitch.toDouble(),
+                            "volume" to volume.toDouble(),
+                            "language" to language,
+                            "is_verse" to isVerse
+                        )
+                    )
+                } catch (e: Exception) {
+                    JSONObject().put("success", false).put("error", e.message)
+                }
+            }
+
+            val current = _state.value ?: return@launch
+            if (PythonBridge.isSuccess(result)) {
+                val newPath = result.optString("audio_path")
+                if (newPath.isNotEmpty()) {
+                    // Update the stream chunk at this index
+                    val updatedChunks = current.streamChunks.toMutableList()
+                    if (segmentIndex in updatedChunks.indices) {
+                        updatedChunks[segmentIndex] = newPath
+                    }
+                    // Also update the prosody segment's audio path
+                    val updatedSegments = current.prosodySegments.toMutableList()
+                    if (segmentIndex in updatedSegments.indices) {
+                        updatedSegments[segmentIndex] = updatedSegments[segmentIndex].copy(
+                            audioPath = newPath
+                        )
+                    }
+                    _state.value = current.copy(
+                        streamChunks = updatedChunks,
+                        prosodySegments = updatedSegments,
+                        regeneratingIndex = -1,
+                        status = "Segment ${segmentIndex + 1} regenerated ✓"
+                    )
+                }
+            } else {
+                _state.value = current.copy(
+                    regeneratingIndex = -1,
+                    status = "Regen failed: ${result.optString("error", "Unknown")}"
+                )
+            }
+        }
     }
 }

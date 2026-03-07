@@ -152,6 +152,17 @@
     <string name="output_playing">Playing…</string>
     <string name="output_stopped">Stopped</string>
     <string name="output_playback_done">Playback complete</string>
+    <string name="prosody_preview_title">Prosody Preview</string>
+    <string name="prosody_segment_count">%d segments</string>
+    <string name="prosody_verse_badge">Verse</string>
+    <string name="prosody_prose_badge">Prose</string>
+    <string name="prosody_pause_label">Pause: %dms</string>
+    <string name="prosody_rate_label">Rate: %.2f×</string>
+    <string name="prosody_metre_label">Metre: %s</string>
+    <string name="prosody_tap_hint">Tap segment to regenerate</string>
+    <string name="prosody_regenerating">Regenerating segment…</string>
+    <string name="prosody_regen_done">Segment regenerated ✓</string>
+    <string name="prosody_analyzing">Analyzing prosody…</string>
 
     <!-- Me tab cards -->
     <string name="me_stotra_title">Stotra Library</string>

@@ -32,8 +32,22 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ### Planned — Phase 3: Best-in-Class Voice
 - Kokoro TTS integration (open-source, offline, Indian voices)
-- Real-time waveform/prosody preview before generation
-- Per-sentence regeneration from preview
+
+### Added — Phase 3: Prosody Preview + Per-Sentence Regen (FEAT-51, FEAT-52)
+- FEAT-51 Real-time prosody preview on Output screen:
+  - `analyze_prosody()` bridge function (mobile + desktop) calls ProsodyEngine.segment_text()
+    and returns segment list with text, pause_after_ms, emotion, emphasis, pitch_shift,
+    is_verse, metre_name, tts_rate
+  - `ProsodySegment` Kotlin data class, `ProsodySegmentAdapter` RecyclerView adapter
+  - `prosody_preview_card` in fragment_output.xml with segment count, tap-to-regen hint
+  - Each segment shows: text content, Verse/Prose badge, metre name, pause duration, TTS rate
+  - Runs concurrently with TTS generation (pure text analysis, no network needed)
+- FEAT-52 Per-sentence regeneration from prosody preview:
+  - `regenerate_segment()` bridge function (mobile + desktop) — lightweight single-segment
+    TTS via edge-tts → gTTS fallback chain (skips custom voice for speed)
+  - Tap any prosody segment to regenerate just that chunk with current speed setting
+  - Replaces corresponding stream chunk audio path in-place
+  - Progress indicator on regenerating segment, status update on completion
 
 ### Added — Phase 3: Custom Stotra Voice (FEAT-50, FEAT-53)
 - FEAT-50 Custom Stotra Voice Model training pipeline:

@@ -413,6 +413,55 @@ Total: 155 utterances, 36.1 min. Piper dataset at `data/piper_dataset/`.
 
 ---
 
+## Prosody Preview + Per-Sentence Regen (FEAT-51, FEAT-52)
+
+### Prosody Preview (FEAT-51)
+
+**Bridge function:** `analyze_prosody(text, language, is_verse, emotion)` in both
+mobile and desktop `tts_bridge.py`. Returns segment list:
+
+```json
+{
+  "success": true,
+  "segments": [
+    {"index": 0, "text": "...", "pause_after_ms": 600, "emotion": "neutral",
+     "emphasis": 1.0, "pitch_shift": 0.0, "is_verse": false, "metre_name": "",
+     "tts_rate": 1.0}
+  ],
+  "segment_count": N,
+  "is_verse_detected": false,
+  "metre": ""
+}
+```
+
+**Kotlin classes:**
+- `ProsodySegment` data class — mirrors bridge JSON fields + `audioPath`
+- `ProsodySegmentAdapter` — RecyclerView adapter with DiffUtil, shows text + badges
+- `OutputState.prosodySegments` — list of segments, updated by `analyzeProsody()`
+
+**UI flow:** `OutputViewModel.generate()` launches `analyzeProsody()` concurrently
+with TTS generation. The prosody preview card shows segments immediately (pure text
+analysis, no network). Each segment displays: text, Verse/Prose badge, metre name
+(when detected), pause duration, TTS rate.
+
+**Layout:** `prosody_preview_card` in `fragment_output.xml` between emotion_card
+and text_preview_card. Contains segment count header, tap hint, and RecyclerView.
+
+### Per-Sentence Regeneration (FEAT-52)
+
+**Bridge function:** `regenerate_segment(text, speed, pitch, volume, language, gender,
+is_verse, emotion)` — lightweight single-segment TTS. Skips custom voice for speed.
+Fallback: edge-tts → gTTS.
+
+**UI:** Tap any segment in the prosody preview → `OutputViewModel.regenerateSegment()`
+calls the bridge, replaces the corresponding `streamChunks[index]` and updates the
+segment's `audioPath`. Linear progress indicator shown on the regenerating segment.
+
+**State tracking:** `OutputState.regeneratingIndex` (-1 = none). Adapter highlights
+the regenerating item with a progress bar.
+
+---
+
 ## MANDATORY — Offline test before finishing any task
 
 **Every task that touches any `tts/` file MUST end by running the offline test
