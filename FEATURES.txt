@@ -35,6 +35,11 @@ Track feature requests and shipped features here.
 - FEAT-53 ✅ Dual-engine A/B comparison — compare_engines() in both mobile + desktop
   bridges. Runs text through gTTS, Edge-TTS, and custom voice, returns all results
   for side-by-side quality comparison.
+- FEAT-VQ ✅ Verse voice quality — new _generate_edge_verse_prosody() in both mobile +
+  desktop bridges. Uses ProsodyEngine metre-aware segmentation (pauses at ।/॥, pitch
+  contour, per-metre tts_rate) to generate per-segment edge-tts neural audio with
+  calibrated verse pauses. Previously verse text bypassed prosody pipeline and fell to
+  robotic gTTS slow=True. Now: edge-tts verse prosody → single edge-tts → gTTS fallback.
 
 ### Phase 4: Innovation Features (Medium)
 - FEAT-54 Emotion intensity slider (0-100% granularity)
@@ -79,6 +84,8 @@ Track feature requests and shipped features here.
 - FEAT-52 Per-sentence regeneration: regenerate_segment() in both bridges, tap-to-regen
   in ProsodySegmentAdapter. Replaces individual stream chunks with re-generated audio.
 - FEAT-53 Dual-engine A/B comparison: compare_engines() in both bridge scripts.
+- FEAT-VQ Verse voice quality: _generate_edge_verse_prosody() in both bridges, edge-tts
+  neural voice with metre-aware prosody segmentation for verse/stotra content.
 
 ### Mobile UX
 - FEAT-37 Settings screen + Dark Mode + Draft Persistence (v3.0.0)

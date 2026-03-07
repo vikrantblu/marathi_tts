@@ -49,6 +49,16 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
   - Replaces corresponding stream chunk audio path in-place
   - Progress indicator on regenerating segment, status update on completion
 
+### Added — Phase 3: Verse Voice Quality (FEAT-VQ)
+- `_generate_edge_verse_prosody()` in both mobile + desktop tts_bridge.py:
+  - Uses ProsodyEngine metre-aware segmentation (pauses at ।/॥, pitch contour, tts_rate)
+  - Edge-tts neural voice generates per-segment audio with SSML rate/pitch/volume per segment
+  - pydub stitches with calibrated verse pauses (800ms half, 1200ms full, 1600ms stanza)
+  - Previously verse text bypassed prosody and fell to robotic gTTS slow=True
+  - Chandrabindu nasalization (FEAT-15) applied per segment
+  - Segment cap: 40 (verse segments are shorter than prose)
+  - Transparent fallthrough: returns None → single-call edge-tts → gTTS verse
+
 ### Added — Phase 3: Custom Stotra Voice (FEAT-50, FEAT-53)
 - FEAT-50 Custom Stotra Voice Model training pipeline:
   - `preprocess_audio.py` — Audio normalization + adaptive silence-based segmentation

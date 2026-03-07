@@ -392,9 +392,13 @@ from text input (activated when `stotra_voice.onnx` is present).
 
 Custom voice is the **highest-priority engine** in both fallback chains:
 
-**Mobile:** Custom → Network check → edge-tts prosody → edge-tts single → gTTS prosody → gTTS+pydub → gTTS bare
+**Mobile (verse):** Custom → Network check → edge-tts verse prosody → edge-tts single → gTTS verse (slow) → gTTS bare
 
-**Desktop:** Custom → Stage 0 stotra library → Stage 1 TTSEngine → Network check → edge-tts → gTTS stages
+**Mobile (prose):** Custom → Network check → edge-tts prosody → edge-tts single → gTTS prosody → gTTS+pydub → gTTS bare
+
+**Desktop (verse):** Custom → Stage 0 stotra library → Stage 1 TTSEngine → Network check → edge-tts verse prosody → edge-tts single → gTTS verse → gTTS bare
+
+**Desktop (prose):** Custom → Stage 0 stotra library → Stage 1 TTSEngine → Network check → edge-tts prosody → edge-tts single → gTTS prosody → gTTS+pydub → gTTS bare
 
 ### A/B Comparison (FEAT-53)
 
@@ -811,7 +815,8 @@ Words in this dict bypass rule-based schwa processing (identity map = gTTS handl
 
 ## Chandrabindu Nasalization (FEAT-15)
 
-`_generate_edge_prosody()` in **both** mobile and desktop `tts_bridge.py`:
+`_generate_edge_prosody()` and `_generate_edge_verse_prosody()` in **both** mobile and
+desktop `tts_bridge.py`:
 - For each segment, checks if `'\u0901'` (chandrabindu ँ) appears in the processed text
 - When present: applies `-25 pp` volume reduction (≈ -3 dB nasal softening):
   ```python
@@ -819,6 +824,28 @@ Words in this dict bypass rule-based schwa processing (identity map = gTTS handl
   ```
 - Otherwise: uses the flat `vol_str`
 - The per-segment volume string `sv` is passed as a default arg to the `_run_seg()` closure
+
+---
+
+## Edge-TTS Verse Prosody (FEAT-VQ)
+
+**Function:** `_generate_edge_verse_prosody()` in both mobile and desktop `tts_bridge.py`
+
+**Problem solved:** Verse/stotra text previously bypassed the prosody-segmented edge-tts
+pipeline (which was prose-only), falling to single-call edge-tts or robotic gTTS slow=True.
+
+**How it works:**
+1. ProsodyEngine segments verse text at natural boundaries (। and ॥ markers)
+2. Metre detected: Anushtubh, Sragdhara, Stotra, etc. — sets per-segment tts_rate
+3. Pitch contour: wave/falling/rising pattern from MetreDefinition applied per segment
+4. Per-segment preprocessing: stotra-specific + G2P (language-aware: Sanskrit/Old Marathi/Marathi)
+5. Edge-tts neural voice generates each segment with per-segment SSML: rate, pitch, volume
+6. pydub stitches segments with calibrated verse pauses (800ms half, 1200ms full, 1600ms stanza)
+7. Chandrabindu nasalization (FEAT-15) applied per segment
+
+**Segment cap:** 40 (higher than prose's 15 since verse segments are shorter)
+
+**Fallback:** Returns None on failure → falls to single-call edge-tts → gTTS verse
 
 ---
 
