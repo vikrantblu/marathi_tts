@@ -55,6 +55,16 @@ EMOTION_KEYWORDS: Dict[str, List[str]] = {
         'आत्मीयता', 'लोभस', 'प्रेमपूर्वक', 'प्रणय',
     ],
     'neutral': [],
+    # ── Extra categories used by standalone bridges ──────────────────────────
+    'devotional': [
+        'भक्ती', 'प्रार्थना', 'विनंती', 'स्तुती', 'आराधना', 'पूजा',
+        'नमन', 'वंदन', 'जप', 'ध्यान', 'समर्पण', 'देव', 'परमेश्वर',
+        'ईश्वर', 'भगवान', 'श्रद्धा', 'विश्वास', 'आशीर्वाद', 'कृपा',
+    ],
+    'peaceful': [
+        'शांत', 'समाधान', 'स्थिर', 'निवांत', 'शांतता', 'विश्रांती',
+        'निर्मळ', 'मोकळे', 'प्रशांत', 'निःशब्द', 'सुकून', 'निर्भय',
+    ],
 }
 
 
@@ -99,6 +109,24 @@ EMOTION_VOICE_PARAMS: Dict[str, Dict[str, Any]] = {
         'speed': 0.95,
         'volume': 0.5,
         'emotion_tag': 'disgust',
+    },
+    'love': {
+        'pitch': 1.05,
+        'speed': 0.95,
+        'volume': 1.0,
+        'emotion_tag': 'love',
+    },
+    'devotional': {
+        'pitch': 0.95,
+        'speed': 0.90,
+        'volume': 0.5,
+        'emotion_tag': 'devotional',
+    },
+    'peaceful': {
+        'pitch': 0.95,
+        'speed': 0.85,
+        'volume': -0.5,
+        'emotion_tag': 'peaceful',
     },
     'neutral': {
         'pitch': 1.0,
@@ -184,6 +212,21 @@ EMOTION_PATTERNS: Dict[str, Dict[str, Any]] = {
         ],
         'modulation': {'pitch': 1, 'speed': 0.9, 'volume': 1},
     },
+    'devotional': {
+        'markers': [
+            'भक्ती', 'प्रार्थना', 'स्तुती', 'आराधना', 'पूजा', 'नमन',
+            'वंदन', 'जप', 'ध्यान', 'समर्पण', 'देव', 'परमेश्वर', 'ईश्वर',
+            'भगवान', 'श्रद्धा', 'विश्वास', 'आशीर्वाद', 'कृपा',
+        ],
+        'modulation': {'pitch': -1, 'speed': 0.9, 'volume': 0},
+    },
+    'peaceful': {
+        'markers': [
+            'शांत', 'समाधान', 'स्थिर', 'निवांत', 'शांतता', 'विश्रांती',
+            'निर्मळ', 'मोकळे', 'प्रशांत', 'निःशब्द', 'सुकून', 'निर्भय',
+        ],
+        'modulation': {'pitch': -1, 'speed': 0.85, 'volume': -1},
+    },
 }
 
 
@@ -200,6 +243,8 @@ EMOTION_TRANSLATIONS: Dict[str, str] = {
     'neutral': 'तटस्थ',
     'disgust': 'तिरस्कार',
     'love': 'प्रेमळ',
+    'devotional': 'भक्तिमय',
+    'peaceful': 'शांत',
 }
 
 EMOTION_COLORS: Dict[str, str] = {
@@ -211,6 +256,8 @@ EMOTION_COLORS: Dict[str, str] = {
     'neutral': '#808080',
     'disgust': '#006400',
     'love': '#FF1493',
+    'devotional': '#FF8C00',
+    'peaceful': '#20B2AA',
 }
 
 
@@ -226,6 +273,10 @@ EMOTION_SSML_TAG_MAP: Dict[str, str] = {
     'fear': 'afraid',
     'surprise': 'excited',
     'neutral': 'neutral',
+    'love': 'soft',
+    'devotional': 'soft',
+    'peaceful': 'soft',
+    'disgust': 'displeased',
 }
 
 
