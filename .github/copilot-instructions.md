@@ -800,6 +800,24 @@ Triggered when `prosody.metre.yati_syllables` is non-empty.
 
 ---
 
+## Per-Verse Metre Detection (FEAT-80)
+
+**`detect_line(line: str) -> Tuple[MetreDefinition, float]`** in `MetreEngine`:
+Detects metre for a single pāda (verse line) using syllable count + gaṇa pattern bonus.
+Returns the best-matching MetreDefinition and confidence score.
+
+**`detect_per_line(lines: List[str]) -> Optional[Dict[int, MetreProsody]]`** in `MetreEngine`:
+Runs `detect_line()` on each line. Returns a `Dict[line_index → MetreProsody]` **only** when
+2+ distinct metre names are found (each with conf ≥ 0.60). Returns `None` for uniform-metre
+stanzas (the common case), so the existing single-metre path is preserved.
+
+**`_apply_metre_prosody()` enhanced** in `MarathiProsodyEngine`:
+After paragraph-level `detect()`, calls `detect_per_line(prosody.all_lines)`. If mixed metres
+found, applies per-segment `tts_rate`, `metre_name`, and pause profile from the corresponding
+line's MetreProsody. Falls back to uniform-metre application otherwise.
+
+---
+
 ## Schwa Deletion Lexicon (FEAT-10)
 
 `SCHWA_EXCEPTIONS` in `g2p_constants.py` expanded from 8 to 220+ entries grouped as:

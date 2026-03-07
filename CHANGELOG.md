@@ -6,6 +6,20 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
+## [Unreleased]
+
+### Added
+- FEAT-74: Voice gender selection chips (Female/Male) in Output screen — wires
+  existing TtsEngineManager gender support to UI via ChipGroup
+- FEAT-80: Per-verse metre detection — MetreEngine.detect_line() + detect_per_line();
+  ProsodyEngine applies per-segment tts_rate when mixed metres detected in a stanza
+
+### Changed
+- SDLC gaps filled: root requirements.txt, AGENTS.md, Dockerfile + docker-compose.yml,
+  .claude/skills/claudeskills/SKILL.md populated
+
+---
+
 ## [4.0.0] — 2026-03-07
 
 **Tag:** `v4.0.0`  

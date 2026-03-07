@@ -165,8 +165,8 @@ Track feature requests and shipped features here.
 ### Code Quality
 - FEAT-79 ✅ Dead code cleanup: unreachable code removed from _segment_verse_block()
   in all 3 platforms.
-- FEAT-80 Per-verse metre detection: detect metre changes within mixed-metre stotras
-  (e.g., Meghaduta opens Mandakranta then shifts). Currently only per-paragraph.
+- FEAT-80 ✅ Per-verse metre detection: detect_line() + detect_per_line() in MetreEngine;
+  ProsodyEngine applies per-segment rates when mixed metres detected (2+ distinct, conf>=0.60).
 
 ## Shipped — v1.0.0 (2026-02)
 
