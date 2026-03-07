@@ -1,0 +1,22 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block object-tools %}
+    <div class="object-tools">
+        {% if has_add_permission %}
+            {{ block.super }}
+            <ul class="object-tools">
+                <li>
+                    <a href="{% url 'admin:import_corrections_csv' %}" class="addlink">
+                        {% translate "Import CSV" %}
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'admin:batch_add_corrections' %}" class="addlink">
+                        {% translate "Batch Add" %}
+                    </a>
+                </li>
+            </ul>
+        {% endif %}
+    </div>
+{% endblock %}

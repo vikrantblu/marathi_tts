@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% translate "Import Corrections from CSV" %}</h1>
+    <div class="module">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <label>CSV File:</label>
+                <input type="file" name="csv_file" accept=".csv" required>
+            </div>
+            <div class="help">
+                Format: incorrect_text,correct_text,category,notes
+            </div>
+            <div class="submit-row">
+                <input type="submit" value="{% translate 'Import CSV' %}" class="default">
+                <a href="../" class="button">{% translate 'Cancel' %}</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

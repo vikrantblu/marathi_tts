@@ -1,0 +1,1 @@
+pdfimages -png temp.pdf output_prefix

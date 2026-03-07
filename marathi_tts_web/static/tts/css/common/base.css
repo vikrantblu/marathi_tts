@@ -1,0 +1,204 @@
+/* Base styles */
+:root {
+    /* Keep existing root variables and add: */
+    --primary-text: #4e4e4e;
+    --link-hover: #d80010;
+    --header-bg: #2b1200;
+}
+
+/* Selection styles */
+::selection {
+    background: rgba(255, 64, 129, 0.22);
+    color: rgb(0, 0, 0);
+}
+
+::-moz-selection {
+    background: rgba(255, 64, 129, 0.22);
+    color: #000;
+}
+
+/* Typography */
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #FFDAB9;
+    font-family: 'Mukta', serif;
+    color: var(--primary-text);
+    line-height: 2.4rem;
+    font-size: 1.8rem;
+    height: auto !important;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Mukta', serif;
+    color: var(--text);
+    margin-bottom: 1rem;
+}
+
+h1 { font-size: 3.3rem; }
+h2 { font-size: 3.0rem; }
+h3 { font-size: 2.7rem; }
+h4 { font-size: 2.4rem; }
+
+/* Links */
+a:hover, a:focus {
+    color: var(--link-hover);
+    text-decoration: underline !important;
+    outline: none;
+    transition: all 0.3s ease-out;
+}
+
+/* Keep the rest of your existing layout styles */
+
+/* Update media queries to handle both layouts */
+@media (max-width: 768px) {
+    /* Combine both sets of mobile styles */
+    a {
+        text-decoration: underline;
+        color: #990000;
+    }
+    
+    .tab {
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    h1 { font-size: 24px; }
+    h2 { font-size: 20px; }
+}
+
+.top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background-color: #343a40;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+}
+
+.btn-logout {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.btn-logout:hover {
+    color: #ccc;
+}
+
+.main-content {
+    margin-top: 60px; /* Increase margin to prevent overlap */
+    padding: 20px;    /* Add padding for better spacing */
+}
+    /* Responsive layout */
+.container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Tab styling */
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.tab {
+    flex: 1;
+    min-width: 100px;
+    padding: 8px;
+    font-size: 14px;
+}
+
+/* Details columns */
+.details-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+/* Charts grid */
+.charts-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    padding: 10px;
+}
+
+.chart-container {
+    width: 100%;
+    min-height: 300px;
+    margin-bottom: 15px;
+}
+
+/* Table responsiveness */
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    min-width: 300px;
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+    .tab {
+        padding: 6px;
+        font-size: 12px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .details-column ul {
+        padding-left: 0;
+    }
+
+    .chart-container {
+        min-height: 250px;
+    }
+
+    .main-content {
+        margin-top: 50px;
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 10px;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .tab {
+        min-width: auto;
+        flex: 1;
+    }
+
+    .details-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .charts-wrapper {
+        grid-template-columns: 1fr;
+    }
+}

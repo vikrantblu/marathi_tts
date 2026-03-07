@@ -1,0 +1,216 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - SuryaSiddhanta</title>
+    <link rel="stylesheet" href="{% static 'ds_app/css/common/bootstrap.min.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #2196F3, #4A148C);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
+            margin: 0;
+            padding: 20px;
+            flex-wrap: wrap;
+            align-content: stretch;
+            flex-direction: column-reverse;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 600px;  /* Increased from 500px */
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container.login-container& {
+            margin-top: -50px;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) }
+            50% { transform: translateY(-20px) }
+            100% { transform: translateY(0px) }
+        }
+
+        .card {
+            width: 100%;
+            min-width: 320px;  /* Added minimum width */
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;  /* Increased padding */
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            background: none;
+            border: none;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .card-body {
+            padding: 30px;    /* Increased padding */
+        }
+        .card-header h2 {
+            color: #646464;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 1.5rem;  /* Larger title */
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form p {
+            margin-bottom: 1.5rem;
+        }
+        .form-control {
+            font-family: 'Poppins', sans-serif;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px;
+            height: 25px;     /* Taller input fields */
+            font-size: 1.1rem;
+            margin-bottom: 15px;  /* Reduced bottom margin */
+            width: 100%;
+            max-width: 100%;  /* Ensure inputs don't overflow */
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            transition: all 0.3s ease;
+            width: 100%;
+            height: 50px;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(45deg, #764ba2, #667eea);
+        }
+
+        label {
+            font-weight: 500;
+            color: #424242;
+        }
+
+        .social-login {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .social-login a {
+            margin: 0 10px;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .social-login a:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+        .login-container {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        .card {
+            padding: 20px;
+        }
+        }
+
+        .form-group {
+            margin-bottom: 20px;  /* Reduced spacing between form groups */
+            width: 100%;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;  /* Consistent spacing between elements */
+        }
+
+        .btn-login {
+            margin-top: 20px;  /* Space between inputs and button */
+            height: 45px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container login-container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Welcome to VikAstro</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <button type="submit" class="btn btn-primary">Sign In</button>
+                        </form>
+                    </div>
+                    <script>
+                        // Disable right-click
+                        document.addEventListener('contextmenu', function(e) {
+                            e.preventDefault();
+                        });
+                    
+                        // Disable text selection
+                        document.addEventListener('selectstart', function(e) {
+                            e.preventDefault();
+                        });
+                    
+                        // Prevent screenshot by hiding content when Print Screen key is pressed
+                        document.addEventListener('keydown', function(e) {
+                            if (e.key === 'PrintScreen') {
+                                document.body.style.display = 'none';
+                                alert('Screenshots are not allowed on this website.');
+                                setTimeout(function() {
+                                    document.body.style.display = 'block';
+                                }, 100);
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

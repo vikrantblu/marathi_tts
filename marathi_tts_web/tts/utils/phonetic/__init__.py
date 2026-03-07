@@ -1,0 +1,1 @@
+"""Phonetic processing package — G2P engine, phonetic analyzer, pronunciation resolver."""

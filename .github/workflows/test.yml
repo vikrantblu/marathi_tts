@@ -26,6 +26,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+          cache-dependency-path: .github/ci-requirements.txt
 
       # Core engine tests use only stdlib + internal tts packages —
       # install only the lightweight deps that the engine modules actually need.

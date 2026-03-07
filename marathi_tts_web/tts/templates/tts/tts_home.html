@@ -1,0 +1,575 @@
+{% extends 'common/base.html' %}
+{% load static %}
+
+{% block title %}Marathi TTS | मराठी टेक्स्ट-टू-स्पीच{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<link rel="stylesheet" href="{% static 'tts/css/marathi_tts/marathi_tts.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"/>
+{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+<meta name="base-url" content="{% url 'tts:generate_audio' %}">
+<script type="module" src="{% static 'tts/js/core/tts-engine.js' %}"></script>
+<script type="module" src="{% static 'tts/js/core/tts.js' %}"></script>
+<script type="module" src="{% static 'tts/js/utils/emotions-processor.js' %}"></script>
+
+
+{% endblock %}
+
+{% block content %}
+<form id="ttsForm" onsubmit="return false;">
+    {% csrf_token %}
+    <div class="main-container">
+        <div class="tts-container">
+            <!-- Existing form elements -->
+            <div id="tts-status" class="tts-status hidden"></div>
+            <div class="header-section">
+                <h1>Marathi TTS</h1>
+                <p>आता तुम्ही तुमचा मराठी मजकूर मराठी ध्वनी रुपांतराच्या स्वरूपात रूपांतरीत करू शकता</p>
+            </div>
+
+            <div class="input-card">
+                <div class="input-tabs">
+                    <button id="textInputBtn" class="tab-button active">मराठी मजकूर</button>
+                    <button id="urlInputBtn" class="tab-button">मराठी वेबसाइट लिंक</button>
+                    <button id="imageInputBtn" class="tab-button">मराठी मजकुराचे छायाचित्र</button>
+                    <button id="pdfInputBtn" class="tab-button">मराठी पीडीएफ</button>
+                    <button id="sttInputBtn" class="tab-button">🎙 भाषण-ते-मजकूर</button>
+                    <button id="modiInputBtn" class="tab-button">𑘦 लिपी रूपांतरण</button>
+                    <button id="stotraInputBtn" class="tab-button">📿 स्तोत्र संग्रह</button>
+                </div>
+
+                <div id="textInputSection" class="section active">
+                    <div class="textarea-container">
+                        <textarea 
+                            id="marathiText" 
+                            placeholder="इथे मराठी मजकूर टाका..."
+                            class="form-control"
+                            spellcheck="false"
+                            autocomplete="off"
+                            aria-label="Marathi text input"
+                            data-gramm="false"
+                            tabindex="0"
+                        ></textarea>
+                        <!-- Add word counter display -->
+                        <div class="word-counter">
+                            <span id="wordCount">0</span>
+                        </div>
+                        <!-- Update text correction button with spell-check icon -->
+                        <button id="aiCorrectBtn" class="action-button correction-btn" type="button" title="चुकीचे शब्द आणि वाक्ये सुधारा">
+                            <i class="fas fa-spell-check"></i>
+                            <span class="button-text">शब्द सुधारा</span>
+                        </button>
+                        <!-- Add new formatting button -->
+                        <button id="aiFormatBtn" class="action-button format-btn" type="button" title="मजकूर स्वच्छ आणि सुव्यवस्थित करा">
+                            <i class="fas fa-align-left"></i>
+                            <span class="button-text">मजकूर स्वरूपित करा</span>
+                        </button>
+                    </div>
+                    <!-- Controls for TTS -->
+                    <div class="controls-grid" id="ttsControls">
+                        <div class="slider-controls-container">
+                            <!-- Language selector -->
+                            <div class="control-group">
+                                <label class="control-label" for="languageSelect">भाषा (Language)</label>
+                                <select id="languageSelect" class="form-select form-select-sm">
+                                    <option value="mr" selected>मराठी (Marathi)</option>
+                                    <option value="hi">हिंदी (Hindi)</option>
+                                    <option value="sa">संस्कृत (Sanskrit)</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+
+                            <!-- TTS Engine selector -->
+                            <div class="control-group">
+                                <label class="control-label" for="ttsEngineSelect">TTS इंजिन (Engine)</label>
+                                <select id="ttsEngineSelect" class="form-select form-select-sm">
+                                    <option value="auto" selected>Auto (सर्वोत्तम निवडा)</option>
+                                    <option value="google">Google TTS (ऑनलाइन)</option>
+                                    <option value="local">System TTS (ऑफलाइन)</option>
+                                </select>
+                            </div>
+
+                            <!-- Voice Gender selector -->
+                            <div class="control-group">
+                                <label class="control-label" for="genderSelect">आवाज (Voice)</label>
+                                <select id="genderSelect" class="form-select form-select-sm">
+                                    <option value="female" selected>स्त्री (Female)</option>
+                                    <option value="male">पुरुष (Male)</option>
+                                </select>
+                            </div>
+
+                            <!-- Speed Control -->
+                            <div class="control-group">
+                                <label class="control-label" for="speedRange">गती (Speed)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="speedRange" class="slider" 
+                                           min="0.5" max="1.5" step="0.1" value="1.0">
+                                    <span id="speedValue" class="slider-value">1.0x</span>
+                                </div>
+                            </div>
+
+                            <!-- Pitch Control -->
+                            <div class="control-group">
+                                <label class="control-label" for="pitchRange">उतार-चढाव (Pitch)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="pitchRange" class="slider" 
+                                           min="-12" max="12" step="1" value="0">
+                                    <span id="pitchValue" class="slider-value">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Volume Control -->
+                            <div class="control-group">
+                                <label class="control-label" for="volumeRange">पातळी (Volume)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="volumeRange" class="slider" 
+                                           min="-20" max="20" step="1" value="0">
+                                    <span id="volumeValue" class="slider-value">0 dB</span>
+                                </div>
+                            </div>
+
+                            <!-- Emotion Control -->
+                            <div class="control-group">
+                                <label class="control-label" for="emotionIntensityRange">भावनिक तीव्रता (Intensity)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="emotionIntensityRange" class="slider" 
+                                           min="0" max="1" step="0.1" value="0.8">
+                                    <span id="emotionIntensityValue" class="slider-value">0.8</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Emotion Display -->
+                        <div class="emotion-display-container">
+                            <div id="emotion-display" class="emotion-display"></div>
+                        </div>
+                    </div>
+                    <!-- Generate button -->
+                    <div class="buttons-container text-center">
+                        <button id="generateBtn" class="action-button generate-btn" type="button">
+                            <i class="fas fa-magic"></i> 
+                            <span class="button-text">भाषिक वृत्तांत तयार करा</span>
+                        </button>
+                        <button id="listenAgainBtn" class="action-button listen-btn hidden" type="button">
+                            <i class="fas fa-headphones"></i> 
+                            <span class="button-text">मजकूर ऐका</span>
+                        </button>
+                    </div>
+                    <!-- Advanced Mode Checkbox -->
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="advancedModeCheckbox">
+                        <label class="form-check-label" for="advancedModeCheckbox">
+                            प्रगत वैशिष्ट्ये वापरा (भावना विश्लेषण, उच्चार सुधारणा)
+                        </label>
+                    </div>
+                    <!-- Verse Mode Checkbox -->
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="verseModeCheckbox">
+                        <label class="form-check-label" for="verseModeCheckbox">
+                            श्लोक / स्तोत्र मोड (॥) — Verse / Shloka mode
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ── Stotra Library Tab ────────────────────────── -->
+                <div id="stotraInputSection" class="section hidden">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">स्तोत्र शोधा</label>
+                        <input type="text" id="stotraSearch" class="form-control" placeholder="स्तोत्राचे नाव शोधा…">
+                    </div>
+                    <div class="mb-2 d-flex gap-1 flex-wrap" id="stotraDeityChips">
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip active" data-deity="all">सर्व</button>
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip" data-deity="गणेश">गणेश</button>
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip" data-deity="विष्णु">विष्णु</button>
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip" data-deity="शिव">शिव</button>
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip" data-deity="देवी">देवी</button>
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip" data-deity="हनुमान">हनुमान</button>
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip" data-deity="राम">राम</button>
+                        <button class="btn btn-sm btn-outline-secondary stotra-chip" data-deity="कृष्ण">कृष्ण</button>
+                    </div>
+                    <div id="stotraList" class="stotra-list-container" style="max-height:400px;overflow-y:auto">
+                        <!-- Stotra items loaded dynamically -->
+                        <div class="text-center text-muted py-3">स्तोत्रे लोड होत आहेत…</div>
+                    </div>
+                    <div id="stotraDetailSection" class="mt-3 hidden">
+                        <h5 id="stotraDetailTitle" class="fw-bold"></h5>
+                        <p id="stotraDetailDesc" class="text-muted small"></p>
+                        <textarea id="stotraTextArea" class="form-control" rows="10" readonly></textarea>
+                        <div class="d-flex gap-2 mt-2">
+                            <button id="stotraSendToTtsBtn" class="action-button generate-btn" type="button">
+                                <i class="fas fa-volume-up"></i>
+                                <span class="button-text">TTS ला पाठवा</span>
+                            </button>
+                            <button id="stotraBackBtn" class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-arrow-left"></i> मागे
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="urlInputSection" class="section hidden">
+                    <input type="url" id="websiteUrl" class="url-input" placeholder="वेबसाइट URL टाका">
+                    
+                    <div class="text-center">
+                        <button id="fetchTextBtn" class="action-button fetch-btn" type="button">
+                            <i class="fas fa-file-import"></i>
+                            <span class="button-text">मजकूर मिळवा</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="imageInputSection" class="section hidden">
+                    <div class="image-upload-container">
+                        <input type="file" 
+                            id="imageUpload" 
+                            class="form-control" 
+                            accept="image/*"
+                            hidden>
+                        <label for="imageUpload" class="upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>मराठी मजकूर असलेले छायाचित्र निवडा</span>
+                        </label>
+                        <div id="imagePreview" class="image-preview hidden">
+                            <img id="uploadedImage" src="#" alt="Uploaded image">
+                        </div>
+                        <small class="form-text text-muted">
+                            फक्त JPG, PNG किंवा GIF छायाचित्रे स्वीकारली जातील
+                        </small>
+                    </div>
+                    <div class="text-center">
+                        <button id="extractTextBtn" class="action-button extract-btn" type="button">
+                            <i class="fas fa-file-import"></i>
+                            <span class="button-text">छायाचित्रातून मजकूर काढा</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="pdfInputSection" class="section hidden">
+                    <div class="pdf-upload-container">
+                        <input type="file" 
+                            id="pdfUpload" 
+                            class="form-control" 
+                            accept="application/pdf"
+                            hidden>
+                        <label for="pdfUpload" class="upload-label">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>मराठी मजकूर असलेले पीडीएफ निवडा</span>
+                        </label>
+                        <div id="pdfPreview" class="pdf-preview hidden">
+                            <div id="pdfThumbnail" class="pdf-thumbnail"></div>
+                            <p id="pdfFileName" class="pdf-filename"></p>
+                        </div>
+                        <small class="form-text text-muted">
+                            फक्त PDF फाइल्स स्वीकारल्या जातील
+                        </small>
+                    </div>
+                    <div class="text-center">
+                        <button id="extractPdfTextBtn" class="action-button extract-btn" type="button">
+                            <i class="fas fa-file-import"></i>
+                            <span class="button-text">पीडीएफमधून मजकूर काढा</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── STT: Speech-to-Text ────────────────────────────── -->
+                <div id="sttInputSection" class="section hidden">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">ऑडिओ / रेकॉर्डिंग</label>
+                        <input type="file" id="sttFileUpload" class="form-control" accept="audio/*,video/*">
+                        <small class="form-text text-muted">MP3, WAV, M4A, OGG फाइल निवडा किंवा थेट रेकॉर्ड करा</small>
+                    </div>
+                    <div class="d-flex gap-2 mb-3 flex-wrap">
+                        <button id="sttTranscribeBtn" class="action-button fetch-btn" type="button" disabled>
+                            <i class="fas fa-file-audio"></i>
+                            <span class="button-text">फाइल ट्रान्सक्राइब करा</span>
+                        </button>
+                        <button id="sttRecordBtn" class="action-button" type="button"
+                                style="background:var(--primary-color,#e65c00);color:#fff;border:none;padding:.5rem 1.2rem;border-radius:20px;cursor:pointer">
+                            <i class="fas fa-microphone"></i>
+                            <span id="sttRecordLabel">थेट रेकॉर्ड करा</span>
+                        </button>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">भाषा</label>
+                        <select id="sttLanguageSelect" class="form-select" style="max-width:200px">
+                            <option value="mr-IN">मराठी (mr)</option>
+                            <option value="hi-IN">हिंदी (hi)</option>
+                            <option value="en-US">English (en)</option>
+                        </select>
+                    </div>
+                    <label class="form-label fw-semibold mt-2">ट्रान्सक्रिप्ट</label>
+                    <textarea id="sttTranscriptArea" class="form-control" rows="5"
+                              placeholder="ट्रान्सक्रिप्ट येथे दिसेल…"></textarea>
+                    <div class="d-flex gap-2 mt-2 align-items-center">
+                        <button id="sttSendToTtsBtn" class="action-button generate-btn" type="button" disabled>
+                            <i class="fas fa-volume-up"></i>
+                            <span class="button-text">TTS ला पाठवा</span>
+                        </button>
+                        <small id="sttStatusText" class="text-muted"></small>
+                    </div>
+                </div>
+
+                <!-- ── Script Converter (Modi / IAST / Brahmi) ────────── -->
+                <div id="modiInputSection" class="section hidden">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">रूपांतरण प्रकार</label>
+                        <select id="modiModeSelect" class="form-select" style="max-width:320px"
+                                onchange="document.getElementById('modiModeHint').textContent=
+                                    ['मोडी लिपीतील मजकूर देवनागरीत रूपांतरित करा',
+                                     'देवनागरी मजकूर IAST Roman लिपीत रूपांतरित करा',
+                                     'IAST Roman मजकूर देवनागरीत रूपांतरित करा',
+                                     'ब्राह्मी लिपीतील मजकूर देवनागरीत रूपांतरित करा'
+                                    ][this.selectedIndex]">
+                            <option value="modi_to_devanagari">मोडी → देवनागरी</option>
+                            <option value="devanagari_to_iast">देवनागरी → IAST (Roman)</option>
+                            <option value="iast_to_devanagari">IAST → देवनागरी</option>
+                            <option value="brahmi_to_devanagari">ब्राह्मी → देवनागरी</option>
+                        </select>
+                        <small id="modiModeHint" class="form-text text-muted mt-1">मोडी लिपीतील मजकूर देवनागरीत रूपांतरित करा</small>
+                    </div>
+                    <label class="form-label fw-semibold">इनपुट मजकूर</label>
+                    <textarea id="modiInputArea" class="form-control" rows="4"
+                              placeholder="येथे रूपांतरित करायचा मजकूर टाका…"></textarea>
+                    <div class="text-center mt-2">
+                        <button id="modiConvertBtn" class="action-button extract-btn" type="button">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span class="button-text">रूपांतरित करा</span>
+                        </button>
+                    </div>
+                    <label class="form-label fw-semibold mt-3">रूपांतरित मजकूर</label>
+                    <textarea id="modiOutputArea" class="form-control" rows="4"
+                              placeholder="रूपांतरित मजकूर येथे दिसेल…" readonly></textarea>
+                    <div class="d-flex gap-2 mt-2 align-items-center">
+                        <button id="modiSendToTtsBtn" class="action-button generate-btn" type="button" disabled>
+                            <i class="fas fa-volume-up"></i>
+                            <span class="button-text">TTS ला पाठवा</span>
+                        </button>
+                        <small id="modiStatusText" class="text-muted"></small>
+                    </div>
+                </div>
+
+            </div>
+            <div id="audioPlayerModal" style="display: none;">
+                <div class="audio-modal-content">
+                    <div class="text-sync-container">
+                        <div class="sync-text" id="syncText"></div>
+                    </div>
+                    <div class="audio-controls">
+                        <audio id="audioPlayer" 
+                               controls 
+                               preload="none" 
+                               autoplay="false" 
+                               onloadstart="this.pause()"
+                               oncanplay="this.pause()"
+                               crossorigin="anonymous">
+                            <source id="audioSource" type="audio/wav">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <button id="downloadBtn" class="action-button download-btn">
+                            <i class="fas fa-download"></i> 
+                            <span class="button-text">आवाज डाउनलोड करा</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="language-support-info text-center">
+        <small class="text-muted"></small>
+            * मराठी, संस्कृत आणि मोडी लिपीचे रूपांतर (Marathi, Sanskrit and Modi script support)
+        </small>
+    </div>
+
+    <!-- Update the loading section with better visibility -->
+    <div id="loadingSection" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner-container">
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="loading-status">
+                <h3 id="loadingMainText">प्रक्रिया सुरू आहे...</h3>
+                <p id="loadingSubText" class="text-muted"></p>
+            </div>
+            <div class="progress mt-3" style="width: 200px;">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Correction Modal -->
+    <div id="textCorrectionModal" class="modal fade" tabindex="-1" aria-labelledby="textCorrectionModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="textCorrectionModalLabel">मजकूर सुधारणा</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-corrections-container">
+              <div class="diff-view" id="diffView">
+                <!-- Diff content will be inserted here -->
+              </div>
+              <!-- Add a refresh button -->
+              <button id="refreshCorrectionsBtn" class="btn btn-outline-primary mt-3">
+                <i class="fas fa-sync-alt"></i>
+                पुन्हा तपासा
+              </button>
+              <!-- Add near your correction controls -->
+              <button id="suggestCorrectionBtn" class="btn btn-outline-secondary mt-2" type="button">
+                <i class="fas fa-lightbulb"></i> सुधारणा सुचवा
+              </button>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">रद्द करा</button>
+            <button type="button" class="btn btn-primary" id="acceptCorrectionsBtn">सुधारणा स्वीकारा</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggest Correction Modal -->
+    <div id="suggestCorrectionModal" class="modal fade" tabindex="-1" aria-labelledby="suggestCorrectionModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="suggestCorrectionForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="suggestCorrectionModalLabel">
+              <i class="fas fa-lightbulb text-warning"></i> नवीन सुधारणा सुचवा
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Smart selection section -->
+            <div class="selected-text-info mb-4 d-none">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>तुम्ही निवडलेला मजकूर:</span>
+                <strong id="selectedTextDisplay"></strong>
+              </div>
+            </div>
+
+            <div class="correction-input-container">
+              <!-- Incorrect text input with suggestions -->
+              <div class="mb-3">
+                <label for="incorrectInput" class="form-label">
+                  <i class="fas fa-times-circle text-danger"></i> चुकीचा शब्द/वाक्य
+                </label>
+                <div class="input-group">
+                  <input type="text" 
+                         class="form-control" 
+                         id="incorrectInput" 
+                         name="incorrect_text" 
+                         required
+                         placeholder="उदा. विक्रत">
+                  <button class="btn btn-outline-secondary" 
+                          type="button"
+                          id="pasteSelectedBtn"
+                          title="निवडलेला मजकूर वापरा">
+                    <i class="fas fa-paste"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Correct text input with visual indicator -->
+              <div class="mb-3">
+                <label for="correctInput" class="form-label">
+                  <i class="fas fa-check-circle text-success"></i> योग्य शब्द/वाक्य
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="correctInput" 
+                       name="correct_text" 
+                       required
+                       placeholder="उदा. विक्रांत">
+              </div>
+
+              <!-- Category with predefined options -->
+              <div class="mb-3">
+                <label for="categoryInput" class="form-label">
+                  <i class="fas fa-tag"></i> श्रेणी
+                </label>
+                <select class="form-select" id="categoryInput" name="category">
+                  <option value="">श्रेणी निवडा...</option>
+                  <option value="spelling">स्पेलिंग दुरुस्ती</option>
+                  <option value="grammar">व्याकरण दुरुस्ती</option>
+                  <option value="format">स्वरूपण दुरुस्ती</option>
+                  <option value="other">इतर</option>
+                </select>
+              </div>
+
+              <!-- Notes with character counter -->
+              <div class="mb-3">
+                <label for="notesInput" class="form-label">
+                  <i class="fas fa-comment-alt"></i> नोंदी
+                  <small class="text-muted">(<span id="notesCharCount">0</span>/200)</small>
+                </label>
+                <textarea class="form-control" 
+                          id="notesInput" 
+                          name="notes" 
+                          maxlength="200"
+                          placeholder="या सुधारणेबद्दल अधिक माहिती द्या..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="fas fa-times"></i> रद्द करा
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane"></i> सुधारणा सादर करा
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Third party libraries -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+<!-- Load diff utilities first -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/1.0.5/diff_match_patch.js"></script>
+<script>
+// Fallback in case the external script fails to load
+if (typeof diff_match_patch !== 'function') {
+    console.warn('External diff_match_patch not loaded, using local copy');
+    document.write('<script src="{% static "tts/js/common/diff_match_patch.js" %}"><\/script>');
+}
+</script>
+<script src="{% static 'tts/js/common/diff-display.js' %}"></script>
+
+<!-- Rest of your scripts -->
+<!-- Load configuration first -->
+<script type="module" src="{% static 'tts/js/utils/config.js' %}"></script>
+
+<!-- Load core modules -->
+<script type="module" src="{% static 'tts/js/core/tts-engine.js' %}"></script>
+<script type="module" src="{% static 'tts/js/core/audio-controller.js' %}"></script>
+<script type="module" src="{% static 'tts/js/core/text-processor.js' %}"></script>
+
+<!-- Load UI modules -->
+<script type="module" src="{% static 'tts/js/ui/controls.js' %}"></script>
+
+<!-- Load utils -->
+<script type="module" src="{% static 'tts/js/utils/word-sync.js' %}"></script>
+<script type="module" src="{% static 'tts/js/utils/audio-queue.js' %}"></script>
+<!-- Text correction module -->
+<script type="module" src="{% static 'tts/js/utils/text-correction.js' %}"></script>
+
+<!-- STT + Script Converter tabs -->
+<script type="module" src="{% static 'tts/js/core/stt-modi-tabs.js' %}"></script>
+
+{% endblock %}
