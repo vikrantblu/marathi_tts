@@ -1,0 +1,15 @@
+{
+  "version": "4.0.0",
+  "buildNumber": 17,
+  "date": "2026-03-07",
+  "platforms": {
+    "web": "Django 4.x",
+    "desktop": "JavaFX + Kotlin",
+    "mobile": "Android (Kotlin + Chaquopy)"
+  },
+  "featureFlags": {
+    "FEAT_OFFLINE_PIPER": false,
+    "FEAT_ONDEVICE_WHISPER": false,
+    "FEAT_WORD_HIGHLIGHT": false
+  }
+}

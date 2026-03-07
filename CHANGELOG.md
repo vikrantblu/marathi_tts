@@ -17,6 +17,9 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 ### Changed
 - SDLC gaps filled: root requirements.txt, AGENTS.md, Dockerfile + docker-compose.yml,
   .claude/skills/claudeskills/SKILL.md populated
+- SDLC maturity (10 gaps): PR template, VS Code tasks (10), validate CI workflow (4 jobs),
+  agent prompts (6→12), MCP tools (9→21), VS Code settings enhanced, docs/ folder (16 specs),
+  version.json system, pre-commit hooks documented, feature flags pattern
 
 ---
 

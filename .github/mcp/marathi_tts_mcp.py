@@ -107,6 +107,120 @@ TOOLS = [
         "name": "list_connected_adb_devices",
         "description": "Return the list of Android devices/emulators currently connected via ADB.",
         "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "bump_version",
+        "description": (
+            "Bump the project version in version.json and build.gradle.kts. "
+            "Level can be 'major', 'minor', or 'patch'."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "type": "string",
+                    "enum": ["major", "minor", "patch"],
+                    "description": "Semver bump level"
+                }
+            },
+            "required": ["level"]
+        }
+    },
+    {
+        "name": "get_version_json",
+        "description": "Return the full contents of version.json including feature flags.",
+        "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "get_feature_flags",
+        "description": "Return all feature flags and their current status from version.json.",
+        "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "toggle_feature_flag",
+        "description": "Enable or disable a feature flag in version.json.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "flag": {"type": "string", "description": "Flag name (e.g., FEAT_OFFLINE_PIPER)"},
+                "enabled": {"type": "boolean", "description": "True to enable, False to disable"}
+            },
+            "required": ["flag", "enabled"]
+        }
+    },
+    {
+        "name": "check_tts_sync",
+        "description": (
+            "Verify all three platforms have identical tts/ engine files. "
+            "Reports any missing or drifted files."
+        ),
+        "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "list_stotra_catalog",
+        "description": "Return the stotra catalog (id, name, deity) from stotra_catalog.json.",
+        "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "get_mobile_nav_graph",
+        "description": "Return the list of destinations in the mobile navigation graph.",
+        "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "search_g2p_lexicon",
+        "description": "Search the G2P exception lexicon for a word or pattern.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Devanagari word or substring to search for"
+                }
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "count_tts_engine_files",
+        "description": "Count Python files across all three platform tts/ trees.",
+        "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "get_bridge_functions",
+        "description": "List all public functions in a bridge script.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "bridge": {
+                    "type": "string",
+                    "description": "Bridge name (e.g., 'tts', 'emotion', 'stt', 'ocr', 'pdf', 'web', 'correction')"
+                }
+            },
+            "required": ["bridge"]
+        }
+    },
+    {
+        "name": "get_test_sections",
+        "description": "List all test sections in test_all_platforms.py with their check counts.",
+        "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+        "name": "run_single_test_section",
+        "description": "Run a specific test section (A-K) from test_all_platforms.py.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "section": {
+                    "type": "string",
+                    "description": "Section letter (A, B, C, D, E, F, G, H, I, J, K)"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Platform to test (web, desktop, mobile). Default: all."
+                }
+            },
+            "required": ["section"]
+        }
     }
 ]
 
@@ -289,6 +403,246 @@ def tool_list_connected_adb_devices(_args: dict) -> str:
         return f"ERROR: {e}"
 
 
+def tool_bump_version(args: dict) -> str:
+    level = args.get("level", "patch")
+    vj_path = ROOT / "version.json"
+    gradle_path = ROOT / "marathi_tts_mobile" / "app" / "build.gradle.kts"
+    try:
+        vj = json.loads(vj_path.read_text("utf-8"))
+        parts = vj["version"].split(".")
+        major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+        if level == "major":
+            major += 1; minor = 0; patch = 0
+        elif level == "minor":
+            minor += 1; patch = 0
+        else:
+            patch += 1
+        new_ver = f"{major}.{minor}.{patch}"
+        vj["version"] = new_ver
+        vj["buildNumber"] = vj.get("buildNumber", 0) + 1
+        from datetime import date
+        vj["date"] = date.today().isoformat()
+        vj_path.write_text(json.dumps(vj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        # Update build.gradle.kts
+        gradle_text = gradle_path.read_text("utf-8")
+        gradle_text = re.sub(r'versionName\s*=\s*"[^"]+"', f'versionName = "{new_ver}"', gradle_text)
+        old_code = re.search(r'versionCode\s*=\s*(\d+)', gradle_text)
+        if old_code:
+            gradle_text = gradle_text.replace(
+                old_code.group(0),
+                f'versionCode = {int(old_code.group(1)) + 1}'
+            )
+        gradle_path.write_text(gradle_text, encoding="utf-8")
+        return json.dumps({"version": new_ver, "buildNumber": vj["buildNumber"]}, indent=2)
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_get_version_json(_args: dict) -> str:
+    try:
+        return (ROOT / "version.json").read_text("utf-8")
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_get_feature_flags(_args: dict) -> str:
+    try:
+        vj = json.loads((ROOT / "version.json").read_text("utf-8"))
+        flags = vj.get("featureFlags", {})
+        if not flags:
+            return "No feature flags defined."
+        lines = []
+        for k, v in sorted(flags.items()):
+            status = "✅ ON" if v else "❌ OFF"
+            lines.append(f"  {k}: {status}")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_toggle_feature_flag(args: dict) -> str:
+    flag = args.get("flag", "").strip()
+    enabled = args.get("enabled", False)
+    if not flag:
+        return "ERROR: flag name is required"
+    vj_path = ROOT / "version.json"
+    try:
+        vj = json.loads(vj_path.read_text("utf-8"))
+        if "featureFlags" not in vj:
+            vj["featureFlags"] = {}
+        vj["featureFlags"][flag] = enabled
+        vj_path.write_text(json.dumps(vj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        status = "ENABLED" if enabled else "DISABLED"
+        return f"{flag}: {status}"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_check_tts_sync(_args: dict) -> str:
+    import hashlib
+    web = ROOT / "marathi_tts_web" / "tts"
+    desk = ROOT / "marathi_tts_desktop" / "python_bridge" / "tts"
+    mob = ROOT / "marathi_tts_mobile" / "app" / "src" / "main" / "python" / "tts"
+    drifted = []
+    ok = 0
+    for f in sorted(web.rglob("*.py")):
+        rel = f.relative_to(web)
+        wh = hashlib.md5(f.read_bytes()).hexdigest()
+        for name, base in [("desktop", desk), ("mobile", mob)]:
+            other = base / rel
+            if not other.exists():
+                drifted.append(f"MISSING [{name}] {rel}")
+            elif hashlib.md5(other.read_bytes()).hexdigest() != wh:
+                drifted.append(f"DRIFTED [{name}] {rel}")
+            else:
+                ok += 1
+    if drifted:
+        return f"{ok} in sync, {len(drifted)} issues:\n" + "\n".join(drifted)
+    return f"All {ok} file pairs in sync across 3 platforms ✓"
+
+
+def tool_list_stotra_catalog(_args: dict) -> str:
+    catalog_path = ROOT / "marathi_tts_desktop" / "stotras" / "stotra_catalog.json"
+    if not catalog_path.exists():
+        catalog_path = ROOT / "marathi_tts_web" / "data" / "stotra_catalog.json"
+    try:
+        catalog = json.loads(catalog_path.read_text("utf-8"))
+        lines = []
+        for s in catalog:
+            lines.append(f"  {s.get('id', '?')} — {s.get('name', '?')} ({s.get('deity', '?')})")
+        return f"{len(catalog)} stotras:\n" + "\n".join(lines)
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_get_mobile_nav_graph(_args: dict) -> str:
+    nav_file = ROOT / "marathi_tts_mobile" / "app" / "src" / "main" / "res" / "navigation" / "nav_graph.xml"
+    try:
+        text = nav_file.read_text("utf-8")
+        fragments = re.findall(r'android:id="@\+id/(\w+)"', text)
+        labels = re.findall(r'android:label="([^"]*)"', text)
+        lines = [f"  {fid}" for fid in fragments]
+        return f"{len(fragments)} destinations:\n" + "\n".join(lines)
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_search_g2p_lexicon(args: dict) -> str:
+    query = args.get("query", "").strip()
+    if not query:
+        return "ERROR: query is required"
+    g2p_path = ROOT / "marathi_tts_web" / "tts" / "constants" / "g2p_constants.py"
+    try:
+        text = g2p_path.read_text("utf-8")
+        matches = []
+        for line in text.splitlines():
+            if query in line and (":" in line or "=" in line):
+                matches.append(line.strip())
+        if matches:
+            return f"{len(matches)} matches:\n" + "\n".join(f"  {m}" for m in matches[:30])
+        return f"No matches for '{query}' in G2P lexicon."
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_count_tts_engine_files(_args: dict) -> str:
+    platforms = {
+        "web":     ROOT / "marathi_tts_web" / "tts",
+        "desktop": ROOT / "marathi_tts_desktop" / "python_bridge" / "tts",
+        "mobile":  ROOT / "marathi_tts_mobile" / "app" / "src" / "main" / "python" / "tts",
+    }
+    lines = []
+    total = 0
+    for name, base in platforms.items():
+        count = len(list(base.rglob("*.py")))
+        lines.append(f"  [{name:8}] {count} files")
+        total += count
+    return f"Total: {total}\n" + "\n".join(lines)
+
+
+def tool_get_bridge_functions(args: dict) -> str:
+    bridge = args.get("bridge", "").strip()
+    if not bridge:
+        return "ERROR: bridge name is required"
+    filename = f"{bridge}_bridge.py"
+    # Check desktop first (has all bridges)
+    bridge_path = ROOT / "marathi_tts_desktop" / "python_bridge" / filename
+    if not bridge_path.exists():
+        bridge_path = ROOT / "marathi_tts_mobile" / "app" / "src" / "main" / "python" / filename
+    if not bridge_path.exists():
+        return f"ERROR: bridge script not found: {filename}"
+    try:
+        import ast as ast_mod
+        tree = ast_mod.parse(bridge_path.read_text("utf-8"))
+        funcs = []
+        for node in ast_mod.walk(tree):
+            if isinstance(node, ast_mod.FunctionDef) and not node.name.startswith("_"):
+                args_list = [a.arg for a in node.args.args]
+                funcs.append(f"  {node.name}({', '.join(args_list)})")
+        return f"{len(funcs)} public functions in {filename}:\n" + "\n".join(funcs)
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_get_test_sections(_args: dict) -> str:
+    test_file = ROOT / "test_all_platforms.py"
+    try:
+        text = test_file.read_text("utf-8")
+        sections = re.findall(r'Section\s+([A-K])[\s:—–-]+([^\n]+)', text)
+        checks = {}
+        current = None
+        for line in text.splitlines():
+            m = re.search(r'Section\s+([A-K])', line)
+            if m:
+                current = m.group(1)
+                checks[current] = 0
+            if current and ("✓" in line or "pass" in line.lower()) and "print" in line:
+                checks[current] = checks.get(current, 0) + 1
+        lines = []
+        for letter, name in sections:
+            count = checks.get(letter, 0)
+            lines.append(f"  [{letter}] {name.strip()} ({count} checks)")
+        return "\n".join(lines) if lines else "Could not parse test sections."
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
+def tool_run_single_test_section(args: dict) -> str:
+    section = args.get("section", "").strip().upper()
+    platform = args.get("platform", "").strip()
+    if not section:
+        return "ERROR: section letter is required"
+    cmd = [sys.executable, str(ROOT / "test_all_platforms.py")]
+    if platform:
+        cmd.extend(["--platform", platform])
+    try:
+        result = subprocess.run(
+            cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=120
+        )
+        output = result.stdout + result.stderr
+        # Extract just the relevant section
+        lines = output.splitlines()
+        collecting = False
+        section_lines = []
+        for line in lines:
+            if f"Section {section}" in line or f"section {section}" in line.lower():
+                collecting = True
+            if collecting:
+                section_lines.append(line)
+            if collecting and line.strip() == "" and len(section_lines) > 3:
+                break
+            if collecting and "Section" in line and f"Section {section}" not in line:
+                break
+        if section_lines:
+            return "\n".join(section_lines)
+        # Fallback: return full output
+        return output[-3000:] if len(output) > 3000 else output
+    except subprocess.TimeoutExpired:
+        return "ERROR: test timed out after 120s"
+    except Exception as e:
+        return f"ERROR: {e}"
+
+
 TOOL_HANDLERS = {
     "run_platform_tests":         tool_run_platform_tests,
     "run_parallel_tests":         tool_run_parallel_tests,
@@ -299,6 +653,18 @@ TOOL_HANDLERS = {
     "get_changelog_unreleased": tool_get_changelog_unreleased,
     "check_tts_syntax":         tool_check_tts_syntax,
     "list_connected_adb_devices": tool_list_connected_adb_devices,
+    "bump_version":             tool_bump_version,
+    "get_version_json":         tool_get_version_json,
+    "get_feature_flags":        tool_get_feature_flags,
+    "toggle_feature_flag":      tool_toggle_feature_flag,
+    "check_tts_sync":           tool_check_tts_sync,
+    "list_stotra_catalog":      tool_list_stotra_catalog,
+    "get_mobile_nav_graph":     tool_get_mobile_nav_graph,
+    "search_g2p_lexicon":       tool_search_g2p_lexicon,
+    "count_tts_engine_files":   tool_count_tts_engine_files,
+    "get_bridge_functions":     tool_get_bridge_functions,
+    "get_test_sections":        tool_get_test_sections,
+    "run_single_test_section":  tool_run_single_test_section,
 }
 
 # ── MCP main loop ───────────────────────────────────────────────────────────

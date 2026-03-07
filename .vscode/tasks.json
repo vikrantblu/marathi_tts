@@ -1,0 +1,94 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run All Platform Tests",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["test_all_platforms.py"],
+            "group": { "kind": "test", "isDefault": true },
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "TTS Syntax Check",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["-c", "import ast, pathlib; files=[f for d in ['marathi_tts_web/tts','marathi_tts_desktop/python_bridge/tts','marathi_tts_mobile/app/src/main/python/tts'] for f in pathlib.Path(d).rglob('*.py')]; [ast.parse(f.read_text('utf-8')) for f in files]; print(f'{len(files)} files syntax-clean')"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Sync TTS Engine (Web → Desktop + Mobile)",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["-c", "import shutil,pathlib; web=pathlib.Path('marathi_tts_web/tts'); [(shutil.copy2(str(f),str(d/f.relative_to(web))),print(f'✓ {f.relative_to(web)} → {p}')) for f in web.rglob('*.py') for p,d in [('desktop',pathlib.Path('marathi_tts_desktop/python_bridge/tts')),('mobile',pathlib.Path('marathi_tts_mobile/app/src/main/python/tts'))] if (d/f.relative_to(web)).parent.mkdir(parents=True,exist_ok=True) or True]"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Start Web Server (Django)",
+            "type": "shell",
+            "command": "${workspaceFolder}/marathi_tts_web/.venv/Scripts/python.exe",
+            "args": ["manage.py", "runserver"],
+            "options": { "cwd": "${workspaceFolder}/marathi_tts_web" },
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        },
+        {
+            "label": "Start Desktop App (Gradle)",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": ["run"],
+            "options": { "cwd": "${workspaceFolder}/marathi_tts_desktop" },
+            "isBackground": true,
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        },
+        {
+            "label": "Build Mobile APK (Debug)",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": ["assembleDebug"],
+            "options": { "cwd": "${workspaceFolder}/marathi_tts_mobile" },
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Build Mobile APK (Release)",
+            "type": "shell",
+            "command": "./gradlew",
+            "args": ["assembleRelease"],
+            "options": { "cwd": "${workspaceFolder}/marathi_tts_mobile" },
+            "group": "build",
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Deploy Mobile (Interactive)",
+            "type": "shell",
+            "command": "powershell",
+            "args": ["-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/deploy_mobile.ps1"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "dedicated", "focus": true }
+        },
+        {
+            "label": "List Open Bugs",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["-c", "import re,pathlib; t=pathlib.Path('BUGS.txt').read_text('utf-8'); m=re.search(r'## Open\\s*(.*?)(?=## Fixed|$)',t,re.DOTALL); print(m.group(1).strip() if m else 'No open bugs')"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        },
+        {
+            "label": "Show Version",
+            "type": "shell",
+            "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "args": ["-c", "import json; v=json.load(open('version.json','r')); print(f\"v{v['version']} (build {v['buildNumber']})\")"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always", "panel": "shared" }
+        }
+    ]
+}

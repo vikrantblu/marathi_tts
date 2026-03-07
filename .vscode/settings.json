@@ -1,3 +1,46 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+
+    // Python
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+
+    // File associations
+    "files.associations": {
+        "*.gradle.kts": "kotlin",
+        "stotra_catalog.json": "json"
+    },
+
+    // Exclude noise from search/explorer
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/build": true,
+        "**/.gradle": true,
+        "**/node_modules": true
+    },
+    "search.exclude": {
+        "**/build": true,
+        "**/__pycache__": true,
+        "**/staticfiles": true,
+        "**/media/tts": true
+    },
+
+    // Editor conventions
+    "files.encoding": "utf8",
+    "files.eol": "\n",
+    "editor.formatOnSave": true,
+    "editor.rulers": [100],
+
+    // Kotlin
+    "kotlin.languageServer.enabled": true,
+
+    // Copilot
+    "github.copilot.chat.codeGeneration.instructions": [
+        { "file": ".github/instructions/copilot-instructions.md" }
+    ],
+
+    // Task runner
+    "task.autoDetect": "off"
 }
