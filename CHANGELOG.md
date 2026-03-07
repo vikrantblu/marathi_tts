@@ -15,6 +15,9 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - **BUG-44 [MEDIUM]**: Long Marathi prose not streaming — `splitSentences()` regex required
   trailing whitespace after `.`/`;`, causing no splits. Unified regex to `(?<=[।॥?!.;])\s*`;
   added comma/newline fallback for unpunctuated prose.
+- **BUG-45 [MEDIUM]**: `text_normalizer.py` eyelash-ra regex used `\u` escapes in raw strings,
+  causing `re.error: bad escape \u at position 2` on every normalize call. Replaced with actual
+  Devanagari characters across all 3 platforms.
 
 ### Security
 - **CRITICAL**: Fixed SSRF in web app `website_view.py` — URL validation via DNS resolution

@@ -51,7 +51,7 @@ class MarathiTextNormalizer:
             
             # Handle hyphens in Marathi words that represent eyelash-ra (ऱ्)
             # क-हा, क-हे, टाळक-या → कऱ्हा, कऱ्हे, टाळकऱ्या
-            text = re.sub(r'(\u0915)-(\u0939)', r'\1\u0931\u094d\2', text)  # क-ह → कऱ्ह
+            text = re.sub(r'(क)-(ह)', r'\1ऱ्\2', text)  # क-ह → कऱ्ह
             text = re.sub(r'([कखगघटठडढणतथदधनपफबभमयरलवशषसह])-([रलवशषसह])',
                          lambda m: m.group(1) + 'ऱ्' + m.group(2), text)
             # Note: -य excluded from second pattern because ऱ्य is converted to र्य 

@@ -19,6 +19,10 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
   (fixed [Unreleased] — unified regex to `(?<=[।॥?!.;])\s*` so periods/semicolons split without
   requiring trailing whitespace; added fallback comma/newline splitting for unpunctuated prose.)
 
+- ~~BUG-45 [MEDIUM] text_normalizer.py eyelash-ra regex uses \\u escapes in raw strings — causes re.error~~
+  (fixed [Unreleased] — replaced `r'(\\u0915)-(\\u0939)'` / `r'\\1\\u0931\\u094d\\2'` with actual
+  Devanagari characters `r'(क)-(ह)'` / `r'\\1ऱ्\\2'` in all 3 platforms per coding standard.)
+
 ## Fixed
 
 - ~~BUG-42 [HIGH] STT file transcription auto-starts microphone instead of processing audio file~~ (fixed [Unreleased] —
