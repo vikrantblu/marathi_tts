@@ -94,7 +94,7 @@ class HistoryFragment : Fragment() {
                     1 -> OutputActions.shareText(requireContext(), entry.outputText, "History")
                     2 -> {
                         val bundle = Bundle().apply { putString("tts_text", entry.outputText) }
-                        findNavController().navigate(R.id.ttsFragment, bundle)
+                        findNavController().navigate(R.id.inputFragment, bundle)
                     }
                 }
             }

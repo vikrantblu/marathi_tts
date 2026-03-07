@@ -69,7 +69,7 @@ class ModiFragment : Fragment() {
             val text = binding.outputText.text.toString()
             if (text.isNotBlank()) {
                 val bundle = Bundle().apply { putString("tts_text", text) }
-                findNavController().navigate(R.id.ttsFragment, bundle)
+                findNavController().navigate(R.id.inputFragment, bundle)
             }
         }
 

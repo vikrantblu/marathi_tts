@@ -83,7 +83,7 @@ class StotraFragment : Fragment() {
             val text = viewModel.state.value?.stotraText ?: return@setOnClickListener
             // Navigate to TTS fragment with the stotra text
             findNavController().navigate(
-                R.id.ttsFragment,
+                R.id.inputFragment,
                 bundleOf("tts_text" to text)
             )
         }

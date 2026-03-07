@@ -155,6 +155,37 @@ class SettingsFragment : Fragment() {
 
         // ── About section ────────────────────────────────────────────────
         binding.versionText.text = "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+
+        // ── Developer mode ───────────────────────────────────────────────
+        binding.devModeSwitch.isChecked = AppPreferences.isDevModeEnabled(ctx)
+        binding.devModeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            AppPreferences.setDevMode(ctx, isChecked)
+            updateEngineStats(ctx)
+        }
+
+        // Show engine stats if dev mode is on
+        updateEngineStats(ctx)
+    }
+
+    private fun updateEngineStats(ctx: android.content.Context) {
+        if (AppPreferences.isDevModeEnabled(ctx)) {
+            val stats = AppPreferences.getEngineStats(ctx)
+            val total = stats.values.sum()
+            if (total > 0) {
+                val preferred = AppPreferences.getLearnedPreferredEngine(ctx)
+                val lines = stats.entries
+                    .filter { it.value > 0 }
+                    .sortedByDescending { it.value }
+                    .joinToString(", ") { "${it.key}: ${it.value}" }
+                val hint = if (preferred != null) " → auto-prefers $preferred" else ""
+                binding.txtEngineStats.text = "Usage: $lines$hint"
+                binding.txtEngineStats.visibility = View.VISIBLE
+            } else {
+                binding.txtEngineStats.visibility = View.GONE
+            }
+        } else {
+            binding.txtEngineStats.visibility = View.GONE
+        }
     }
 
     private fun clearCacheFiles(ctx: android.content.Context) {

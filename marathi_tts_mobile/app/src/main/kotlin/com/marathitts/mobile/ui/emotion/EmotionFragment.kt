@@ -49,7 +49,7 @@ class EmotionFragment : Fragment() {
                     putString("tts_text", text)
                     if (emotion != null) putString("tts_emotion", emotion)
                 }
-                findNavController().navigate(R.id.ttsFragment, bundle)
+                findNavController().navigate(R.id.inputFragment, bundle)
             }
         }
 

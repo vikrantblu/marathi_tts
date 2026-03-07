@@ -126,39 +126,57 @@ tts/
 **Build:** Gradle + Chaquopy plugin (embeds Python 3.11)  
 **Python bridge location:** `app/src/main/python/` (Chaquopy copies at build time)
 
-### Navigation
+### Navigation (v4.0.0 — 3-tab bottom navigation)
 
-Pattern: `DrawerLayout` (hamburger) + `NavigationView` sidebar + `NavHostFragment`  
-All fragments are top-level destinations (no Back arrow — drawer shows on every screen).
+Pattern: `BottomNavigationView` (3 tabs) + `NavHostFragment`  
+Top-level tabs show bottom bar; child destinations show Up arrow in toolbar.
 
-| Nav ID | Fragment class | Screen |
-|--------|---------------|--------|
-| `ttsFragment` ★ | `ui/tts/TtsFragment` | Marathi TTS — enter text, speak |
-| `emotionFragment` | `ui/emotion/EmotionFragment` | Emotion analysis |
-| `sttFragment` | `ui/stt/SttFragment` | Speech-to-text |
-| `ocrFragment` | `ui/ocr/OcrFragment` | Camera OCR → text |
-| `pdfFragment` | `ui/pdf/PdfFragment` | PDF → read aloud |
-| `webFetchFragment` | `ui/web/WebFetchFragment` | Fetch web page → TTS |
-| `correctionFragment` | `ui/correction/CorrectionFragment` | Spell / grammar correction |
-| `modiFragment` | `ui/modi/ModiFragment` | Modi script converter |
-| `stotraFragment` | `ui/stotra/StotraFragment` | Stotra library browser |
-| `bookReaderFragment` | `ui/bookreader/BookReaderFragment` | Book camera + page reader |
-| `historyFragment` | `ui/history/HistoryFragment` | Generation history |
-| `settingsFragment` | `ui/settings/SettingsFragment` | App settings |
-| `testDashboardFragment` | `ui/test/TestDashboardFragment` | Feature test dashboard |
+**Bottom tabs:**
+
+| Tab | Nav ID | Fragment class | Purpose |
+|-----|--------|---------------|---------|
+| Input ★ | `inputFragment` | `ui/input/InputFragment` | Text entry, source chips, Generate |
+| Output | `outputFragment` | `ui/output/OutputFragment` | Auto-generates TTS, playback, emotion, copy/share/save |
+| Me | `meFragment` | `ui/me/MeFragment` | Stotra, History, Modi, Settings hub |
 
 ★ = start destination
 
-Drawer menu file: `res/menu/bottom_nav_menu.xml`  
-Nav graph file: `res/navigation/nav_graph.xml`
+**Child destinations (navigable from tabs via actions):**
+
+| Nav ID | Fragment class | Accessed from | Purpose |
+|--------|---------------|---------------|---------|
+| `ocrFragment` | `ui/ocr/OcrFragment` | Input → chip_camera | Camera OCR → text |
+| `pdfFragment` | `ui/pdf/PdfFragment` | Input → chip_pdf | PDF → text |
+| `webFetchFragment` | `ui/web/WebFetchFragment` | Input → chip_web | Web page → text |
+| `sttFragment` | `ui/stt/SttFragment` | Input → chip_mic | Speech-to-text |
+| `bookReaderFragment` | `ui/bookreader/BookReaderFragment` | Input → chip_book | Book camera + reader |
+| `correctionFragment` | `ui/correction/CorrectionFragment` | Input → btn_correction | Spell/grammar correction |
+| `emotionFragment` | `ui/emotion/EmotionFragment` | Output | Emotion analysis |
+| `stotraFragment` | `ui/stotra/StotraFragment` | Me → card | Stotra library |
+| `historyFragment` | `ui/history/HistoryFragment` | Me → card | Generation history |
+| `modiFragment` | `ui/modi/ModiFragment` | Me → card | Modi script converter |
+| `settingsFragment` | `ui/settings/SettingsFragment` | Me → card | App settings |
+| `testDashboardFragment` | `ui/test/TestDashboardFragment` | Me (dev) | Feature test dashboard |
+| `ttsFragment` | `ui/tts/TtsFragment` | Legacy deep link | Original TTS screen (kept for compat) |
+
+**Text flow:** Child screens (OCR/PDF/Web/STT) return text to InputFragment via
+`savedStateHandle.set("extracted_text", text)` + `popBackStack()`. Other screens
+(Correction/Emotion/History/Modi/Stotra) navigate to `inputFragment` with `tts_text` arg.
+
+Bottom tab menu: `res/menu/bottom_tabs_menu.xml`  
+Nav graph: `res/navigation/nav_graph.xml`  
+Old drawer menu (deprecated): `res/menu/bottom_nav_menu.xml`
 
 ### Layout files
 
 | File | Used by |
 |------|---------|
-| `activity_main.xml` | `MainActivity` — DrawerLayout + Toolbar + NavHostFragment |
-| `nav_header.xml` | Drawer header |
-| `fragment_tts.xml` | TtsFragment |
+| `activity_main.xml` | `MainActivity` — Toolbar + NavHostFragment + BottomNavigationView |
+| `fragment_input.xml` | InputFragment — text entry + source chips + generate |
+| `fragment_output.xml` | OutputFragment — playback + emotion + actions |
+| `fragment_me.xml` | MeFragment — hub cards for stotra/history/modi/settings |
+| `fragment_tts.xml` | TtsFragment (legacy, kept for deep links) |
+| `nav_header.xml` | Drawer header (deprecated) |
 | `fragment_emotion.xml` | EmotionFragment |
 | `fragment_stt.xml` | SttFragment |
 | `fragment_ocr.xml` | OcrFragment |
@@ -175,6 +193,22 @@ Nav graph file: `res/navigation/nav_graph.xml`
 | `fragment_test_dashboard.xml` | TestDashboardFragment |
 | `item_test_row.xml` | TestDashboardAdapter — result row |
 | `item_test_group_header.xml` | TestDashboardAdapter — group section header |
+
+### Share-to-App (FEAT-61)
+
+The app is registered as a share target for URLs and images via `AndroidManifest.xml`
+intent filters. When a user shares content from another app (browser, gallery, etc.),
+`MainActivity.handleShareIntent()` routes by MIME type:
+
+| Shared content | MIME type | Destination | Behavior |
+|----------------|-----------|-------------|----------|
+| Image from gallery | `image/*` | OcrFragment | Auto-loads image via `shared_image_uri` arg |
+| URL from browser | `text/plain` (http/https) | WebFetchFragment | Auto-fills URL + auto-fetches via `shared_url` arg |
+| Plain text | `text/plain` (non-URL) | InputFragment | Fills text input via `tts_text` arg |
+
+**Intent filters** (in `AndroidManifest.xml` on `MainActivity`):
+- `ACTION_SEND` + `text/plain` — URLs and plain text
+- `ACTION_SEND` + `image/*` — images from gallery/camera/browser
 
 ### Services & helpers (`service/` package)
 
@@ -196,6 +230,7 @@ Nav graph file: `res/navigation/nav_graph.xml`
 |-------|---------|
 | `OutputActions` | Static helpers: copyText, shareText, shareAudio (FileProvider), saveTextToDownloads, saveAudioToDownloads (MediaStore for API 29+) |
 | `HistoryLogger` | Fire-and-forget Room DB logger; IO dispatcher; truncates to 2000 chars |
+| `AppPreferences` | SharedPreferences wrapper: theme, TTS defaults, draft text, dev mode toggle |
 
 ### Python bridge scripts (called via `PythonBridge`)
 
@@ -313,6 +348,121 @@ Key modules (same in all three platforms):
 - `phonetic/marathi_phonetics.py` — Language-mode phonetic preprocessors
 - `audio/prosody_engine.py` — Segment-level pause engine; calls MetreEngine for verse; emotion modifiers; pitch contour; Ovi pulse
 - `constants/g2p_constants.py` — Exception lexicon (Sanskrit, Old Marathi, Sant literature)
+
+---
+
+## Custom Stotra Voice Pipeline (FEAT-50, FEAT-53)
+
+### Training Pipeline (`custom-tts-voice-model/scripts/`)
+
+| Script | Purpose |
+|--------|---------|
+| `preprocess_audio.py` | Normalize audio (22050Hz mono 16-bit), adaptive silence detection, segment at verse boundaries |
+| `align_transcript.py` | Map transcript verses to audio segments (numbered ॥N॥ or double-danda parsing) |
+| `validate_dataset.py` | Quality checks (SNR, duration ranges, silence ratio, Piper-readiness) |
+| `generate_piper_config.py` | Create Piper-compatible dataset (wav/ dir, metadata.csv, config.json) |
+| `train_piper.py` | Colab-ready Piper VITS fine-tuning (Hindi base model) |
+| `run_pipeline.py` | Master orchestrator (subprocess-based, runs all 4 steps) |
+
+### Adaptive Silence Detection
+
+`preprocess_audio.py` auto-retries with progressively sensitive thresholds if no
+silence gaps found at the default -35dB/400ms:
+
+```
+-35dB/400ms → -28dB/300ms → -25dB/250ms → -22dB/200ms → -20dB/150ms
+```
+
+Stops when at least 3 gaps are found. Segments exceeding MAX_SEGMENT_SEC (15s) are
+force-split evenly. CLI overrides: `--silence-thresh-db`, `--min-silence-ms`.
+
+### Custom Voice Engine
+
+**Files:**
+- Mobile: `marathi_tts_mobile/app/src/main/python/custom_voice_engine.py`
+- Desktop: `marathi_tts_desktop/python_bridge/custom_voice_engine.py`
+
+**Phase A — Segment Library:** Fingerprint-matches input text against pre-recorded
+segments (first 80 Devanagari chars, prefix overlap scoring, 0.7 threshold).
+
+**Phase B — ONNX Model:** Loads Piper VITS model via onnxruntime, generates audio
+from text input (activated when `stotra_voice.onnx` is present).
+
+### Bridge Integration
+
+Custom voice is the **highest-priority engine** in both fallback chains:
+
+**Mobile (verse):** Custom → Network check → edge-tts verse prosody → edge-tts single → gTTS verse (slow) → gTTS bare
+
+**Mobile (prose):** Custom → Network check → edge-tts prosody → edge-tts single → gTTS prosody → gTTS+pydub → gTTS bare
+
+**Desktop (verse):** Custom → Stage 0 stotra library → Stage 1 TTSEngine → Network check → edge-tts verse prosody → edge-tts single → gTTS verse → gTTS bare
+
+**Desktop (prose):** Custom → Stage 0 stotra library → Stage 1 TTSEngine → Network check → edge-tts prosody → edge-tts single → gTTS prosody → gTTS+pydub → gTTS bare
+
+### A/B Comparison (FEAT-53)
+
+`compare_engines()` in both bridge scripts: runs text through gTTS, Edge-TTS, and
+custom voice; returns dict with all audio paths for side-by-side quality comparison.
+
+### Processed Data
+
+| Recording | Segments | Duration | Status |
+|-----------|----------|----------|--------|
+| ShreeChandrashekharAshtakam | 44 | 7.7 min | Aligned (10 verses) |
+| ShreeVishnuSahatranam | 143 | 18.6 min | Piper-ready ✓ |
+| ShriRamRakshaStotra | 42 | 9.9 min | Piper-ready ✓ |
+
+Total: 155 utterances, 36.1 min. Piper dataset at `data/piper_dataset/`.
+
+---
+
+## Prosody Preview + Per-Sentence Regen (FEAT-51, FEAT-52)
+
+### Prosody Preview (FEAT-51)
+
+**Bridge function:** `analyze_prosody(text, language, is_verse, emotion)` in both
+mobile and desktop `tts_bridge.py`. Returns segment list:
+
+```json
+{
+  "success": true,
+  "segments": [
+    {"index": 0, "text": "...", "pause_after_ms": 600, "emotion": "neutral",
+     "emphasis": 1.0, "pitch_shift": 0.0, "is_verse": false, "metre_name": "",
+     "tts_rate": 1.0}
+  ],
+  "segment_count": N,
+  "is_verse_detected": false,
+  "metre": ""
+}
+```
+
+**Kotlin classes:**
+- `ProsodySegment` data class — mirrors bridge JSON fields + `audioPath`
+- `ProsodySegmentAdapter` — RecyclerView adapter with DiffUtil, shows text + badges
+- `OutputState.prosodySegments` — list of segments, updated by `analyzeProsody()`
+
+**UI flow:** `OutputViewModel.generate()` launches `analyzeProsody()` concurrently
+with TTS generation. The prosody preview card shows segments immediately (pure text
+analysis, no network). Each segment displays: text, Verse/Prose badge, metre name
+(when detected), pause duration, TTS rate.
+
+**Layout:** `prosody_preview_card` in `fragment_output.xml` between emotion_card
+and text_preview_card. Contains segment count header, tap hint, and RecyclerView.
+
+### Per-Sentence Regeneration (FEAT-52)
+
+**Bridge function:** `regenerate_segment(text, speed, pitch, volume, language, gender,
+is_verse, emotion)` — lightweight single-segment TTS. Skips custom voice for speed.
+Fallback: edge-tts → gTTS.
+
+**UI:** Tap any segment in the prosody preview → `OutputViewModel.regenerateSegment()`
+calls the bridge, replaces the corresponding `streamChunks[index]` and updates the
+segment's `audioPath`. Linear progress indicator shown on the regenerating segment.
+
+**State tracking:** `OutputState.regeneratingIndex` (-1 = none). Adapter highlights
+the regenerating item with a progress bar.
 
 ---
 
@@ -665,7 +815,8 @@ Words in this dict bypass rule-based schwa processing (identity map = gTTS handl
 
 ## Chandrabindu Nasalization (FEAT-15)
 
-`_generate_edge_prosody()` in **both** mobile and desktop `tts_bridge.py`:
+`_generate_edge_prosody()` and `_generate_edge_verse_prosody()` in **both** mobile and
+desktop `tts_bridge.py`:
 - For each segment, checks if `'\u0901'` (chandrabindu ँ) appears in the processed text
 - When present: applies `-25 pp` volume reduction (≈ -3 dB nasal softening):
   ```python
@@ -673,6 +824,28 @@ Words in this dict bypass rule-based schwa processing (identity map = gTTS handl
   ```
 - Otherwise: uses the flat `vol_str`
 - The per-segment volume string `sv` is passed as a default arg to the `_run_seg()` closure
+
+---
+
+## Edge-TTS Verse Prosody (FEAT-VQ)
+
+**Function:** `_generate_edge_verse_prosody()` in both mobile and desktop `tts_bridge.py`
+
+**Problem solved:** Verse/stotra text previously bypassed the prosody-segmented edge-tts
+pipeline (which was prose-only), falling to single-call edge-tts or robotic gTTS slow=True.
+
+**How it works:**
+1. ProsodyEngine segments verse text at natural boundaries (। and ॥ markers)
+2. Metre detected: Anushtubh, Sragdhara, Stotra, etc. — sets per-segment tts_rate
+3. Pitch contour: wave/falling/rising pattern from MetreDefinition applied per segment
+4. Per-segment preprocessing: stotra-specific + G2P (language-aware: Sanskrit/Old Marathi/Marathi)
+5. Edge-tts neural voice generates each segment with per-segment SSML: rate, pitch, volume
+6. pydub stitches segments with calibrated verse pauses (800ms half, 1200ms full, 1600ms stanza)
+7. Chandrabindu nasalization (FEAT-15) applied per segment
+
+**Segment cap:** 40 (higher than prose's 15 since verse segments are shorter)
+
+**Fallback:** Returns None on failure → falls to single-call edge-tts → gTTS verse
 
 ---
 

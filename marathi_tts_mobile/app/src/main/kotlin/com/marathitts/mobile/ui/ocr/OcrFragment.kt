@@ -61,6 +61,12 @@ class OcrFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Handle image shared from another app (gallery, browser, etc.)
+        arguments?.getString("shared_image_uri")?.let { uriString ->
+            val uri = Uri.parse(uriString)
+            handleImageUri(uri)
+        }
+
         binding.browseBtn.setOnClickListener { pickImage.launch("image/*") }
 
         binding.cameraBtn.setOnClickListener {
@@ -81,8 +87,9 @@ class OcrFragment : Fragment() {
         binding.sendToTtsBtn.setOnClickListener {
             val text = binding.extractedText.text.toString()
             if (text.isNotBlank()) {
-                val bundle = Bundle().apply { putString("tts_text", text) }
-                findNavController().navigate(R.id.ttsFragment, bundle)
+                findNavController().previousBackStackEntry
+                    ?.savedStateHandle?.set("extracted_text", text)
+                findNavController().popBackStack()
             }
         }
 

@@ -25,6 +25,12 @@ class WebFetchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Handle URL shared from another app (browser, etc.)
+        arguments?.getString("shared_url")?.let { url ->
+            binding.urlInput.setText(url)
+            viewModel.fetchUrl(url)
+        }
+
         val doFetch = {
             val url = binding.urlInput.text.toString().trim()
             if (url.isNotEmpty()) viewModel.fetchUrl(url)
@@ -44,8 +50,9 @@ class WebFetchFragment : Fragment() {
         binding.sendToTtsBtn.setOnClickListener {
             val text = binding.contentText.text.toString()
             if (text.isNotBlank()) {
-                val bundle = Bundle().apply { putString("tts_text", text) }
-                findNavController().navigate(R.id.ttsFragment, bundle)
+                findNavController().previousBackStackEntry
+                    ?.savedStateHandle?.set("extracted_text", text)
+                findNavController().popBackStack()
             }
         }
 
