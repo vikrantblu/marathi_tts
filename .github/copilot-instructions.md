@@ -351,6 +351,68 @@ Key modules (same in all three platforms):
 
 ---
 
+## Custom Stotra Voice Pipeline (FEAT-50, FEAT-53)
+
+### Training Pipeline (`custom-tts-voice-model/scripts/`)
+
+| Script | Purpose |
+|--------|---------|
+| `preprocess_audio.py` | Normalize audio (22050Hz mono 16-bit), adaptive silence detection, segment at verse boundaries |
+| `align_transcript.py` | Map transcript verses to audio segments (numbered ॥N॥ or double-danda parsing) |
+| `validate_dataset.py` | Quality checks (SNR, duration ranges, silence ratio, Piper-readiness) |
+| `generate_piper_config.py` | Create Piper-compatible dataset (wav/ dir, metadata.csv, config.json) |
+| `train_piper.py` | Colab-ready Piper VITS fine-tuning (Hindi base model) |
+| `run_pipeline.py` | Master orchestrator (subprocess-based, runs all 4 steps) |
+
+### Adaptive Silence Detection
+
+`preprocess_audio.py` auto-retries with progressively sensitive thresholds if no
+silence gaps found at the default -35dB/400ms:
+
+```
+-35dB/400ms → -28dB/300ms → -25dB/250ms → -22dB/200ms → -20dB/150ms
+```
+
+Stops when at least 3 gaps are found. Segments exceeding MAX_SEGMENT_SEC (15s) are
+force-split evenly. CLI overrides: `--silence-thresh-db`, `--min-silence-ms`.
+
+### Custom Voice Engine
+
+**Files:**
+- Mobile: `marathi_tts_mobile/app/src/main/python/custom_voice_engine.py`
+- Desktop: `marathi_tts_desktop/python_bridge/custom_voice_engine.py`
+
+**Phase A — Segment Library:** Fingerprint-matches input text against pre-recorded
+segments (first 80 Devanagari chars, prefix overlap scoring, 0.7 threshold).
+
+**Phase B — ONNX Model:** Loads Piper VITS model via onnxruntime, generates audio
+from text input (activated when `stotra_voice.onnx` is present).
+
+### Bridge Integration
+
+Custom voice is the **highest-priority engine** in both fallback chains:
+
+**Mobile:** Custom → Network check → edge-tts prosody → edge-tts single → gTTS prosody → gTTS+pydub → gTTS bare
+
+**Desktop:** Custom → Stage 0 stotra library → Stage 1 TTSEngine → Network check → edge-tts → gTTS stages
+
+### A/B Comparison (FEAT-53)
+
+`compare_engines()` in both bridge scripts: runs text through gTTS, Edge-TTS, and
+custom voice; returns dict with all audio paths for side-by-side quality comparison.
+
+### Processed Data
+
+| Recording | Segments | Duration | Status |
+|-----------|----------|----------|--------|
+| ShreeChandrashekharAshtakam | 44 | 7.7 min | Aligned (10 verses) |
+| ShreeVishnuSahatranam | 143 | 18.6 min | Piper-ready ✓ |
+| ShriRamRakshaStotra | 42 | 9.9 min | Piper-ready ✓ |
+
+Total: 155 utterances, 36.1 min. Piper dataset at `data/piper_dataset/`.
+
+---
+
 ## MANDATORY — Offline test before finishing any task
 
 **Every task that touches any `tts/` file MUST end by running the offline test

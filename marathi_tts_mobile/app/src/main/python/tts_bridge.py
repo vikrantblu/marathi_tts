@@ -806,6 +806,26 @@ def generate_tts(text: str,
     _gtts_lang_map = {"sa": "hi", "mr-old": "mr", "ne": "hi"}
     gtts_language = _gtts_lang_map.get(language, language)
 
+    # ── Custom Voice Engine (FEAT-50) ────────────────────────────────────
+    # Highest priority for verse content: try pre-recorded segment library
+    # and custom ONNX model BEFORE any network-dependent engine.
+    # Works offline — no internet required.
+    try:
+        from custom_voice_engine import generate_custom_voice
+        custom_result = generate_custom_voice(
+            text, speed=speed, pitch=pitch, volume=volume,
+            output_path=output_path, is_verse=is_verse, language=language)
+        if custom_result and custom_result.get("success"):
+            custom_result["elapsed_sec"] = round(time.time() - t0, 2)
+            log.info("[Custom] SUCCESS engine=%s (%.2fs)",
+                     custom_result.get("engine", "custom"),
+                     custom_result["elapsed_sec"])
+            return custom_result
+    except ImportError:
+        log.debug("[Custom] custom_voice_engine not available")
+    except Exception as exc:
+        log.warning("[Custom] Custom voice failed: %s", exc)
+
     # ── Network pre-check (BUG-21) ───────────────────────────────────────
     # Both edge-tts and gTTS require internet.  Fail fast with a clear
     # message instead of waiting 30 s for a socket timeout.
@@ -981,6 +1001,97 @@ def generate_tts(text: str,
         log.error("[Stage 2] All TTS stages failed: %s\n%s", exc, traceback.format_exc())
         return {"success": False, "error": str(exc),
                 "error_code": "ERR_ALL_ENGINES_FAILED", "stage": "all_failed"}
+
+
+# ---------------------------------------------------------------------------
+# FEAT-53: A/B Engine Comparison
+# ---------------------------------------------------------------------------
+def compare_engines(text: str,
+                    speed: float = 1.0,
+                    pitch: float = 1.0,
+                    volume: float = 1.0,
+                    is_verse: bool = False,
+                    language: str = "mr",
+                    gender: str = "female",
+                    engines: list = None) -> dict:
+    """Generate audio with multiple engines for A/B comparison.
+
+    Returns:
+        {
+            "success": True,
+            "results": [
+                {"engine": "custom_segment_library", "audio_path": "...", "elapsed_sec": 1.2},
+                {"engine": "edge_tts", "audio_path": "...", "elapsed_sec": 2.5},
+                {"engine": "gtts_pydub", "audio_path": "...", "elapsed_sec": 3.1},
+            ],
+            "engine_count": 3
+        }
+    """
+    log.info("=== compare_engines START | engines=%s ===", engines)
+    all_engines = engines or ["custom", "edge_tts", "gtts"]
+    results = []
+
+    for eng_name in all_engines:
+        fd, out_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        os.close(fd)
+        t0 = time.time()
+
+        try:
+            if eng_name == "custom":
+                try:
+                    from custom_voice_engine import generate_custom_voice
+                    r = generate_custom_voice(
+                        text, speed=speed, pitch=pitch, volume=volume,
+                        output_path=out_path, is_verse=is_verse, language=language)
+                    if r and r.get("success"):
+                        r["elapsed_sec"] = round(time.time() - t0, 2)
+                        results.append(r)
+                        continue
+                except ImportError:
+                    pass
+
+            elif eng_name == "edge_tts" and _edge_tts_available():
+                r = _generate_edge_tts(
+                    text, language, gender, speed, pitch, volume,
+                    out_path, is_verse=is_verse)
+                if r.get("success"):
+                    r["elapsed_sec"] = round(time.time() - t0, 2)
+                    results.append(r)
+                    continue
+
+            elif eng_name == "gtts":
+                _gtts_lang_map = {"sa": "hi", "mr-old": "mr", "ne": "hi"}
+                gtts_lang = _gtts_lang_map.get(language, language)
+                from gtts import gTTS  # type: ignore
+                gTTS(text=text, lang=gtts_lang, slow=False,
+                     lang_check=False).save(out_path)
+                if os.path.exists(out_path) and os.path.getsize(out_path) > 0:
+                    results.append({
+                        "success": True,
+                        "audio_path": out_path,
+                        "engine": "gtts_bare",
+                        "elapsed_sec": round(time.time() - t0, 2),
+                    })
+                    continue
+
+            # Engine didn't produce output — clean up
+            try:
+                os.unlink(out_path)
+            except OSError:
+                pass
+
+        except Exception as exc:
+            log.warning("[Compare] %s failed: %s", eng_name, exc)
+            try:
+                os.unlink(out_path)
+            except OSError:
+                pass
+
+    return {
+        "success": len(results) > 0,
+        "results": results,
+        "engine_count": len(results),
+    }
 
 
 def main():

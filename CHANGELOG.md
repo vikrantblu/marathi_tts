@@ -34,7 +34,26 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - Kokoro TTS integration (open-source, offline, Indian voices)
 - Real-time waveform/prosody preview before generation
 - Per-sentence regeneration from preview
-- Dual-engine A/B comparison
+
+### Added — Phase 3: Custom Stotra Voice (FEAT-50, FEAT-53)
+- FEAT-50 Custom Stotra Voice Model training pipeline:
+  - `preprocess_audio.py` — Audio normalization + adaptive silence-based segmentation
+    (auto-retries at -28/-25/-22/-20 dB thresholds when default -35 dB finds no gaps)
+  - `align_transcript.py` — Transcript-to-audio alignment via shloka numbers (॥N॥) or
+    double-danda parsing, proportional character-count mapping
+  - `validate_dataset.py` — Quality validation (SNR, duration ranges, silence ratio,
+    Piper-readiness check)
+  - `generate_piper_config.py` — Piper-compatible dataset: wav/ dir, metadata.csv,
+    config.json, training_config.json
+  - `train_piper.py` — Colab-ready Piper VITS fine-tuning (Hindi base model)
+  - `run_pipeline.py` — Master pipeline orchestrator (subprocess-based)
+  - `custom_voice_engine.py` deployed to mobile + desktop: Phase A (segment library
+    fingerprint matching) + Phase B (ONNX model inference via Sherpa-ONNX)
+  - Integrated as highest-priority engine in both mobile + desktop bridge fallback chains
+  - Processed 3 recordings: Chandrashekhar (44 segs), Vishnu Sahasranama (143 segs),
+    Ram Raksha (42 segs) — total 155 utterances, 36.1 min
+- FEAT-53 Dual-engine A/B comparison: `compare_engines()` function in both bridge scripts,
+  runs text through gTTS/Edge-TTS/Custom and returns all audio paths for comparison
 
 ---
 
