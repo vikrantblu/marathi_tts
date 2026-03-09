@@ -10,6 +10,12 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Recently Fixed (Unreleased)
 
+- ~~BUG-48 [MEDIUM] gTTS y-glide on ALL nasalized matras — not just front vowels~~
+  (fixed [Unreleased] — apply_gtts_mr_fixes() only blocked y-glide for ें/ैं (front-vowel
+  matras + anusvara). Extended ZWNJ insertion pattern from [\u0947\u0948] to [\u093E-\u094C]
+  to cover ALL matras (ां ीं ूं ों ौं etc.) before anusvara. Fixes Old Marathi verse
+  endings like संतीं→संतीय, द्यावें→द्यावेय, तयां→तयाय.)
+
 - ~~BUG-47 [HIGH] Schwa deletion lexicon never matches Devanagari words — \b word boundary broken~~
   (fixed [Unreleased] — Python re \b treats Devanagari matras (ा ी ू etc.) as \W, so \b
   matches INSIDE words rather than at word edge.  Replaced regex-based lookup with

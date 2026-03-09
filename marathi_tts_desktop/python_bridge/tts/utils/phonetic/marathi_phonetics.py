@@ -796,8 +796,8 @@ def apply_gtts_mr_fixes(text: str) -> str:
     Fixes applied:
       1. Y-glide on word-internal "-चा" suffix  (रामाचा → sounds like रामाच्या)
          → Insert ZWNJ between च and ा when preceded by a matra.
-      2. Y-glide on "ें" / "ैं" (front-vowel matra + anusvara)
-         (आदरें → sounds like आदरेय)
+      2. Y-glide on any matra + anusvara
+         (आदरें → आदरेय, संतीं → संतीय, तयां → तयाय)
          → Insert ZWNJ between the preceding consonant and the matra
            to break gTTS's phonological bundling of the nasalized vowel.
       3. Terminal halant (virama) at sentence / verse boundaries
@@ -816,14 +816,16 @@ def apply_gtts_mr_fixes(text: str) -> str:
         r'च(?=ा)',
         'च\u200C', text)
 
-    # ── 2. "ें"/"ैं" y-glide ────────────────────────────────────────
-    # gTTS Marathi inserts a palatal y-glide [j] before nasalized front
-    # vowels (े + ं  and  ै + ं).  Inserting ZWNJ between the consonant
-    # and the e/ai-matra stops gTTS from bundling them into a single
-    # nasalized syllable with y-onset.
+    # ── 2. Matra + anusvara y-glide ─────────────────────────────────
+    # gTTS Marathi inserts a palatal y-glide [j] before nasalized
+    # vowels (any matra + anusvara).  Inserting ZWNJ between the
+    # consonant and the matra stops gTTS from bundling them into a
+    # single nasalized syllable with y-onset.
     #   आदरें → आदर‌ें  (ZWNJ between र and े)
+    #   संतीं → संत‌ीं  (ZWNJ between त and ी)
+    #   तयां  → तय‌ां   (ZWNJ between य and ा)
     text = re.sub(
-        r'([\u0915-\u0939])(?=[\u0947\u0948]\u0902)',
+        r'([\u0915-\u0939])(?=[\u093E-\u094C]\u0902)',
         '\\1\u200C', text)
 
     # ── 3. Terminal halant removal ───────────────────────────────────
