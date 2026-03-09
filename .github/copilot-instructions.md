@@ -1422,3 +1422,56 @@ Full-text search across stotra content with optional voice input.
 - Search bar wrapped in horizontal `LinearLayout` with voice search button
 - `content_search_card` MaterialCardView (visibility=gone) with `content_search_header`
   and `content_search_results` TextViews
+
+---
+
+## Phase 5: Polish & Accessibility (FEAT-75, FEAT-76, FEAT-78)
+
+### Segment-Level Playback Highlighting (FEAT-75)
+
+**State:** `OutputState.activePlayingIndex` (Int, default -1, -1 = none active)
+**ViewModel:** `setActivePlayingIndex(index)` updates state.
+
+**Adapter:** `ProsodySegmentAdapter.activePlayingIndex` — highlights the active item with
+Material3 `colorSecondaryContainer` background, full opacity (1.0). Non-active items get
+transparent background and 0.85 alpha.
+
+**Wiring:** `OutputFragment.autoPlay()`:
+- Streaming (multi-chunk): `onChunkStart = { idx -> viewModel.setActivePlayingIndex(idx) }`
+- Single file: sets `activePlayingIndex = 0`
+- `onAllComplete` / `onError` → `setActivePlayingIndex(-1)`
+- Stop button → `setActivePlayingIndex(-1)`
+
+### Export Audio with Metadata (FEAT-76)
+
+**Method:** `OutputActions.exportAudioWithMetadata(context, audioPath, title, artist, album, language)`
+
+**Storage:** Saves to `Music/MarathiTTS/` via `MediaStore.Audio.Media` (Android Q+) with:
+- `DISPLAY_NAME`, `MIME_TYPE`, `RELATIVE_PATH`
+- `TITLE`, `ARTIST`, `ALBUM`, `DURATION`
+- `IS_PENDING` pattern for atomic writes
+
+Pre-Q fallback: copies to `Environment.DIRECTORY_MUSIC/MarathiTTS/`.
+
+**Chunk merge:** `OutputActions.concatenateAudioChunks(chunks, outputPath)` — byte-level
+MP3 concatenation for streaming results. Called by export button before export dialog.
+
+**UI:** `btn_export` MaterialButton in `fragment_output.xml` action row (after Save).
+`showExportDialog(audioPath)` — AlertDialog with title EditText, pre-filled from input text.
+
+**Strings:** `action_export`, `export_dialog_title`, `export_title_hint`
+
+### Accessibility Improvements (FEAT-78)
+
+**Slider labels:** `slider_speed` and `slider_emotion_intensity` have `contentDescription`
+attributes mapping to their label strings.
+
+**Language spinner:** `spinner_language` has `contentDescription="Select language"`.
+
+**Prosody segments:** Each item in `ProsodySegmentAdapter` gets a computed `contentDescription`:
+`"Segment N, Verse/Prose. [text]. Metre: [name]. Tap to regenerate. Long press for phonetic rules."`
+
+**Decorative elements:** Empty-state ImageView in `fragment_output.xml` marked with
+`importantForAccessibility="no"` (was previously using tab label as contentDescription).
+
+**Export button:** Has explicit `contentDescription` for TalkBack.

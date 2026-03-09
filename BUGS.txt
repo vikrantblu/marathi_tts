@@ -10,6 +10,10 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Recently Fixed (Unreleased)
 
+- ~~BUG-46 [CRITICAL] Verse mode crashes app — speed slider stepSize=0.1 incompatible with 0.85 value~~
+  (fixed [Unreleased] — changed slider_speed stepSize from 0.1 to 0.05 in fragment_output.xml
+  so 0.85 (= 0.5 + 7×0.05) is a valid step position. FEAT-48 smart verse speed sets 0.85x.)
+
 - ~~BUG-43 [HIGH] TTS generation permanently locks after first attempt — hasStartedGeneration never reset~~
   (fixed [Unreleased] — wrapped generateSingle() and generateStreaming() in try/finally to always
   reset hasStartedGeneration flag; also reset in cancelGeneration(). Verse mode was most visibly

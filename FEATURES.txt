@@ -153,14 +153,18 @@ Track feature requests and shipped features here.
   Manohar (male) for Marathi, plus Hindi/Sanskrit voices. Gender chips in Output screen.
 
 ### User Experience
-- FEAT-75 Word-level playback highlighting: highlight current word/segment in prosody
-  preview as audio plays. Sync via segment duration tracking.
-- FEAT-76 Export to MP3/WAV with metadata: save generated audio with proper ID3 tags
-  (title, artist, language) for music player compatibility.
+- FEAT-75 ✅ Word-level playback highlighting: active segment highlighted with
+  secondary container color in prosody preview during audio playback. Segment index
+  tracked via onChunkStart callback and activePlayingIndex in OutputState/adapter.
+- FEAT-76 ✅ Export to MP3 with metadata: exportAudioWithMetadata() saves to Music/MarathiTTS
+  via MediaStore.Audio.Media with TITLE, ARTIST, ALBUM, DURATION columns. Export dialog
+  lets user set title. Streaming chunks auto-concatenated before export.
 - FEAT-77 Widget for quick TTS: Android home screen widget with text input and one-tap
   generate. Uses AppPreferences defaults.
-- FEAT-78 Accessibility: TalkBack support audit, content descriptions for all interactive
-  elements, minimum touch target sizes.
+- FEAT-78 ✅ Accessibility: contentDescription on sliders (speed, emotion intensity),
+  spinner (language), prosody segments (segment + mode + metre description), export button.
+  Decorative ImageView marked importantForAccessibility=no. 48dp min touch targets on
+  all icon-only buttons.
 
 ### Code Quality
 - FEAT-79 ✅ Dead code cleanup: unreachable code removed from _segment_verse_block()

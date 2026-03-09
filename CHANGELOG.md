@@ -6,9 +6,107 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
-## [Unreleased]
+## [4.1.0] — 2026-03-09  (build 18)
+### Minor release
+### Added
+- **FEAT-75**: Segment-level playback highlighting — active segment in prosody preview
+  highlights with Material3 secondaryContainer color during audio playback. Tracked via
+  `onChunkStart` callback → `activePlayingIndex` in OutputState and ProsodySegmentAdapter.
+- **FEAT-76**: Export audio with metadata — `exportAudioWithMetadata()` saves to
+  `Music/MarathiTTS/` via `MediaStore.Audio.Media` with TITLE, ARTIST, ALBUM, DURATION
+  columns. Export dialog lets user set a custom title. Streaming chunks auto-concatenated
+  via `concatenateAudioChunks()` before export.
+- **FEAT-78**: Accessibility improvements — `contentDescription` on sliders (Speed,
+  Emotion Intensity), language Spinner, prosody segments (mode/metre/instructions),
+  export button. Decorative empty-state ImageView marked `importantForAccessibility=no`.
 
 ### Fixed
+- **BUG-46 [CRITICAL]**: Verse mode crashes app — speed slider `stepSize=0.1` incompatible
+  with smart verse speed value `0.85`. Changed `stepSize` to `0.05`.
+- **BUG-43 [HIGH]**: TTS generation permanently locks after first attempt — `hasStartedGeneration`
+  flag never reset in `generateSingle()`/`generateStreaming()`. Wrapped both in `try/finally`;
+  also reset flag in `cancelGeneration()`. Verse mode was the most visible failure path.
+- **BUG-44 [MEDIUM]**: Long Marathi prose not streaming — `splitSentences()` regex required
+  trailing whitespace after `.`/`;`, causing no splits. Unified regex to `(?<=[।॥?!.;])\s*`;
+  added comma/newline fallback for unpunctuated prose.
+- **BUG-45 [MEDIUM]**: `text_normalizer.py` eyelash-ra regex used `\u` escapes in raw strings,
+  causing `re.error: bad escape \u at position 2` on every normalize call. Replaced with actual
+  Devanagari characters across all 3 platforms.
+
+### Security
+- **CRITICAL**: Fixed SSRF in web app `website_view.py` — URL validation via DNS resolution
+  + IP range blocking before `requests.get()` (both `fetch_website_content` and
+  `extract_text_from_image_url`)
+- **CRITICAL**: Fixed path traversal in `tts_views.py` `stream_status()` — session_id now
+  validated as UUID pattern before use in file paths
+- **CRITICAL**: Fixed path traversal in MCP `sync_tts_file()` — rejects `..` components
+  and verifies resolved path stays within `tts/` directory
+- **CRITICAL**: Fixed SQL injection patterns in `db_id_reset.py`, `db_table_rename.py`,
+  `rename_app.py` — added table name validation (regex whitelist)
+- **HIGH**: Replaced `@csrf_exempt` with `@csrf_protect` on 6 Django views (OCR, STT,
+  script convert, AI correction × 3)
+- **HIGH**: Added upload validation with magic byte checks and size limits: images (10MB),
+  PDFs (50MB), audio (100MB) via new `tts/utils/security.py` module
+- **HIGH**: Fixed SSRF in mobile + desktop `web_bridge.py` — added `_is_safe_url()` with
+  DNS resolution and private IP rejection
+- **HIGH**: Fixed unsafe `pickle.load()` in `text_processor.py` (all 3 platforms) —
+  replaced with `RestrictedUnpickler` allowing only builtin types
+- **HIGH**: Restricted Android `FileProvider` scope from `path="/"` to specific subdirs
+- **HIGH**: Created `network_security_config.xml` with `cleartextTrafficPermitted="false"`
+- **HIGH**: Fixed path traversal in `stotra_view.py` — added `realpath` containment check
+  and symlink rejection
+- **MEDIUM**: Changed Django `DEBUG` default from `True` to `False` (env var override)
+- **MEDIUM**: Enabled `SECURE_CONTENT_TYPE_NOSNIFF` and `SECURE_BROWSER_XSS_FILTER` always
+- **MEDIUM**: Removed `urllib3.disable_warnings(InsecureRequestWarning)` from settings.py
+  and mobile `web_bridge.py`
+- **MEDIUM**: Added `X-Content-Type-Options: nosniff` header in JS middleware
+- **MEDIUM**: Set `android:allowBackup="false"` in AndroidManifest.xml
+- **MEDIUM**: Added `level` enum validation in MCP `bump_version()` tool
+- **MEDIUM**: Removed unsafe runtime `pip install` in `audio_processor.py`
+- **MEDIUM**: Fixed symlink-following attack in `_cleanup_output_dir()` (mobile + desktop
+  `tts_bridge.py`) — added `os.path.islink()` check and `realpath` containment
+- **MEDIUM**: Sanitized error messages in HTTP responses (no `str(e)` exposure)
+- Created shared security utility module `tts/utils/security.py` with `is_safe_url()`,
+  `is_safe_session_id()`, `validate_image_upload()`, `validate_pdf_upload()`,
+  `validate_audio_upload()`, `is_path_within()`
+
+### Added
+- FEAT-74: Voice gender selection chips (Female/Male) in Output screen — wires
+  existing TtsEngineManager gender support to UI via ChipGroup
+- FEAT-80: Per-verse metre detection — MetreEngine.detect_line() + detect_per_line();
+  ProsodyEngine applies per-segment tts_rate when mixed metres detected in a stanza
+
+### Changed
+- SDLC gaps filled: root requirements.txt, AGENTS.md, Dockerfile + docker-compose.yml,
+  .claude/skills/claudeskills/SKILL.md populated
+- SDLC maturity (10 gaps): PR template, VS Code tasks (10), validate CI workflow (4 jobs),
+  agent prompts (6→12), MCP tools (9→21), VS Code settings enhanced, docs/ folder (16 specs),
+  version.json system, pre-commit hooks documented, feature flags pattern
+
+---
+
+## [Unreleased]
+
+<!-- Changes staged but not yet released go here -->
+---
+
+## [4.1.0] — 2026-03-09  (build 18)
+### Minor release
+### Added
+- **FEAT-75**: Segment-level playback highlighting — active segment in prosody preview
+  highlights with Material3 secondaryContainer color during audio playback. Tracked via
+  `onChunkStart` callback → `activePlayingIndex` in OutputState and ProsodySegmentAdapter.
+- **FEAT-76**: Export audio with metadata — `exportAudioWithMetadata()` saves to
+  `Music/MarathiTTS/` via `MediaStore.Audio.Media` with TITLE, ARTIST, ALBUM, DURATION
+  columns. Export dialog lets user set a custom title. Streaming chunks auto-concatenated
+  via `concatenateAudioChunks()` before export.
+- **FEAT-78**: Accessibility improvements — `contentDescription` on sliders (Speed,
+  Emotion Intensity), language Spinner, prosody segments (mode/metre/instructions),
+  export button. Decorative empty-state ImageView marked `importantForAccessibility=no`.
+
+### Fixed
+- **BUG-46 [CRITICAL]**: Verse mode crashes app — speed slider `stepSize=0.1` incompatible
+  with smart verse speed value `0.85`. Changed `stepSize` to `0.05`.
 - **BUG-43 [HIGH]**: TTS generation permanently locks after first attempt — `hasStartedGeneration`
   flag never reset in `generateSingle()`/`generateStreaming()`. Wrapped both in `try/finally`;
   also reset flag in `cancelGeneration()`. Verse mode was the most visible failure path.
@@ -174,6 +272,85 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
+## [4.1.0] — 2026-03-09  (build 18)
+### Minor release
+### Added
+- **FEAT-75**: Segment-level playback highlighting — active segment in prosody preview
+  highlights with Material3 secondaryContainer color during audio playback. Tracked via
+  `onChunkStart` callback → `activePlayingIndex` in OutputState and ProsodySegmentAdapter.
+- **FEAT-76**: Export audio with metadata — `exportAudioWithMetadata()` saves to
+  `Music/MarathiTTS/` via `MediaStore.Audio.Media` with TITLE, ARTIST, ALBUM, DURATION
+  columns. Export dialog lets user set a custom title. Streaming chunks auto-concatenated
+  via `concatenateAudioChunks()` before export.
+- **FEAT-78**: Accessibility improvements — `contentDescription` on sliders (Speed,
+  Emotion Intensity), language Spinner, prosody segments (mode/metre/instructions),
+  export button. Decorative empty-state ImageView marked `importantForAccessibility=no`.
+
+### Fixed
+- **BUG-46 [CRITICAL]**: Verse mode crashes app — speed slider `stepSize=0.1` incompatible
+  with smart verse speed value `0.85`. Changed `stepSize` to `0.05`.
+- **BUG-43 [HIGH]**: TTS generation permanently locks after first attempt — `hasStartedGeneration`
+  flag never reset in `generateSingle()`/`generateStreaming()`. Wrapped both in `try/finally`;
+  also reset flag in `cancelGeneration()`. Verse mode was the most visible failure path.
+- **BUG-44 [MEDIUM]**: Long Marathi prose not streaming — `splitSentences()` regex required
+  trailing whitespace after `.`/`;`, causing no splits. Unified regex to `(?<=[।॥?!.;])\s*`;
+  added comma/newline fallback for unpunctuated prose.
+- **BUG-45 [MEDIUM]**: `text_normalizer.py` eyelash-ra regex used `\u` escapes in raw strings,
+  causing `re.error: bad escape \u at position 2` on every normalize call. Replaced with actual
+  Devanagari characters across all 3 platforms.
+
+### Security
+- **CRITICAL**: Fixed SSRF in web app `website_view.py` — URL validation via DNS resolution
+  + IP range blocking before `requests.get()` (both `fetch_website_content` and
+  `extract_text_from_image_url`)
+- **CRITICAL**: Fixed path traversal in `tts_views.py` `stream_status()` — session_id now
+  validated as UUID pattern before use in file paths
+- **CRITICAL**: Fixed path traversal in MCP `sync_tts_file()` — rejects `..` components
+  and verifies resolved path stays within `tts/` directory
+- **CRITICAL**: Fixed SQL injection patterns in `db_id_reset.py`, `db_table_rename.py`,
+  `rename_app.py` — added table name validation (regex whitelist)
+- **HIGH**: Replaced `@csrf_exempt` with `@csrf_protect` on 6 Django views (OCR, STT,
+  script convert, AI correction × 3)
+- **HIGH**: Added upload validation with magic byte checks and size limits: images (10MB),
+  PDFs (50MB), audio (100MB) via new `tts/utils/security.py` module
+- **HIGH**: Fixed SSRF in mobile + desktop `web_bridge.py` — added `_is_safe_url()` with
+  DNS resolution and private IP rejection
+- **HIGH**: Fixed unsafe `pickle.load()` in `text_processor.py` (all 3 platforms) —
+  replaced with `RestrictedUnpickler` allowing only builtin types
+- **HIGH**: Restricted Android `FileProvider` scope from `path="/"` to specific subdirs
+- **HIGH**: Created `network_security_config.xml` with `cleartextTrafficPermitted="false"`
+- **HIGH**: Fixed path traversal in `stotra_view.py` — added `realpath` containment check
+  and symlink rejection
+- **MEDIUM**: Changed Django `DEBUG` default from `True` to `False` (env var override)
+- **MEDIUM**: Enabled `SECURE_CONTENT_TYPE_NOSNIFF` and `SECURE_BROWSER_XSS_FILTER` always
+- **MEDIUM**: Removed `urllib3.disable_warnings(InsecureRequestWarning)` from settings.py
+  and mobile `web_bridge.py`
+- **MEDIUM**: Added `X-Content-Type-Options: nosniff` header in JS middleware
+- **MEDIUM**: Set `android:allowBackup="false"` in AndroidManifest.xml
+- **MEDIUM**: Added `level` enum validation in MCP `bump_version()` tool
+- **MEDIUM**: Removed unsafe runtime `pip install` in `audio_processor.py`
+- **MEDIUM**: Fixed symlink-following attack in `_cleanup_output_dir()` (mobile + desktop
+  `tts_bridge.py`) — added `os.path.islink()` check and `realpath` containment
+- **MEDIUM**: Sanitized error messages in HTTP responses (no `str(e)` exposure)
+- Created shared security utility module `tts/utils/security.py` with `is_safe_url()`,
+  `is_safe_session_id()`, `validate_image_upload()`, `validate_pdf_upload()`,
+  `validate_audio_upload()`, `is_path_within()`
+
+### Added
+- FEAT-74: Voice gender selection chips (Female/Male) in Output screen — wires
+  existing TtsEngineManager gender support to UI via ChipGroup
+- FEAT-80: Per-verse metre detection — MetreEngine.detect_line() + detect_per_line();
+  ProsodyEngine applies per-segment tts_rate when mixed metres detected in a stanza
+
+### Changed
+- SDLC gaps filled: root requirements.txt, AGENTS.md, Dockerfile + docker-compose.yml,
+  .claude/skills/claudeskills/SKILL.md populated
+- SDLC maturity (10 gaps): PR template, VS Code tasks (10), validate CI workflow (4 jobs),
+  agent prompts (6→12), MCP tools (9→21), VS Code settings enhanced, docs/ folder (16 specs),
+  version.json system, pre-commit hooks documented, feature flags pattern
+
+---
+
 ## [3.0.0] — 2026-03
 
 **Tag:** `v3.0.0` → `v3.0.0-stable` (baseline for v4 pivot)
@@ -233,6 +410,85 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 ### Changed
 - GitHub Actions CI workflow added (`test_all_platforms.py` on ubuntu-latest).
 - Cross-platform path resolution with `_ROOT` in test script.
+
+---
+
+## [4.1.0] — 2026-03-09  (build 18)
+### Minor release
+### Added
+- **FEAT-75**: Segment-level playback highlighting — active segment in prosody preview
+  highlights with Material3 secondaryContainer color during audio playback. Tracked via
+  `onChunkStart` callback → `activePlayingIndex` in OutputState and ProsodySegmentAdapter.
+- **FEAT-76**: Export audio with metadata — `exportAudioWithMetadata()` saves to
+  `Music/MarathiTTS/` via `MediaStore.Audio.Media` with TITLE, ARTIST, ALBUM, DURATION
+  columns. Export dialog lets user set a custom title. Streaming chunks auto-concatenated
+  via `concatenateAudioChunks()` before export.
+- **FEAT-78**: Accessibility improvements — `contentDescription` on sliders (Speed,
+  Emotion Intensity), language Spinner, prosody segments (mode/metre/instructions),
+  export button. Decorative empty-state ImageView marked `importantForAccessibility=no`.
+
+### Fixed
+- **BUG-46 [CRITICAL]**: Verse mode crashes app — speed slider `stepSize=0.1` incompatible
+  with smart verse speed value `0.85`. Changed `stepSize` to `0.05`.
+- **BUG-43 [HIGH]**: TTS generation permanently locks after first attempt — `hasStartedGeneration`
+  flag never reset in `generateSingle()`/`generateStreaming()`. Wrapped both in `try/finally`;
+  also reset flag in `cancelGeneration()`. Verse mode was the most visible failure path.
+- **BUG-44 [MEDIUM]**: Long Marathi prose not streaming — `splitSentences()` regex required
+  trailing whitespace after `.`/`;`, causing no splits. Unified regex to `(?<=[।॥?!.;])\s*`;
+  added comma/newline fallback for unpunctuated prose.
+- **BUG-45 [MEDIUM]**: `text_normalizer.py` eyelash-ra regex used `\u` escapes in raw strings,
+  causing `re.error: bad escape \u at position 2` on every normalize call. Replaced with actual
+  Devanagari characters across all 3 platforms.
+
+### Security
+- **CRITICAL**: Fixed SSRF in web app `website_view.py` — URL validation via DNS resolution
+  + IP range blocking before `requests.get()` (both `fetch_website_content` and
+  `extract_text_from_image_url`)
+- **CRITICAL**: Fixed path traversal in `tts_views.py` `stream_status()` — session_id now
+  validated as UUID pattern before use in file paths
+- **CRITICAL**: Fixed path traversal in MCP `sync_tts_file()` — rejects `..` components
+  and verifies resolved path stays within `tts/` directory
+- **CRITICAL**: Fixed SQL injection patterns in `db_id_reset.py`, `db_table_rename.py`,
+  `rename_app.py` — added table name validation (regex whitelist)
+- **HIGH**: Replaced `@csrf_exempt` with `@csrf_protect` on 6 Django views (OCR, STT,
+  script convert, AI correction × 3)
+- **HIGH**: Added upload validation with magic byte checks and size limits: images (10MB),
+  PDFs (50MB), audio (100MB) via new `tts/utils/security.py` module
+- **HIGH**: Fixed SSRF in mobile + desktop `web_bridge.py` — added `_is_safe_url()` with
+  DNS resolution and private IP rejection
+- **HIGH**: Fixed unsafe `pickle.load()` in `text_processor.py` (all 3 platforms) —
+  replaced with `RestrictedUnpickler` allowing only builtin types
+- **HIGH**: Restricted Android `FileProvider` scope from `path="/"` to specific subdirs
+- **HIGH**: Created `network_security_config.xml` with `cleartextTrafficPermitted="false"`
+- **HIGH**: Fixed path traversal in `stotra_view.py` — added `realpath` containment check
+  and symlink rejection
+- **MEDIUM**: Changed Django `DEBUG` default from `True` to `False` (env var override)
+- **MEDIUM**: Enabled `SECURE_CONTENT_TYPE_NOSNIFF` and `SECURE_BROWSER_XSS_FILTER` always
+- **MEDIUM**: Removed `urllib3.disable_warnings(InsecureRequestWarning)` from settings.py
+  and mobile `web_bridge.py`
+- **MEDIUM**: Added `X-Content-Type-Options: nosniff` header in JS middleware
+- **MEDIUM**: Set `android:allowBackup="false"` in AndroidManifest.xml
+- **MEDIUM**: Added `level` enum validation in MCP `bump_version()` tool
+- **MEDIUM**: Removed unsafe runtime `pip install` in `audio_processor.py`
+- **MEDIUM**: Fixed symlink-following attack in `_cleanup_output_dir()` (mobile + desktop
+  `tts_bridge.py`) — added `os.path.islink()` check and `realpath` containment
+- **MEDIUM**: Sanitized error messages in HTTP responses (no `str(e)` exposure)
+- Created shared security utility module `tts/utils/security.py` with `is_safe_url()`,
+  `is_safe_session_id()`, `validate_image_upload()`, `validate_pdf_upload()`,
+  `validate_audio_upload()`, `is_path_within()`
+
+### Added
+- FEAT-74: Voice gender selection chips (Female/Male) in Output screen — wires
+  existing TtsEngineManager gender support to UI via ChipGroup
+- FEAT-80: Per-verse metre detection — MetreEngine.detect_line() + detect_per_line();
+  ProsodyEngine applies per-segment tts_rate when mixed metres detected in a stanza
+
+### Changed
+- SDLC gaps filled: root requirements.txt, AGENTS.md, Dockerfile + docker-compose.yml,
+  .claude/skills/claudeskills/SKILL.md populated
+- SDLC maturity (10 gaps): PR template, VS Code tasks (10), validate CI workflow (4 jobs),
+  agent prompts (6→12), MCP tools (9→21), VS Code settings enhanced, docs/ folder (16 specs),
+  version.json system, pre-commit hooks documented, feature flags pattern
 
 ---
 
