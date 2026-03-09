@@ -28,7 +28,7 @@
                 android:src="@drawable/ic_volume_up"
                 android:alpha="0.3"
                 app:tint="?attr/colorOnSurfaceVariant"
-                android:contentDescription="@string/tab_output"/>
+                android:importantForAccessibility="no"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -170,7 +170,8 @@
                     android:valueFrom="0.5"
                     android:valueTo="2.0"
                     android:value="1.0"
-                    android:stepSize="0.1"/>
+                    android:stepSize="0.05"
+                    android:contentDescription="@string/slider_speed"/>
 
                 <TextView
                     android:id="@+id/txt_speed_hint"
@@ -210,6 +211,15 @@
                         android:layout_height="wrap_content"
                         android:text="@string/action_save"
                         app:icon="@drawable/ic_download_24"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_export"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/action_export"
+                        app:icon="@drawable/ic_download_24"
+                        android:contentDescription="Export audio to Music folder with metadata"/>
 
                 </LinearLayout>
 
@@ -399,7 +409,8 @@
                     android:valueFrom="0.0"
                     android:valueTo="1.0"
                     android:value="0.5"
-                    android:stepSize="0.05"/>
+                    android:stepSize="0.05"
+                    android:contentDescription="@string/emotion_intensity_label"/>
 
                 <TextView
                     android:id="@+id/txt_intensity_value"

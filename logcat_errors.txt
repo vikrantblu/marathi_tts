@@ -1,0 +1,919 @@
+﻿--------- beginning of main
+03-09 16:50:58.134 22488 22488 E .office.outlook: BBinder_init Processname  com.microsoft.office.outlook  
+03-09 16:50:58.134 22488 22488 E .office.outlook: BBinder_init hasGetProcessName  com.microsoft.office.outlook
+03-09 16:50:58.256 22527 22527 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.256 22527 22527 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.311 22541 22541 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.312 22541 22541 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.392 22559 22559 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.394 22559 22559 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.451 22576 22576 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.452 22576 22576 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.622 22600 22600 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.622 22600 22600 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.669 22644 22644 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.680 22644 22644 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.749 22674 22674 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.750 22674 22674 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.814 22696 22696 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.815 22696 22696 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.945 22741 22741 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.945 22741 22741 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.990 22766 22766 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:58.990 22766 22766 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:58.995 22488 22712 E COST    : bootstrap: 27 result: 0
+03-09 16:50:59.212 22488 22655 E NativeCrashManager: register: NativeCrashManager is already enabled. Updating listener
+03-09 16:50:59.335 22838 22838 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:59.342 22838 22838 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:59.549 22861 22861 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:59.550 22861 22861 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:59.696 22872 22872 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:59.696 22872 22872 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:59.796 22884 22884 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:59.796 22884 22884 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:59.894 22889 22889 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:59.894 22889 22889 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:50:59.966 22895 22895 E cmd     : BBinder_init Processname  cmd  
+03-09 16:50:59.966 22895 22895 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.020 22900 22900 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.020 22900 22900 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.056 22905 22905 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.057 22905 22905 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.112 22909 22909 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.113 22909 22909 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.161 22914 22914 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.161 22914 22914 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.224 22922 22922 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.225 22922 22922 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.252 22926 22926 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.253 22926 22926 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.280 22932 22932 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.281 22932 22932 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.338 22945 22945 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.338 22945 22945 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.366 22949 22949 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.366 22949 22949 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.393 22953 22953 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.394 22953 22953 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.424 22957 22957 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.424 22957 22957 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.456 23025 23025 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.457 23025 23025 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.515 23034 23034 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.516 23034 23034 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.546 23038 23038 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.546 23038 23038 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.575 23042 23042 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.575 23042 23042 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.604 23046 23046 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.604 23046 23046 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.632 23050 23050 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.632 23050 23050 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.661 23054 23054 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.661 23054 23054 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.690 23058 23058 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.690 23058 23058 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.719 23063 23063 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.720 23063 23063 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.747 23071 23071 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.747 23071 23071 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.776 23075 23075 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.777 23075 23075 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.811 23080 23080 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.811 23080 23080 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.839 23084 23084 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.839 23084 23084 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.896 23100 23100 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.896 23100 23100 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.925 23105 23105 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.925 23105 23105 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.955 23109 23109 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.955 23109 23109 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:00.985 23113 23113 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:00.985 23113 23113 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:01.012 23127 23127 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:01.012 23127 23127 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:02.355 12163 12815 E Label_VideoCapture: start converter fail:-1
+03-09 16:51:02.947 22488 22636 E AppCenter: Sending logs groupName=group_core id=f7ffa95a-b99e-47c1-908f-e47cfc2d024d failed
+03-09 16:51:02.947 22488 22636 E AppCenter: com.microsoft.appcenter.http.HttpException: 401 - {"status":"AppSecretForbiddenListed","validDiagnosticsIds":[],"throttledDiagnosticsIds":[],"correlationId":"17a888e5-c907-469e-9155-0ec1cc535e51"}
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at Yh.c.a(Unknown Source:422)
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at Yh.c.b(Unknown Source:6)
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at Yh.c.doInBackground(Unknown Source:2)
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at android.os.AsyncTask$3.call(AsyncTask.java:394)
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+03-09 16:51:02.947 22488 22636 E AppCenter: 	at java.lang.Thread.run(Thread.java:1563)
+03-09 16:51:03.648 23190 23190 E ager:releasable: BBinder_init Processname  com.vivo.imanager:releasable  
+03-09 16:51:03.648 23190 23190 E ager:releasable: BBinder_init hasGetProcessName  com.vivo.imanager:releasable
+03-09 16:51:03.660 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.662 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.670 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.671 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.674 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.674 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.676 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.677 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.680 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.680 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.684 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.684 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.687 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.687 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.689 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.690 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.692 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.692 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.694 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.694 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.697 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.697 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.700 12343 12363 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.700 12343 12363 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.702 12343 12363 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.703 12343 12363 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.705 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.706 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.708 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:03.709 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:03.711 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.001 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.002 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.005 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.005 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.009 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.009 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.012 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.013 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.016 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.016 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.020 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.020 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.024 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.024 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.028 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.028 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.032 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.032 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.036 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.036 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.039 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.040 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.043 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.043 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.047 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.048 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.052 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.052 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.056 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.056 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.061 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: Writing exception to parcel
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: android.database.sqlite.SQLiteException: no such column: extra2 (code 1 SQLITE_ERROR): , while compiling: SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switch, media_id, bucket_display_name, height, longitude, image_type, _data, orientation, _display_name, date_added, date_modified, fisheye, mime_type, group_id, width, package_name, _id, live_photo, relative_path FROM image WHERE (_id = ?)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(Unknown Source:0)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQuery.<init>(SQLiteQuery.java:37)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDirectCursorDriver.query(SQLiteDirectCursorDriver.java:46)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteDatabase.rawQueryWithFactory(SQLiteDatabase.java:1851)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:601)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.database.sqlite.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:472)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at com.vivo.data_api.recycle.RecycleProvider.query(Unknown Source:151)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1727)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider.query(ContentProvider.java:1823)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+03-09 16:51:04.062 12343 19053 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+03-09 16:51:04.066 12343 19053 E SQLiteLog: (1) no such column: extra2 in "SELECT camera_refocus, date_recycled, media_special, latitude, extra2, facing, audioseek, extra1, data_original, title, group_index, _size, bucket_id, fullview, datetaken, func_switc
+03-09 16:51:06.274 23255 23255 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.274 23255 23255 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.338 23265 23265 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.338 23265 23265 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.372 23269 23269 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.373 23269 23269 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.409 23273 23273 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.409 23273 23273 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.441 23277 23277 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.441 23277 23277 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.470 23282 23282 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.471 23282 23282 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.501 23286 23286 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.501 23286 23286 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.527 23290 23290 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.527 23290 23290 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.554 23294 23294 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.555 23294 23294 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.581 23299 23299 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.581 23299 23299 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.608 23304 23304 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.608 23304 23304 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.635 23309 23309 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.635 23309 23309 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.661 23313 23313 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.662 23313 23313 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.687 23317 23317 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.688 23317 23317 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.716 23321 23321 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.717 23321 23321 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.744 23325 23325 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.745 23325 23325 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.772 23329 23329 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.772 23329 23329 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.826 23337 23337 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.826 23337 23337 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.852 23341 23341 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.852 23341 23341 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.880 23345 23345 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.880 23345 23345 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.906 23349 23349 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.907 23349 23349 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.935 23354 23354 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.935 23354 23354 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:06.993 23362 23362 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:06.993 23362 23362 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.025 23366 23366 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.025 23366 23366 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.056 23370 23370 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.057 23370 23370 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.121 23378 23378 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.121 23378 23378 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.153 23387 23387 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.153 23387 23387 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.181 23391 23391 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.181 23391 23391 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.208 23396 23396 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.209 23396 23396 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.236 23402 23402 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.236 23402 23402 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.268 23406 23406 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.268 23406 23406 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.296 23410 23410 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.296 23410 23410 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.321 23415 23415 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.322 23415 23415 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.349 23419 23419 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.350 23419 23419 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.378 23423 23423 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.378 23423 23423 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.404 23427 23427 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.404 23427 23427 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.464 23436 23436 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.464 23436 23436 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.498 23440 23440 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.498 23440 23440 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.525 23444 23444 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.526 23444 23444 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.552 23448 23448 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.552 23448 23448 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.579 23452 23452 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.579 23452 23452 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.652 23466 23466 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.652 23466 23466 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.682 23470 23470 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.682 23470 23470 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.710 23475 23475 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.710 23475 23475 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.739 23479 23479 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.739 23479 23479 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.771 23486 23486 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.772 23486 23486 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.802 23490 23490 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.802 23490 23490 E cmd     : BBinder_init hasGetProcessName  cmd
+03-09 16:51:07.834 23494 23494 E cmd     : BBinder_init Processname  cmd  
+03-09 16:51:07.835 23494 23494 E cmd     : BBinder_init hasGetProcessName  cmd

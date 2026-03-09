@@ -386,16 +386,28 @@ _CLASSICAL_ANUSVARA_RE = re.compile(
 #
 # We apply Rule B and C conservatively via known word patterns.
 
-# Words where gTTS gets schwa deletion wrong (add explicit halant)
+# Words where gTTS gets schwa deletion wrong (add explicit halant).
+# Key = written form, Value = phonetically corrected form with halant
+# inserted where gTTS incorrectly retains the inherent 'a' (schwa).
+#
+# Marathi schwa deletion rules:
+#   1. Word-final schwa is ALWAYS deleted (gTTS handles this OK)
+#   2. Medial schwa before a suffixed matra is deleted:
+#      CaCi → C्Ci  (e.g., मालकी → माल्की)
+#   3. In CVCV patterns, medial schwas are deleted:
+#      CaCaC → C्CaC (e.g., सरकार → सर्कार)
+#   4. Reduplicated words delete medial schwas:
+#      CaCaC-CaCaC → CaC्CaC (e.g., बडबड → बड्बड)
 _SCHWA_DELETION_LEXICON = {
-    # Three-syllable Rule B: middle schwa deleted before trailing matra
+    # ── Three-syllable Rule B: middle schwa deleted before matra ─────
     'मालकी': 'माल्की',
     'सरकी': 'सर्की',
     'चमकी': 'चम्की',
     'कमकी': 'कम्की',
     'बरकी': 'बर्की',
     'ढमकी': 'ढम्की',
-    # Four-syllable Rule C: 2nd and 4th schwa deleted
+
+    # ── Four-syllable Rule C: medial schwa deleted ───────────────────
     'करवत': 'कर्वत',
     'सरपट': 'सर्पट',
     'अलमट': 'अल्मट',
@@ -406,9 +418,208 @@ _SCHWA_DELETION_LEXICON = {
     'कटकट': 'कट्कट',
     'खटपट': 'खट्पट',
     'गडबड': 'गड्बड',
-    # Common words where gTTS retains incorrect schwa
-    'सरकार': 'सर्कार',     # sarkār not sarakār
     'अरवट': 'अर्वट',
+
+    # ── HIGH-FREQUENCY Marathi words — schwa correction ──────────────
+    # These are everyday words where gTTS retains incorrect medial schwa
+    'सरकार': 'सर्कार',       # government (sar-kaar NOT sa-ra-kaar)
+    'नमस्कार': 'नमस्कार',   # greeting — compound, gTTS handles it
+    'अक्कल': 'अक्कल',       # wisdom
+    'फरक': 'फर्क',           # difference (fark NOT fa-rak)
+    'परत': 'पर्त',           # again/return (part NOT pa-rat)
+    'वरचा': 'वर्चा',         # upper (var-cha)
+    'करणार': 'कर्णार',       # will do
+    'मरण': 'मर्ण',           # death (mar-aN)
+    'तरण': 'तर्ण',           # swimming
+    'सरळ': 'सर्ळ',           # straight (sarL)
+    'करून': 'करून',           # having done (OK as-is, matra protects)
+    'बरोबर': 'बरोबर्',       # correct/equal
+    'अंतर': 'अंतर्',         # distance
+    'सुरवात': 'सुर्वात',     # beginning (sur-vaat)
+    'वसलेले': 'वस्लेले',   # situated
+    'समजा': 'सम्जा',         # understand! (sam-ja)
+    'लवकर': 'लव्कर',         # soon (lav-kar)
+    'नवरा': 'नव्रा',         # husband (nav-ra)
+    'सकाळ': 'सकाळ',           # morning (sa-kaaL, first schwa kept — 2-syl)
+    'दुपार': 'दुपार',         # afternoon
+    'संध्याकाळ': 'संध्याकाळ', # evening (compound — OK)
+    'रात्र': 'रात्र',         # night (OK — cluster)
+    'दिवस': 'दिव्स',         # day (div-s NOT di-vas)
+    'आठवडा': 'आठ्वडा',       # week (aaTh-va-Da)
+    'महिना': 'महिना',         # month
+    'वरून': 'वरून',           # from above (OK — matra)
+    'खरेदी': 'खरेदी',         # purchase (OK — matra)
+    'विकास': 'विकास',         # development
+    'प्रगती': 'प्रगती',       # progress
+    'कामगार': 'काम्गार',     # worker (kaam-gaar)
+    'मजदूर': 'मज्दूर',       # labourer (maj-door)
+    'कचरा': 'कच्रा',         # garbage (kach-ra)
+    'अचानक': 'अचान्क',       # suddenly (a-chaank)
+    'बदल': 'बद्ल',           # change (bad-l)
+    'नक्कल': 'नक्कल',       # imitation (OK — geminate)
+    'तक्रार': 'तक्रार',     # complaint (OK — cluster)
+    'मुलगा': 'मुल्गा',       # boy (mul-gaa)
+    'मुलगी': 'मुल्गी',       # girl (mul-gee)
+    'मुलांना': 'मुलांना',   # to children (OK — anusvara)
+    'कळत': 'कळ्त',           # understanding (kaL-t)
+    'बसत': 'बस्त',           # sitting (bas-t)
+    'वळत': 'वळ्त',           # turning (vaL-t)
+    'मिळत': 'मिळ्त',         # getting (miL-t)
+    'सुटत': 'सुट्त',         # releasing (suT-t)
+    'बघत': 'बघ्त',           # looking (bagh-t)
+    'हसत': 'हस्त',           # laughing (has-t)
+    'रडत': 'रड्त',           # crying (raD-t)
+    'पडत': 'पड्त',           # falling (paD-t)
+    'चढत': 'चढ्त',           # climbing (chaDh-t)
+    'उतरत': 'उतर्त',         # descending
+    'सुरू': 'सुरू',           # started (OK — matra)
+
+    # ── Pronouns and common function words ───────────────────────────
+    'तुमचा': 'तुम्चा',       # your (m.) (tum-cha)
+    'तुमची': 'तुम्ची',       # your (f.)
+    'तुमचे': 'तुम्चे',       # your (n.)
+    'आमचा': 'आम्चा',         # our (m.)
+    'आमची': 'आम्ची',         # our (f.)
+    'आमचे': 'आम्चे',         # our (n.)
+    'त्यांचा': 'त्यांचा',   # their (OK — cluster)
+    'कोणाचा': 'कोणाचा',     # whose (OK — matra protected)
+    'तसेच': 'तसेच्',         # likewise
+    'जसेच': 'जसेच्',         # just as
+    'तोपर्यंत': 'तोपर्यंत', # until (compound OK)
+    'मात्र': 'मात्र',         # however (OK — cluster)
+
+    # ── Everyday nouns — medial schwa correction ─────────────────────
+    'पगार': 'पगार',           # salary (pa-gaar, 2 syl OK)
+    'कपडे': 'कप्डे',         # clothes (kap-De)
+    'कपडा': 'कप्डा',         # cloth (kap-Da)
+    'चपल': 'चप्ल',           # sandal (chap-l)
+    'तबला': 'तब्ला',         # tabla drum (tab-la)
+    'दफ्तर': 'दफ्तर',       # office (OK — cluster)
+    'सबंध': 'सबंध',           # relation (OK)
+    'जमीन': 'जमीन',           # land
+    'किल्ला': 'किल्ला',       # fort (OK — geminate)
+    'पक्षी': 'पक्षी',         # bird (OK — cluster)
+    'मासा': 'मासा',           # fish (OK — 2 syl)
+    'कावळा': 'काव्ळा',       # crow (kaav-La)
+    'चिमणी': 'चिम्णी',       # sparrow (chim-Nee)
+    'कबूतर': 'कबूतर्',       # pigeon
+    'ससा': 'ससा',               # rabbit (OK)
+    'कुत्रा': 'कुत्रा',       # dog (OK — cluster)
+    'माकड': 'माक्ड',         # monkey (maak-D)
+    'उंदीर': 'उंदीर',         # rat (OK — anusvara)
+    'घोडा': 'घोडा',           # horse (OK — 2 syl)
+    'बैल': 'बैल',             # bull (OK)
+    'फळ': 'फळ',               # fruit (OK — 1 syl)
+    'भाजी': 'भाजी',           # vegetable (OK)
+    'भाकरी': 'भाक्री',       # flatbread (bhaak-ree)
+    'चहा': 'चहा',             # tea (OK — 2 syl)
+    'दुध': 'दूध',             # milk (doodh)
+    'साखर': 'साख्र',         # sugar (saakh-r)
+    'मसाला': 'मसाला',         # spice (OK — 2 syl + matra)
+    'भांडी': 'भांडी',         # utensils (OK)
+
+    # ── Verbs — present continuous and habitual ──────────────────────
+    'करतात': 'कर्तात',       # they do (kar-taat)
+    'बोलतात': 'बोल्तात',     # they speak
+    'जातात': 'जातात',         # they go (OK — matra)
+    'येतात': 'येतात',         # they come (OK — matra)
+    'बसतात': 'बस्तात',       # they sit
+    'हसतात': 'हस्तात',       # they laugh
+    'पडतात': 'पड्तात',       # they fall
+    'धावतात': 'धाव्तात',     # they run
+    'खेळतात': 'खेळ्तात',     # they play
+    'वाचतात': 'वाच्तात',     # they read
+    'मागतात': 'माग्तात',     # they ask
+    'चालतात': 'चाल्तात',     # they walk
+    'कळतात': 'कळ्तात',       # they understand
+    'मिळतात': 'मिळ्तात',     # they get
+    'बसला': 'बस्ला',         # he sat (bas-la)
+    'हसला': 'हस्ला',         # he laughed
+    'बसली': 'बस्ली',         # she sat
+    'बसले': 'बस्ले',         # they sat
+    'पडला': 'पड्ला',         # he fell
+    'पडली': 'पड्ली',         # she fell
+    'बघतो': 'बघ्तो',         # he sees
+    'बघते': 'बघ्ते',         # she sees
+    'बघतात': 'बघ्तात',       # they see
+    'ऐकतो': 'ऐक्तो',         # he hears (aik-to)
+    'ऐकते': 'ऐक्ते',         # she hears
+    'ऐकतात': 'ऐक्तात',       # they hear
+    'समजतो': 'समज्तो',       # he understands
+    'समजते': 'समज्ते',       # she understands
+    'शिकतो': 'शिक्तो',       # he learns (shik-to)
+    'शिकते': 'शिक्ते',       # she learns
+    'शिकला': 'शिक्ला',       # he learned
+    'शिकली': 'शिक्ली',       # she learned
+    'निघतात': 'निघ्तात',     # they leave
+    'निघाला': 'निघाला',       # he departed (OK — matra)
+    'चालला': 'चाल्ला',       # he walked
+    'चालली': 'चाल्ली',       # she walked
+    'पळतो': 'पळ्तो',         # he runs (paL-to)
+    'पळते': 'पळ्ते',         # she runs
+    'उठला': 'उठ्ला',         # he got up
+    'उठली': 'उठ्ली',         # she got up
+    'झोपला': 'झोप्ला',       # he slept
+    'झोपली': 'झोप्ली',       # she slept
+    'रडला': 'रड्ला',         # he cried
+    'रडली': 'रड्ली',         # she cried
+    'सापडला': 'सापड्ला',     # he was found
+    'सापडली': 'सापड्ली',     # she was found
+    'सापडले': 'सापड्ले',     # they were found
+    'विसरला': 'विसर्ला',     # he forgot
+    'विसरली': 'विसर्ली',     # she forgot
+
+    # ── Adjectives — medial schwa ────────────────────────────────────
+    'सुंदर': 'सुंदर्',       # beautiful (trailing schwa delete hint)
+    'अवघड': 'अवघ्ड',         # difficult (a-vaghD)
+    'सगळा': 'सग्ळा',         # all (m.) (sag-La)
+    'सगळी': 'सग्ळी',         # all (f.)
+    'सगळे': 'सग्ळे',         # all (n.)
+    'वेगळा': 'वेग्ळा',       # different (veg-La)
+    'वेगळी': 'वेग्ळी',
+    'वेगळे': 'वेग्ळे',
+    'बरेच': 'बरेच्',         # quite/many (barech)
+    'अनेक': 'अनेक्',         # many (aneek)
+    'नवलाचे': 'नव्लाचे',     # wondrous
+    'जवळचा': 'जवळ्चा',       # nearby (javaL-cha)
+    'जवळची': 'जवळ्ची',
+    'सोबतचा': 'सोबत्चा',     # accompanying
+    'दुसरा': 'दुस्रा',       # another (m.) (dus-ra)
+    'दुसरी': 'दुस्री',       # another (f.)
+    'दुसरे': 'दुस्रे',       # another (n.)
+    'तिसरा': 'तिस्रा',       # third (m.)
+    'तिसरी': 'तिस्री',       # third (f.)
+    'पहिला': 'पहिला',         # first (OK — matra before la)
+    'शेवटचा': 'शेवट्चा',     # last
+
+    # ── Common adverbs/postpositions with medial schwa ───────────────
+    'अगदी': 'अग्दी',         # exactly (ag-dee)
+    'सगळ्या': 'सग्ळ्या',     # of all
+    'नक्की': 'नक्की',         # definitely (OK — geminate)
+    'खरच': 'खर्च',           # really (kharch — also means expense!)
+    'जरूर': 'जरूर',           # certainly
+    'अजिबात': 'अजिबात',       # at all (OK)
+    'असतो': 'अस्तो',         # he is (as-to)
+    'असते': 'अस्ते',         # she/it is
+    'असतात': 'अस्तात',       # they are
+    'असला': 'अस्ला',         # was (m.) (as-la)
+    'असली': 'अस्ली',         # was (f.)
+    'असले': 'अस्ले',         # was (n.)
+    'होतो': 'होतो',           # he becomes (OK)
+    'होते': 'होते',           # she/it becomes (OK)
+    'होता': 'होता',           # he was (OK)
+    'होती': 'होती',           # she was (OK)
+    'नसतो': 'नस्तो',         # he is not
+    'नसते': 'नस्ते',         # she/it is not
+    'नसतात': 'नस्तात',       # they are not
+    'वगैरे': 'वगैरे',         # etcetera (OK)
+    'वाटत': 'वाट्त',         # feeling
+    'नसला': 'नस्ला',         # was not (m.)
+    'नसली': 'नस्ली',         # was not (f.)
+    'करता': 'कर्ता',         # for / while doing (kar-ta)
+    'मिळवत': 'मिळ्वत',       # earning/obtaining
+    'सांभाळत': 'सांभाळ्त',   # taking care of
+    'सतत': 'सत्त',           # continuously (sat-t)
 }
 
 # ── English Vowel Integration ────────────────────────────────────────────
@@ -425,6 +636,66 @@ _ENGLISH_VOWEL_FALLBACK = {
     '\u0945': '\u0947',  # ॅ → े (matra)
     # ऑ and ॉ map to ओ/ो but gTTS handles them — only apply if needed
 }
+
+
+# ── Rule-based medial schwa deletion ──────────────────────────────────────
+# Catches words NOT covered by the lexicon above.  Conservative: only
+# applies to clear C₁ a C₂ V patterns (consonant + inherent schwa +
+# consonant + explicit matra) in the middle of a word.
+#
+# Devanagari consonants: \u0915-\u0939
+# Halant (virama): \u094D
+# Matras (dependent vowels): \u093E-\u094C
+# Anusvara: \u0902   Chandrabindu: \u0901   Visarga: \u0903
+#
+# Pattern: A consonant (C₁) not followed by halant (meaning inherent 'a'),
+# followed by consonant C₂ + matra → insert halant after C₁.
+# This deletes the inherent schwa between C₁ and C₂.
+#
+# We EXCLUDE: (a) word-initial position (first syllable schwa preserved),
+#             (b) cases where C₁ already has a halant or matra,
+#             (c) Sanskrit conjuncts that should not be broken.
+
+# Pre-compiled regex for medial schwa deletion
+# Matches: (matra-or-vowel-sign)(consonant)(consonant + matra)
+# The middle consonant has inherent schwa that should be deleted.
+_MEDIAL_SCHWA_RE = re.compile(
+    r'([\u093E-\u094C\u0902\u0901])'   # group 1: preceding matra/anusvara/chandrabindu
+    r'([\u0915-\u0939])'                # group 2: C₁ (has inherent schwa)
+    r'(?=[\u0915-\u0939][\u093E-\u094C])'  # lookahead: C₂ + matra
+)
+
+# Sanskrit/tatsama prefixes where medial schwa should NOT be deleted
+_SCHWA_PRESERVE_PREFIXES = {
+    'अनु', 'प्रति', 'परि', 'अभि', 'उप', 'सम', 'अधि', 'वि',
+    'नि', 'प्र', 'अव', 'आ',
+}
+
+
+def _apply_rule_based_schwa_deletion(word: str) -> str:
+    """Delete medial schwa in common Marathi patterns.
+
+    Only applies when a consonant with inherent schwa sits between
+    a syllable with an explicit matra and another syllable with an
+    explicit matra.  This is the most common and safest pattern for
+    Marathi schwa deletion.
+
+    Examples:
+        कपडे → कप्डे  (the प has inherent 'a' deleted)
+        बसतात → बस्तात  (the स has inherent 'a' deleted)
+    """
+    if len(word) < 3:
+        return word
+
+    # Skip words that start with known Sanskrit prefixes — they tend
+    # to preserve medial schwas (e.g., अनुमती, प्रतिमा)
+    for prefix in _SCHWA_PRESERVE_PREFIXES:
+        if word.startswith(prefix) and len(word) > len(prefix) + 2:
+            return word
+
+    # Apply the rule: insert halant after C₁ to delete its inherent schwa
+    result = _MEDIAL_SCHWA_RE.sub('\\1\\2\u094D', word)
+    return result
 
 
 def apply_marathi_phonetics(text: str, for_system_tts: bool = False) -> str:
@@ -476,9 +747,25 @@ def apply_marathi_phonetics(text: str, for_system_tts: bool = False) -> str:
     # नाहीं → नाही,  करतीं → करती,  गेलीं → गेली
     text = _CLASSICAL_ANUSVARA_RE.sub(r'\1', text)
 
-    # ── 4. Schwa Deletion Lexicon ─────────────────────────────────────
-    for original, replacement in _SCHWA_DELETION_LEXICON.items():
-        text = re.sub(r'\b' + re.escape(original) + r'\b', replacement, text)
+    # ── 4. Schwa Deletion (lexicon + rule-based) ──────────────────────
+    # NOTE: Python re \b word boundary does NOT work with Devanagari
+    # matras (ा ी ू etc. are not \w), so we split into tokens manually.
+    _punct_re = re.compile(r'([,।॥.!?;:\-\(\)]+)')
+    tokens = text.split()
+    for i, tok in enumerate(tokens):
+        # Separate trailing/leading punctuation from the Devanagari word
+        parts = _punct_re.split(tok)
+        for j, part in enumerate(parts):
+            if not part:
+                continue
+            # Try lexicon first (exact match)
+            if part in _SCHWA_DELETION_LEXICON:
+                parts[j] = _SCHWA_DELETION_LEXICON[part]
+            else:
+                # Rule-based medial schwa deletion for unlisted words
+                parts[j] = _apply_rule_based_schwa_deletion(part)
+        tokens[i] = ''.join(parts)
+    text = ' '.join(tokens)
 
     # ── 5. English Vowel Fallback (System TTS only) ──────────────────
     if for_system_tts:

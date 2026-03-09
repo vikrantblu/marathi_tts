@@ -142,6 +142,9 @@
     <string name="action_copy">Copy</string>
     <string name="action_share">Share</string>
     <string name="action_save">Save</string>
+    <string name="action_export">Export</string>
+    <string name="export_dialog_title">Export Audio</string>
+    <string name="export_title_hint">Title (for music player)</string>
     <string name="emotion_title">Emotion Analysis</string>
     <string name="emotion_intensity_label">Emotion Intensity</string>
     <string name="emotion_intensity_default">50%</string>
@@ -230,4 +233,7 @@
     <string name="me_test_subtitle">Run feature tests (developer)</string>
     <string name="settings_dev_mode">Developer mode</string>
     <string name="settings_dev_mode_desc">Show Test Dashboard in Me tab</string>
+
+    <!-- Accessibility (FEAT-78) -->
+    <string name="spinner_language_desc">Select language</string>
 </resources>

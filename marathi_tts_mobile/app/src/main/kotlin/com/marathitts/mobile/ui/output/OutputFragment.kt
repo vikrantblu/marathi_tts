@@ -27,6 +27,7 @@ class OutputFragment : Fragment() {
     private var isVerse: Boolean = false
 
     private lateinit var prosodyAdapter: ProsodySegmentAdapter
+    private var hasAutoPlayed = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -55,6 +56,7 @@ class OutputFragment : Fragment() {
 
         // Auto-trigger generation when text is provided
         if (inputText.isNotBlank()) {
+            hasAutoPlayed = false
             viewModel.generate(inputText, language, isVerse)
         }
     }
@@ -128,6 +130,7 @@ class OutputFragment : Fragment() {
                     getString(R.string.prosody_segment_count, state.prosodySegments.size)
                 prosodyAdapter.submitList(state.prosodySegments)
                 prosodyAdapter.regeneratingIndex = state.regeneratingIndex
+                prosodyAdapter.activePlayingIndex = state.activePlayingIndex
             } else {
                 binding.prosodyPreviewCard.visibility = View.GONE
             }
@@ -138,7 +141,8 @@ class OutputFragment : Fragment() {
             }
 
             // Auto-play when generation completes
-            if (hasAudio && !audioPlayer.isPlaying) {
+            if (hasAudio && !hasAutoPlayed && !audioPlayer.isPlaying) {
+                hasAutoPlayed = true
                 autoPlay(state)
             }
         }
@@ -153,32 +157,40 @@ class OutputFragment : Fragment() {
                     activity?.runOnUiThread {
                         binding.txtPlaybackStatus.text =
                             getString(R.string.output_streaming, idx + 1, state.streamChunks.size)
+                        // FEAT-75: highlight the current playing segment
+                        viewModel.setActivePlayingIndex(idx)
                     }
                 },
                 onAllComplete = {
                     activity?.runOnUiThread {
                         binding.txtPlaybackStatus.text = getString(R.string.output_playback_done)
+                        viewModel.setActivePlayingIndex(-1)
                     }
                 },
                 onError = { err ->
                     activity?.runOnUiThread {
                         binding.txtPlaybackStatus.text = "Playback error: $err"
+                        viewModel.setActivePlayingIndex(-1)
                     }
                 }
             )
         } else {
             val path = state.audioPath ?: return
             binding.txtPlaybackStatus.text = getString(R.string.output_playing)
+            // FEAT-75: single file — highlight segment 0
+            viewModel.setActivePlayingIndex(0)
             audioPlayer.playAsync(
                 filePath = path,
                 onComplete = {
                     activity?.runOnUiThread {
                         binding.txtPlaybackStatus.text = getString(R.string.output_playback_done)
+                        viewModel.setActivePlayingIndex(-1)
                     }
                 },
                 onError = { err ->
                     activity?.runOnUiThread {
                         binding.txtPlaybackStatus.text = "Playback error: $err"
+                        viewModel.setActivePlayingIndex(-1)
                     }
                 }
             )
@@ -206,6 +218,7 @@ class OutputFragment : Fragment() {
         binding.btnStop.setOnClickListener {
             audioPlayer.stop()
             binding.txtPlaybackStatus.text = getString(R.string.output_stopped)
+            viewModel.setActivePlayingIndex(-1)
         }
 
         binding.btnCancel.setOnClickListener {
@@ -240,6 +253,45 @@ class OutputFragment : Fragment() {
                 Toast.makeText(requireContext(), "No audio to save", Toast.LENGTH_SHORT).show()
             }
         }
+
+        // FEAT-76: Export with metadata to Music library
+        binding.btnExport.setOnClickListener {
+            val state = viewModel.state.value ?: return@setOnClickListener
+            // For streaming, concatenate chunks first; otherwise use single file
+            val path = if (state.streamChunks.size > 1) {
+                val merged = java.io.File(requireContext().cacheDir, "export_merged.mp3").absolutePath
+                if (OutputActions.concatenateAudioChunks(state.streamChunks, merged)) merged else null
+            } else {
+                state.audioPath
+            }
+            if (path == null) {
+                Toast.makeText(requireContext(), "No audio to export", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            showExportDialog(path)
+        }
+    }
+
+    /** FEAT-76: Show export dialog for MP3 title metadata. */
+    private fun showExportDialog(audioPath: String) {
+        val titleInput = EditText(requireContext()).apply {
+            setText(inputText.take(80))
+            hint = getString(R.string.export_title_hint)
+            setPadding(48, 24, 48, 24)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.export_dialog_title))
+            .setView(titleInput)
+            .setPositiveButton(getString(R.string.action_export)) { _, _ ->
+                val title = titleInput.text.toString().trim().ifBlank { "Marathi TTS" }
+                OutputActions.exportAudioWithMetadata(
+                    context = requireContext(),
+                    audioPath = audioPath,
+                    title = title
+                )
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     /** FEAT-54: Emotion intensity slider wiring. */

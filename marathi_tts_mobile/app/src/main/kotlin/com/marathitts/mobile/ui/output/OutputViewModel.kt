@@ -37,7 +37,8 @@ data class OutputState(
     val prosodySegments: List<ProsodySegment> = emptyList(),
     val isVerseDetected: Boolean = false,
     val detectedMetre: String = "",
-    val regeneratingIndex: Int = -1
+    val regeneratingIndex: Int = -1,
+    val activePlayingIndex: Int = -1
 )
 
 private const val STREAMING_THRESHOLD = 250
@@ -104,6 +105,11 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
     /** FEAT-74: Update voice gender. */
     fun setGender(gender: String) {
         _state.value = _state.value?.copy(gender = gender)
+    }
+
+    /** FEAT-75: Update the currently playing segment index for playback highlighting. */
+    fun setActivePlayingIndex(index: Int) {
+        _state.value = _state.value?.copy(activePlayingIndex = index)
     }
 
     /**

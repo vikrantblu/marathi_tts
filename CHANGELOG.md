@@ -6,6 +6,18 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
+## [Unreleased]
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
+
+---
+
 ## [4.1.0] — 2026-03-09  (build 18)
 ### Minor release
 ### Added

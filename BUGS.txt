@@ -10,6 +10,12 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Recently Fixed (Unreleased)
 
+- ~~BUG-47 [HIGH] Schwa deletion lexicon never matches Devanagari words — \b word boundary broken~~
+  (fixed [Unreleased] — Python re \b treats Devanagari matras (ा ी ू etc.) as \W, so \b
+  matches INSIDE words rather than at word edge.  Replaced regex-based lookup with
+  token-splitting approach.  Also expanded _SCHWA_DELETION_LEXICON from ~20 to ~200 entries
+  and added rule-based medial schwa deletion for unlisted common Marathi words.)
+
 - ~~BUG-46 [CRITICAL] Verse mode crashes app — speed slider stepSize=0.1 incompatible with 0.85 value~~
   (fixed [Unreleased] — changed slider_speed stepSize from 0.1 to 0.05 in fragment_output.xml
   so 0.85 (= 0.5 + 7×0.05) is a valid step position. FEAT-48 smart verse speed sets 0.85x.)

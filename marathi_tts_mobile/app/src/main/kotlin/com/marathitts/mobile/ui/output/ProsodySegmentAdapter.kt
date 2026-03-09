@@ -29,6 +29,15 @@ class ProsodySegmentAdapter(
             if (value >= 0 && value < itemCount) notifyItemChanged(value)
         }
 
+    /** FEAT-75: Index of the currently playing segment (for highlight). */
+    var activePlayingIndex: Int = -1
+        set(value) {
+            val old = field
+            field = value
+            if (old >= 0 && old < itemCount) notifyItemChanged(old)
+            if (value >= 0 && value < itemCount) notifyItemChanged(value)
+        }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_prosody_segment, parent, false)
@@ -37,7 +46,13 @@ class ProsodySegmentAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val segment = getItem(position)
-        holder.bind(segment, regeneratingIndex == position, onSegmentClick, onSegmentLongClick)
+        holder.bind(
+            segment,
+            isRegenerating = regeneratingIndex == position,
+            isPlaying = activePlayingIndex == position,
+            onClick = onSegmentClick,
+            onLongClick = onSegmentLongClick
+        )
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -51,11 +66,26 @@ class ProsodySegmentAdapter(
         fun bind(
             segment: ProsodySegment,
             isRegenerating: Boolean,
+            isPlaying: Boolean,
             onClick: (ProsodySegment) -> Unit,
             onLongClick: ((ProsodySegment) -> Unit)? = null
         ) {
             val ctx = itemView.context
             txtText.text = segment.text
+
+            // FEAT-75: Highlight currently playing segment
+            if (isPlaying) {
+                val typedValue = android.util.TypedValue()
+                ctx.theme.resolveAttribute(
+                    com.google.android.material.R.attr.colorSecondaryContainer,
+                    typedValue, true
+                )
+                itemView.setBackgroundColor(typedValue.data)
+                itemView.alpha = 1.0f
+            } else {
+                itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                itemView.alpha = 0.85f
+            }
 
             // Verse/Prose badge
             if (segment.isVerse) {
@@ -95,6 +125,16 @@ class ProsodySegmentAdapter(
                     true
                 }
             }
+
+            // FEAT-78: Accessibility — describe the segment for TalkBack
+            val modeLabel = if (segment.isVerse) "Verse" else "Prose"
+            val desc = buildString {
+                append("Segment ${segment.index + 1}, $modeLabel. ")
+                append(segment.text.take(100))
+                if (segment.metreName.isNotEmpty()) append(". Metre: ${segment.metreName}")
+                append(". Tap to regenerate. Long press for phonetic rules.")
+            }
+            itemView.contentDescription = desc
         }
     }
 

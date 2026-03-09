@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -142,5 +143,98 @@ object OutputActions {
         } catch (e: Exception) {
             Toast.makeText(context, "Save failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    // ── FEAT-76: Export audio with ID3 metadata ─────────────────────
+    /**
+     * Save audio to the Music library with metadata (title, artist, album, language).
+     * On Android Q+, uses MediaStore.Audio.Media with proper columns.
+     * On older versions, copies to Music directory in external storage.
+     */
+    fun exportAudioWithMetadata(
+        context: Context,
+        audioPath: String,
+        title: String = "Marathi TTS",
+        artist: String = "Marathi TTS",
+        album: String = "Marathi TTS Generations",
+        language: String = "mr"
+    ) {
+        val srcFile = File(audioPath)
+        if (!srcFile.exists()) {
+            Toast.makeText(context, "Audio file not found", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val ext = srcFile.extension.ifEmpty { "mp3" }
+        val safeTitle = title.take(80).replace(Regex("[^\\w\\s\\-।॥]"), "").trim()
+        val filename = "${safeTitle.ifEmpty { "marathi_tts" }}_$timestamp.$ext"
+
+        // Get duration from source file
+        val durationMs = try {
+            MediaMetadataRetriever().use { mmr ->
+                mmr.setDataSource(audioPath)
+                mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            }
+        } catch (_: Exception) { 0L }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Audio.Media.DISPLAY_NAME, filename)
+                    put(MediaStore.Audio.Media.MIME_TYPE, if (ext == "wav") "audio/wav" else "audio/mpeg")
+                    put(MediaStore.Audio.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MUSIC}/MarathiTTS")
+                    put(MediaStore.Audio.Media.TITLE, title)
+                    put(MediaStore.Audio.Media.ARTIST, artist)
+                    put(MediaStore.Audio.Media.ALBUM, album)
+                    if (durationMs > 0) put(MediaStore.Audio.Media.DURATION, durationMs)
+                    put(MediaStore.Audio.Media.IS_PENDING, 1)
+                }
+                val uri = context.contentResolver.insert(
+                    MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
+                    values
+                )
+                uri?.let {
+                    context.contentResolver.openOutputStream(it)?.use { out ->
+                        FileInputStream(srcFile).use { inp -> inp.copyTo(out) }
+                    }
+                    // Mark as ready
+                    val update = ContentValues().apply {
+                        put(MediaStore.Audio.Media.IS_PENDING, 0)
+                    }
+                    context.contentResolver.update(it, update, null, null)
+                }
+                Toast.makeText(context, "Exported to Music/MarathiTTS/$filename", Toast.LENGTH_LONG).show()
+            } else {
+                @Suppress("DEPRECATION")
+                val dir = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
+                    "MarathiTTS"
+                )
+                dir.mkdirs()
+                srcFile.copyTo(File(dir, filename), overwrite = true)
+                Toast.makeText(context, "Exported to Music/MarathiTTS/$filename", Toast.LENGTH_LONG).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /**
+     * Concatenate multiple audio chunks into a single MP3 file.
+     * MP3 frames are independently decodable, so byte-level concatenation works.
+     */
+    fun concatenateAudioChunks(chunks: List<String>, outputPath: String): Boolean {
+        return try {
+            File(outputPath).outputStream().use { out ->
+                for (chunk in chunks) {
+                    val f = File(chunk)
+                    if (f.exists()) {
+                        FileInputStream(f).use { it.copyTo(out) }
+                    }
+                }
+            }
+            true
+        } catch (_: Exception) { false }
     }
 }
