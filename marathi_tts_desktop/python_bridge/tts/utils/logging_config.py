@@ -1,97 +1,130 @@
-"""
-tts.utils.logging_config — standalone version (no Django dependency).
-
-Provides setup_logging() and get_logger() for use in the desktop bridge
-scripts. The log directory is resolved from the MARATHI_TTS_PROJECT_ROOT
-environment variable (falls back to the user home directory).
-"""
 import logging
 import os
+import time
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from django.conf import settings
 
-# Resolved at import time so all callers share the same root.
-_PROJECT_ROOT = os.environ.get(
-    "MARATHI_TTS_PROJECT_ROOT",
-    os.path.expanduser("~"),
-)
-
+# Track initialized loggers to prevent duplication
+_INITIALIZED_LOGGERS = set()
 _SETUP_COMPLETE = False
 
-
-def setup_logging(force: bool = False) -> dict:
-    """Configure a rotating-file + console logging setup.
-
-    Safe to call multiple times — does nothing after the first call unless
-    *force* is True.  Does NOT require Django to be configured.
-    """
+def setup_logging(force=False):
+    """Configure detailed logging for TTS system with single rotating file"""
     global _SETUP_COMPLETE
+
+    # Skip if already initialized
     if _SETUP_COMPLETE and not force:
         return {}
+
+    # Skip logging initialization in autoreloader subprocesses
+    if os.environ.get('RUN_MAIN') != 'true':
+        return {}
+
     try:
-        log_dir = os.path.join(_PROJECT_ROOT, "logs")
+        # Create logs directory using absolute path
+        log_dir = os.path.join(settings.BASE_DIR, 'logs')
         os.makedirs(log_dir, exist_ok=True)
-        main_log = os.path.join(log_dir, "tts.log")
 
-        fmt = logging.Formatter(
-            "[%(asctime)s] [PID:%(process)d] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
+        # Use a single log file with rotation
+        main_log_file = os.path.join(log_dir, 'tts.log')
+
+        # Ensure the log file exists
+        if not os.path.exists(main_log_file):
+            open(main_log_file, 'a').close()
+
+        # Configure logging format with process ID
+        formatter = logging.Formatter(
+            '[%(asctime)s] [PID:%(process)d] %(levelname)s [%(name)s:%(lineno)s] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
         )
-        fh = RotatingFileHandler(
-            main_log, maxBytes=10 * 1024 * 1024, backupCount=5,
-            encoding="utf-8", delay=True,
+
+        # Rotating file handler with immediate flush
+        file_handler = RotatingFileHandler(
+            main_log_file,
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
+            encoding='utf-8',
+            delay=False
         )
-        fh.setFormatter(fmt)
-        fh.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
 
-        ch = logging.StreamHandler()
-        ch.setFormatter(fmt)
-        ch.setLevel(logging.INFO)
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        console_handler.setLevel(logging.INFO)
 
-        root = logging.getLogger()
-        root.handlers.clear()
-        root.setLevel(logging.DEBUG)
-        root.addHandler(fh)
-        root.addHandler(ch)
+        # Configure root logger
+        root_logger = logging.getLogger()
+        root_logger.handlers.clear()
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.addHandler(file_handler)
+        root_logger.addHandler(console_handler)
 
+        # Component loggers with their own handlers
+        components = ['emotion', 'voice', 'audio', 'text', 'engine', 'views']
+        loggers = {}
+
+        for component in components:
+            logger_name = f'tts.{component}'
+            logger = logging.getLogger(logger_name)
+            logger.handlers.clear()
+            logger.setLevel(logging.DEBUG)
+            logger.propagate = False
+
+            # Create component-specific file handler
+            component_file = os.path.join(log_dir, f'tts_{component}.log')
+            component_handler = RotatingFileHandler(
+                component_file,
+                maxBytes=5 * 1024 * 1024,  # 5MB per component
+                backupCount=3,
+                encoding='utf-8',
+                delay=False
+            )
+            component_handler.setFormatter(formatter)
+            component_handler.setLevel(logging.DEBUG)
+
+            logger.addHandler(component_handler)
+            logger.addHandler(console_handler)
+            loggers[logger_name] = logger
+
+        # Log startup message to verify logging is working
+        root_logger.info('Logging system initialized')
+        for name, logger in loggers.items():
+            logger.info(f'{name} logger initialized')
+
+        # Mark setup as completed
         _SETUP_COMPLETE = True
-    except Exception as exc:
-        print(f"[logging_config] setup_logging failed: {exc}")
-    return {}
+        return loggers
 
+    except Exception as e:
+        # Print to console in case logging fails
+        print(f"Error setting up logging: {str(e)}")
+        raise
 
-def get_logger(name: str) -> logging.Logger:
-    """Return a logger with both file and console handlers.
-
-    Idempotent — attaches handlers only once per logger name.
-    """
+def get_logger(name):
+    """Get a logger instance with duplicate initialization protection"""
     logger = logging.getLogger(name)
-    if logger.handlers:
-        return logger
 
-    fmt = logging.Formatter(
-        "[%(asctime)s] [PID:%(process)d] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
-    # Optional rotating file handler (skip silently on I/O errors)
-    try:
-        log_dir = os.path.join(_PROJECT_ROOT, "logs")
-        os.makedirs(log_dir, exist_ok=True)
-        fh = RotatingFileHandler(
-            os.path.join(log_dir, f"{name}.log"),
-            maxBytes=5 * 1024 * 1024, backupCount=3,
-            encoding="utf-8", delay=True,
+    # Check if handlers are already attached to avoid duplicates
+    if not logger.handlers:
+        # Add handlers only if none exist
+        formatter = logging.Formatter(
+            '[%(asctime)s] [PID:%(process)d] %(levelname)s [%(name)s:%(lineno)s] %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
         )
-        fh.setFormatter(fmt)
-        fh.setLevel(logging.DEBUG)
-        logger.addHandler(fh)
-    except Exception:
-        pass
+        file_handler = RotatingFileHandler(
+            os.path.join(settings.BASE_DIR, 'logs', f'{name}.log'),
+            maxBytes=5 * 1024 * 1024,  # 5MB
+            backupCount=3,
+            encoding='utf-8',
+            delay=False
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
 
-    ch = logging.StreamHandler()
-    ch.setFormatter(fmt)
-    ch.setLevel(logging.INFO)
-    logger.addHandler(ch)
     logger.setLevel(logging.DEBUG)
-    logger.propagate = False
+    logger.propagate = False  # Prevent propagation to the root logger
     return logger

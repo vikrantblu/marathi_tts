@@ -350,10 +350,15 @@ def _generate_edge_tts(text: str, language: str, gender: str,
         processed = _apply_g2p(processed)
         log.info("[edge-tts] [Old Marathi] Preprocessed | orig=%d  new=%d chars", len(text), len(processed))
     elif is_verse:
-        processed = _preprocess_stotra_text(text)
+        processed = _normalize_marathi(text)
+        processed = apply_marathi_phonetics(processed)
+        processed = _preprocess_stotra_text(processed)
         processed = _apply_g2p(processed)
     else:
-        processed = _apply_g2p(text)
+        processed = _normalize_marathi(text)
+        processed = apply_marathi_phonetics(processed)
+        processed = _apply_g2p(processed)
+    processed = apply_gtts_mr_fixes(processed)
 
     log.info("[edge-tts] voice=%s rate=%s pitch=%s text_len=%d",
              voice, rate_str, pitch_str, len(processed))
@@ -458,7 +463,10 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
                 processed = apply_old_marathi_phonetics(seg_text)
                 processed = _apply_g2p(processed)
             else:
-                processed = _apply_g2p(seg_text)
+                processed = _normalize_marathi(seg_text)
+                processed = apply_marathi_phonetics(processed)
+                processed = _apply_g2p(processed)
+            processed = apply_gtts_mr_fixes(processed)
 
             if not processed.strip():
                 continue
@@ -609,9 +617,14 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
                     processed = _preprocess_stotra_text(
                         apply_old_marathi_phonetics(seg_text))
             else:
-                processed = _preprocess_stotra_text(seg_text)
+                # Default Marathi: apply Marathi phonetics (ज्ञ→द्न्य etc.)
+                # before stotra structural cleanup.
+                processed = _normalize_marathi(seg_text)
+                processed = apply_marathi_phonetics(processed)
+                processed = _preprocess_stotra_text(processed)
 
             processed = _apply_g2p(processed)
+            processed = apply_gtts_mr_fixes(processed)
             if not processed.strip():
                 continue
 
@@ -1217,7 +1230,9 @@ def generate_tts(text: str,
                     apply_old_marathi_phonetics(_normalize_marathi(text))
                 )
             else:
-                preprocessed = _preprocess_stotra_text(_normalize_marathi(text))
+                preprocessed = _preprocess_stotra_text(
+                    apply_marathi_phonetics(_normalize_marathi(text))
+                )
 
             preprocessed = _apply_g2p(preprocessed)
             # Apply gTTS-specific fixes (ZWNJ for y-glide, terminal halant)

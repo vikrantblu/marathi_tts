@@ -4,20 +4,7 @@ import uuid
 import math
 import logging
 from typing import Dict, Any, Optional, List, Tuple
-try:
-    from django.conf import settings  # type: ignore
-    _MEDIA_ROOT_DJANGO = True
-except ImportError:
-    _MEDIA_ROOT_DJANGO = False
-    import os as _os
-    class _FakeSettings:
-        MEDIA_ROOT = _os.path.join(
-            _os.environ.get('MARATHI_TTS_PROJECT_ROOT',
-                _os.path.abspath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
-                                               '..', '..', '..', '..', 'media'))), '')
-        BASE_DIR = _os.path.abspath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
-                                                   '..', '..', '..', '..'))
-    settings = _FakeSettings()
+from django.conf import settings
 from gtts import gTTS # type: ignore
 from pydub import AudioSegment # type: ignore
 import re
@@ -25,29 +12,13 @@ import shutil
 import json
 import glob
 
-try:
-    from ..text.text_processor import TextProcessor  # type: ignore
-except ImportError:
-    TextProcessor = None  # type: ignore
-
+from ..text.text_processor import TextProcessor
 from ..emotion.emotion_analyzer import EmotionAnalyzer
-
-# VoiceModulator is web/Django-only; desktop and mobile skip it
-try:
-    from ..voice.voice_modulator import VoiceModulator  # type: ignore
-except ImportError:
-    VoiceModulator = None  # type: ignore
-
+from ..voice.voice_modulator import VoiceModulator
 from ..audio.prosody_engine import MarathiProsodyEngine, PauseType
 from ..text.text_normalizer import MarathiTextNormalizer
 from ..text.marathi_grammar import MarathiGrammarEngine
-
-try:
-    from ..phonetic.g2p_engine import MarathiG2PEngine  # type: ignore
-except ImportError:
-    MarathiG2PEngine = None  # type: ignore
-
-# Sanskrit / Old Marathi / Modern Marathi phonetic preprocessors
+from ..phonetic.g2p_engine import MarathiG2PEngine
 from ..phonetic.marathi_phonetics import (
     apply_sanskrit_phonetics,
     apply_marathi_phonetics,
@@ -95,22 +66,14 @@ class TTSEngine:
         # Initialize components
         self.grammar_engine = MarathiGrammarEngine()
         self.emotion_analyzer = EmotionAnalyzer()
-        # VoiceModulator is web/Django-only (requires audio FX libraries)
-        self.voice_modulator = VoiceModulator() if VoiceModulator else None
-        self.text_processor  = TextProcessor()  if TextProcessor  else None
-        self.prosody_engine  = MarathiProsodyEngine() if MarathiProsodyEngine else None
+        self.voice_modulator = VoiceModulator()
+        self.text_processor = TextProcessor()
+        self.prosody_engine = MarathiProsodyEngine()
         self.text_normalizer = MarathiTextNormalizer()
-
+        
         # Initialize G2P engine with dictionary for word validation
-        _dict_root = os.environ.get(
-            'MARATHI_TTS_PROJECT_ROOT',
-            os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                         '..', '..', '..', '..')))
-        _dict_path = os.path.join(_dict_root, 'dict', 'marathi_dictionary.txt')
-        dict_path = _dict_path if os.path.exists(_dict_path) else None
-        self.g2p_engine = (
-            MarathiG2PEngine(dictionary_path=dict_path)
-            if MarathiG2PEngine else None)
+        dict_path = os.path.join(settings.BASE_DIR, 'dict', 'marathi_dictionary.txt')
+        self.g2p_engine = MarathiG2PEngine(dictionary_path=dict_path)
         
         logger.info("TTS Engine initialization complete")
 
@@ -136,14 +99,12 @@ class TTSEngine:
         #   - Anusvara assimilation (context-dependent nasalization)
         #   - Visarga sandhi (context-dependent sibilant mapping)
         #   - Exception lexicon lookups
-        if self.g2p_engine:
-            text = self.g2p_engine.process(text)
-
+        text = self.g2p_engine.process(text)
+        
         # Step 4: Remaining safe pronunciation fixes (no conjunct-stripping)
-        if self.text_processor:
-            text = self.text_processor._fix_pronunciation(text)
-            text = self.text_processor._process_marathi(text)
-
+        text = self.text_processor._fix_pronunciation(text)
+        text = self.text_processor._process_marathi(text)
+        
         logger.debug(f"Processed text: {text}")
         return text
 
@@ -169,13 +130,11 @@ class TTSEngine:
         text = self.text_normalizer.normalize_text(text)
         
         # G2P
-        if self.g2p_engine:
-            text = self.g2p_engine.process(text)
-
+        text = self.g2p_engine.process(text)
+        
         # Pronunciation fixes
-        if self.text_processor:
-            text = self.text_processor._fix_pronunciation(text)
-            text = self.text_processor._process_marathi(text)
+        text = self.text_processor._fix_pronunciation(text)
+        text = self.text_processor._process_marathi(text)
 
         # ── Language-specific phonetics ──────────────────────────────────
         # Sanskrit: strip Vedic accents, expand avagraha, fix visarga+vowel
@@ -448,13 +407,10 @@ class TTSEngine:
                 return self._generate_fallback_audio(text, voice_params)
             
             # Apply voice modulation to the complete audio
-            if self.voice_modulator:
-                modified_audio = self.voice_modulator.modulate_voice(
-                    audio=combined,
-                    options=voice_params
-                )
-            else:
-                modified_audio = combined
+            modified_audio = self.voice_modulator.modulate_voice(
+                audio=combined,
+                options=voice_params
+            )
             
             # Save final audio
             output_path = os.path.join(self.output_dir, f'tts_{uuid.uuid4()}.wav')
@@ -484,9 +440,7 @@ class TTSEngine:
             if not temp_path:
                 return None
             audio = AudioSegment.from_mp3(temp_path)
-            modified_audio = (
-                self.voice_modulator.modulate_voice(audio=audio, options=voice_params)
-                if self.voice_modulator else audio)
+            modified_audio = self.voice_modulator.modulate_voice(audio=audio, options=voice_params)
             output_path = os.path.join(self.output_dir, f'tts_{uuid.uuid4()}.wav')
             modified_audio.export(output_path, format='wav')
             os.remove(temp_path)

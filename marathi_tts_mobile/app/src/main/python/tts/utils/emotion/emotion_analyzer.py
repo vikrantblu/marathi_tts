@@ -2,13 +2,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 import math
 import re
-try:
-    import numpy as np
-except ImportError:
-    np = None
+import numpy as np
 from typing import Dict, Any, List
+from django.conf import settings
 import os
-from tts.utils.logging_config import get_logger
+from ..logging_config import get_logger
 from tts.constants.emotion_constants import (
     EMOTION_KEYWORDS, EMOTION_VOICE_PARAMS, EMOTION_SSML_TAG_MAP,
 )
@@ -261,7 +259,7 @@ def setup_logging(force=False):
 
     try:
         # Create logs directory using absolute path
-        log_dir = os.path.join(os.environ.get('MARATHI_TTS_PROJECT_ROOT', ''), 'logs')
+        log_dir = os.path.join(settings.BASE_DIR, 'logs')
         os.makedirs(log_dir, exist_ok=True)
 
         # Use a single log file with rotation

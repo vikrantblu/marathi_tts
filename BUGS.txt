@@ -15,6 +15,23 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Recently Fixed (Unreleased)
 
+- ~~BUG-52 [HIGH] ज्ञ pronounced as ग्य (Hindi) instead of द्न्य (Marathi) in verse paths~~
+  (fixed [Unreleased] — all verse code paths (edge-tts verse prosody, edge-tts single-call,
+  gTTS verse) for default language "mr" skipped `apply_marathi_phonetics()`, so the
+  ज्ञ→द्न्य replacement was never applied. Only prose paths called it. Fix: added
+  `apply_marathi_phonetics()` to all verse paths for default Marathi in both mobile and
+  desktop bridges. Also added `_normalize_marathi()` + `apply_marathi_phonetics()` to
+  edge-tts prose prosody and single-call paths.)
+
+- ~~BUG-51 [HIGH] Y-glide persists on word-final matra+anusvara despite BUG-48 ZWNJ fix~~
+  (fixed [Unreleased] — ZWNJ insertion between consonant and matra (BUG-48) was insufficient:
+  both gTTS and edge-tts neural models still produced y-glide [j] on words like संतीं→संतीय,
+  द्यावें→द्यावेय. Root cause: ZWNJ only breaks grapheme clusters but doesn't change how
+  the TTS model phonologizes nasalized vowels at word boundaries. Fix: added new rule in
+  apply_gtts_mr_fixes() that replaces word-final matra+anusvara with matra+chandrabindu
+  (ं→ँ) at word boundaries, marking pure vowel nasalization without nasal consonant onset.
+  Also applied apply_gtts_mr_fixes() to ALL edge-tts paths (was previously gTTS-only).)
+
 - ~~BUG-50 [HIGH] Accent profiles produce no audible difference — offsets too small + threshold blocks them~~
   (fixed [Unreleased] — two root causes: (A) `needs_fx` threshold `>0.05` discarded most accent
   pitch/speed changes (northern had -0.02 pitch, -0.05 rate — both at or below threshold);

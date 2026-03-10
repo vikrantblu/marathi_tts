@@ -1,10 +1,7 @@
 import re
 import logging
 import unicodedata
-try:
-    from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
-except ImportError:
-    IndicNormalizerFactory = None
+from indicnlp.normalize.indic_normalize import IndicNormalizerFactory
 from .number_to_words import normalize_numbers_for_tts
 from tts.constants.text_constants import (
     ABBREVIATIONS, SPECIAL_CHARS, VISARGA_WORDS
@@ -17,13 +14,12 @@ class MarathiTextNormalizer:
     
     def __init__(self):
         """Initialize the normalizer"""
-        self.indic_normalizer = None
-        if IndicNormalizerFactory is not None:
-            try:
-                self.indic_normalizer = IndicNormalizerFactory().get_normalizer("mr")
-                logger.info("Indic normalizer initialized successfully")
-            except Exception as e:
-                logger.error(f"Error initializing indic normalizer: {str(e)}")
+        try:
+            self.indic_normalizer = IndicNormalizerFactory().get_normalizer("mr")
+            logger.info("Indic normalizer initialized successfully")
+        except Exception as e:
+            logger.error(f"Error initializing indic normalizer: {str(e)}")
+            self.indic_normalizer = None
 
     def normalize_text(self, text: str) -> str:
         """Normalize special Sanskrit/Marathi characters for TTS"""

@@ -828,7 +828,24 @@ def apply_gtts_mr_fixes(text: str) -> str:
         r'([\u0915-\u0939])(?=[\u093E-\u094C]\u0902)',
         '\\1\u200C', text)
 
-    # ── 3. Terminal halant removal ───────────────────────────────────
+    # ── 3. Word-final matra + anusvara → matra + chandrabindu ──────
+    # gTTS and edge-tts Marathi voices insert a palatal y-glide [j]
+    # before word-final nasalized vowels (matra + anusvara):
+    #   संतीं → "santīy", द्यावें → "dyāvey"
+    # ZWNJ alone (Fix 2) is insufficient — the neural models still
+    # produce the y-glide.  Replacing word-final anusvara (ं U+0902)
+    # with chandrabindu (ँ U+0901) marks pure vowel nasalization
+    # without a nasal consonant onset, which prevents the y-glide:
+    #   संतीं → संतीँ (nasalized ī, no "y"),
+    #   द्यावें → द्यावेँ (nasalized e, no "y")
+    # Only at word boundaries — word-internal anusvara (e.g. "सं" in
+    # "संत") is preserved because it's followed by a consonant, not
+    # a word boundary.
+    text = re.sub(
+        r'([\u093E-\u094C])\u0902(?=[\s.,;!?\n।॥\u0964\u0965]|$)',
+        '\\1\u0901', text)
+
+    # ── 4. Terminal halant removal ───────────────────────────────────
     # At sentence / verse boundaries, a bare halant (not followed by
     # another consonant) makes gTTS pronounce the final consonant as
     # a half-form (प् instead of प).  Remove it so the implicit schwa

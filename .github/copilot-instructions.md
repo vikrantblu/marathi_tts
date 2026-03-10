@@ -702,6 +702,37 @@ gTTS lang=mr adds y-glide to word-internal -cha. Fix: ZWNJ after G2P in apply_ma
 
 ---
 
+## Y-glide Chandrabindu Fix (BUG-51)
+
+BUG-48's ZWNJ approach was insufficient — both gTTS and edge-tts neural models still
+produced y-glide [j] on word-final matra+anusvara (संतीं→संतीय, द्यावें→द्यावेय).
+
+**Root cause:** ZWNJ breaks grapheme clusters but doesn't change TTS model phonology.
+
+**Fix:** New rule in `apply_gtts_mr_fixes()`: at word boundaries, replace anusvara (ं)
+after matra with chandrabindu (ँ), marking pure vowel nasalization without nasal consonant
+onset. Word-internal anusvara (e.g. "सं" in "संत") is preserved.
+
+**Also fixed:** `apply_gtts_mr_fixes()` is now called in ALL edge-tts paths (was
+previously gTTS-only), and `apply_marathi_phonetics()` (ज्ञ→द्न्य etc.) is now called
+in all verse paths for default Marathi (was previously missing, causing BUG-52).
+
+---
+
+## ज्ञ Verse Path Fix (BUG-52)
+
+All verse code paths (edge-tts verse prosody, edge-tts single-call, gTTS verse) for
+default language "mr" skipped `apply_marathi_phonetics()`, so ज्ञ→द्न्य was never applied
+to verse text. Also missing: `_normalize_marathi()` in edge-tts prose prosody + single-call.
+
+**Fix:** Added `_normalize_marathi()` + `apply_marathi_phonetics()` to:
+- `_generate_edge_verse_prosody()` default "mr" case
+- `_generate_edge_tts()` verse + prose cases
+- `_generate_edge_prosody()` default "mr" case
+- gTTS verse path default "mr" case
+
+---
+
 ## Prosody-Segmented Generation (FEAT-1 + FEAT-8)
 
 Both mobile and desktop bridges now have two prosody functions that segment prose text

@@ -2,11 +2,11 @@ import re
 import unicodedata
 import logging
 from typing import List, Dict, Any, Optional
-# transformers is imported lazily inside MarathiTextCorrector to avoid
-# loading the entire Hugging Face library at module import time.
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import pickle
 import os
 from pathlib import Path
+from django.conf import settings
 import indic_transliteration.sanscript as sanscript # type: ignore
 from indicnlp.normalize.indic_normalize import IndicNormalizerFactory # type: ignore
 from .script_converter import modi_to_devanagari
@@ -14,19 +14,11 @@ from tts.constants.text_constants import (
     ABBREVIATIONS, SPECIAL_CHARS, PRONUNCIATION_FIXES,
 )
 from tts.constants.script_constants import SCRIPT_RANGES
-try:
-    from tts.utils.phonetic.marathi_phonetics import (
-        apply_sanskrit_phonetics,
-        apply_marathi_phonetics,
-    )
-except ImportError:
-    def apply_sanskrit_phonetics(t): return t
-    def apply_marathi_phonetics(t): return t
-# Standalone: resolve BASE_DIR without Django
-import os as _os
-_BASE_DIR = _os.environ.get(
-    "MARATHI_TTS_PROJECT_ROOT",
-    _os.path.abspath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "..", "..", "..")),
+from tts.utils.phonetic.marathi_phonetics import (
+    apply_sanskrit_phonetics,
+    apply_marathi_phonetics,
+    apply_old_marathi_phonetics,
+    preprocess_old_marathi_text,
 )
 
 
@@ -38,7 +30,7 @@ class TextProcessor:
     def __init__(self):
         # Initialize normalizer
         self.normalizer = IndicNormalizerFactory().get_normalizer('mr')
-        self.supported_langs = {'mr', 'hi', 'sa', 'en'}
+        self.supported_langs = {'mr', 'hi', 'sa', 'en', 'mr-old'}
         
         # Define abbreviations — use centralized constants
         self.abbreviations = dict(ABBREVIATIONS)
@@ -77,6 +69,8 @@ class TextProcessor:
             # 4. Language specific processing
             if lang == 'mr':
                 text = self._process_marathi(text)
+            elif lang == 'mr-old':
+                text = self._process_old_marathi(text)
             elif lang == 'hi':
                 text = self._process_hindi(text)
             elif lang == 'sa':
@@ -169,7 +163,11 @@ class TextProcessor:
         # The old rules ('ं([यरलवशषसह])' → 'न् \1') were WRONG for Marathi
         # as they inserted a dental nasal where nasalization was intended.
 
-        # Apply comprehensive Marathi phonetic rules
+        # Apply comprehensive Marathi phonetic rules:
+        #   - Visarga normalization (दुःख → दुख्ख)
+        #   - Conjunct aids (ज्ञ → द्न्य)
+        #   - Classical anusvara cleanup (नाहीं → नाही)
+        #   - Schwa deletion fixes for known problem words
         text = apply_marathi_phonetics(text)
 
         return text
@@ -192,9 +190,47 @@ class TextProcessor:
         return text
     
     def _process_sanskrit(self, text: str) -> str:
-        """Process Sanskrit text with full phonetic rules."""
-        text = re.sub(r'([०-९])॰', r'\1', text)
+        """Process Sanskrit text with full phonetic rules.
+
+        Applies:
+          - Structural normalization (dandas, number dots)
+          - Terminal halant expansion
+          - Visarga context-sensitive sandhi (echoing, morphing)
+          - Conjunct pronunciation aids (ज्ञ → द्न्य)
+          - OM symbol expansion
+        """
+        # Structural cleanup
+        text = re.sub(r'([०-९])॰', r'\1', text)  # Remove dot after numbers
+
+        # Full Sanskrit phonetic rules
         text = apply_sanskrit_phonetics(text)
+
+        return text
+
+    def _process_old_marathi(self, text: str) -> str:
+        """Process Old Marathi text (Dnyaneshwari, Abhangas, Sant literature).
+
+        Key differences from modern Marathi:
+          - Anusvara preserved as nasalized vowel (not stripped)
+          - Schwa deletion suspended for poetic metre
+          - -चि emphasiser particle preserved
+          - Ovi metre structural rules applied
+        """
+        # Start with basic character replacements (same as Marathi)
+        replacements = {
+            'ॅ': 'अॅ', 'ऎ': 'ए', 'ऒ': 'ओ',
+            '॰': '.', '–': '-',
+        }
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+
+        # Fix common conjunct misspelling
+        text = text.replace('ध्द', 'द्ध')
+
+        # Apply Old Marathi phonetic rules
+        # (preserves anusvara, skips schwa deletion, handles Ovi structure)
+        text = apply_old_marathi_phonetics(text)
+
         return text
     
     def _process_english(self, text: str) -> str:
@@ -309,32 +345,26 @@ class TextProcessor:
 class MarathiTextCorrector:
     def __init__(self):
         self.normalizer = IndicNormalizerFactory().get_normalizer('mr')
-        self.model_path = os.path.join(_BASE_DIR, 'models', 'marathi_correction')
+        self.model_path = os.path.join(settings.BASE_DIR, 'models', 'marathi_correction')
         
-        os.makedirs(os.path.join(_BASE_DIR, 'models', 'marathi_correction'), exist_ok=True)
-        os.makedirs(os.path.join(_BASE_DIR, 'data'), exist_ok=True)
+        os.makedirs(os.path.join(settings.BASE_DIR, 'models', 'marathi_correction'), exist_ok=True)
+        os.makedirs(os.path.join(settings.BASE_DIR, 'data'), exist_ok=True)
         
-        # Load the transformer model for Marathi text correction (lazy import)
-        try:
-            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM  # type: ignore
-            if os.path.exists(self.model_path):
-                self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
-                self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_path)
-            else:
-                # Fallback to pretrained Indic model
-                self.tokenizer = AutoTokenizer.from_pretrained('ai4bharat/indic-bert')
-                self.model = AutoModelForSeq2SeqLM.from_pretrained('ai4bharat/indic-bert')
-        except Exception as _e:
-            logger.warning("transformers unavailable, correction model disabled: %s", _e)
-            self.tokenizer = None
-            self.model = None
+        # Load the transformer model for Marathi text correction
+        if os.path.exists(self.model_path):
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_path)
+        else:
+            # Fallback to pretrained Indic model
+            self.tokenizer = AutoTokenizer.from_pretrained('ai4bharat/indic-bert')
+            self.model = AutoModelForSeq2SeqLM.from_pretrained('ai4bharat/indic-bert')
         
         # Load Marathi word frequency dictionary
         self.word_freq = self._load_word_frequencies()
         
     def _load_word_frequencies(self):
         """Load or create Marathi word frequency dictionary"""
-        freq_path = os.path.join(_BASE_DIR, 'data', 'marathi_word_freq.pkl')
+        freq_path = os.path.join(settings.BASE_DIR, 'data', 'marathi_word_freq.pkl')
         if os.path.exists(freq_path):
             # Use restricted unpickler — only allow builtins (dict, str, int)
             import io
@@ -350,9 +380,6 @@ class MarathiTextCorrector:
     def correct_text(self, text: str) -> str:
         """Correct OCR errors in Marathi text using ML model"""
         if not text:
-            return text
-        if self.tokenizer is None or self.model is None:
-            logger.warning("Correction model not loaded; returning original text")
             return text
             
         # First normalize the text

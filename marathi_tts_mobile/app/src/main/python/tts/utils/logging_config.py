@@ -3,6 +3,7 @@ import os
 import time
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
+from django.conf import settings
 
 # Track initialized loggers to prevent duplication
 _INITIALIZED_LOGGERS = set()
@@ -16,9 +17,13 @@ def setup_logging(force=False):
     if _SETUP_COMPLETE and not force:
         return {}
 
+    # Skip logging initialization in autoreloader subprocesses
+    if os.environ.get('RUN_MAIN') != 'true':
+        return {}
+
     try:
         # Create logs directory using absolute path
-        log_dir = os.path.join(os.environ.get('MARATHI_TTS_PROJECT_ROOT', os.getcwd()), 'logs')
+        log_dir = os.path.join(settings.BASE_DIR, 'logs')
         os.makedirs(log_dir, exist_ok=True)
 
         # Use a single log file with rotation
@@ -104,36 +109,21 @@ def get_logger(name):
 
     # Check if handlers are already attached to avoid duplicates
     if not logger.handlers:
+        # Add handlers only if none exist
         formatter = logging.Formatter(
             '[%(asctime)s] [PID:%(process)d] %(levelname)s [%(name)s:%(lineno)s] %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
-        # Only add file handler if the logs directory is writable
-        try:
-            log_dir = os.path.join(
-                os.environ.get('MARATHI_TTS_PROJECT_ROOT', ''),
-                'logs'
-            )
-            if log_dir and log_dir != 'logs' and os.path.isdir(os.path.dirname(log_dir)):
-                os.makedirs(log_dir, exist_ok=True)
-                file_handler = RotatingFileHandler(
-                    os.path.join(log_dir, f'{name}.log'),
-                    maxBytes=5 * 1024 * 1024,  # 5MB
-                    backupCount=3,
-                    encoding='utf-8',
-                    delay=True
-                )
-                file_handler.setFormatter(formatter)
-                file_handler.setLevel(logging.DEBUG)
-                logger.addHandler(file_handler)
-        except Exception:
-            pass  # On mobile/restricted env, skip file logging without crashing
-
-        # Always add stderr handler so logs appear in logcat
-        stderr_handler = logging.StreamHandler()
-        stderr_handler.setFormatter(formatter)
-        stderr_handler.setLevel(logging.DEBUG)
-        logger.addHandler(stderr_handler)
+        file_handler = RotatingFileHandler(
+            os.path.join(settings.BASE_DIR, 'logs', f'{name}.log'),
+            maxBytes=5 * 1024 * 1024,  # 5MB
+            backupCount=3,
+            encoding='utf-8',
+            delay=False
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.addHandler(file_handler)
 
     logger.setLevel(logging.DEBUG)
     logger.propagate = False  # Prevent propagation to the root logger
