@@ -335,6 +335,24 @@ def run_tests_for_platform(label, sys_root):
     except Exception as exc:
         failures.append(('Old Marathi: schwa guard (no crash)', str(exc)))
 
+    # E5. Archaic suffix -तां → -ता
+    r = apply_old_marathi_phonetics('धावतां')
+    _chk(failures, 'Old Marathi: -तां → -ता suffix',
+         'ता' in r and 'तां' not in r,
+         f'Archaic suffix not converted: {repr(r)}')
+
+    # E6. Trailing anusvara → chandrabindu (y-glide prevention)
+    r = apply_old_marathi_phonetics('संतीं बोलती')
+    _chk(failures, 'Old Marathi: trailing anusvara → chandrabindu',
+         'ीँ' in r or 'ीं' not in r.split()[0],
+         f'Anusvara not converted: {repr(r)}')
+
+    # E7. Expanded lexicon: ऐसें → असे
+    r = apply_old_marathi_phonetics('ऐसें म्हणे')
+    _chk(failures, 'Old Marathi: ऐसें → असे',
+         'असे' in r,
+         f'Archaic pronoun not converted: {repr(r)}')
+
     # ══════════════════════════════════════════════════════════════════════
     # F. MODERN MARATHI PHONETICS
     # ══════════════════════════════════════════════════════════════════════

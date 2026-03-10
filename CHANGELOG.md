@@ -28,6 +28,10 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - **Audio post-processing** (#19): All prosody-stitched outputs (edge-tts prose/verse, gTTS)
   now get loudness normalization (target -16 dBFS) and leading/trailing silence trimming.
   Applied in both mobile and desktop bridges.
+- **Old Marathi pronunciation** (#14): Expanded _OLD_MARATHI_LEXICON from ~40 to ~100 entries
+  (archaic pronouns, verb forms, Sant poet names, locative forms). Added trailing anusvara→
+  chandrabindu conversion and archaic suffix normalization (-तां→-ता, -णें→-णे). Three new
+  test assertions (E5/E6/E7).
 
 ### Fixed
 - **BUG-51 [HIGH]**: Y-glide persisted on word-final matra+anusvara despite BUG-48 ZWNJ fix.

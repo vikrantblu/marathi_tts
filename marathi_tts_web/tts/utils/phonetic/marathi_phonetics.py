@@ -330,6 +330,21 @@ _OLD_MARATHI_LEXICON = {
     'तेथें':       'तेथे',
     'केंव्हां':    'केव्हा',
     'कोठें':       'कोठे',
+    'कांहीं':      'काही',
+    'कांही':       'काही',
+    'कोणी':        'कोणी',
+    'तयां':        'त्या',         # oblique demonstrative (archaic)
+    'तयाचा':       'त्याचा',
+    'तयाचें':      'त्याचे',
+    'तयासी':       'त्यासी',
+    'ऐसें':        'असे',          # archaic "thus"
+    'ऐसा':         'असा',
+    'ऐसी':         'अशी',
+    'तैसें':       'तसे',
+    'तैसा':        'तसा',
+    'तैसी':        'तशी',
+    'जैसें':       'जसे',
+    'जैसा':        'जसा',
     # ── Old Marathi verb endings ───────────────────────────────────────
     'म्हणती':     'म्हणती',      # correct as-is
     'म्हणे':      'म्हणे',
@@ -340,6 +355,29 @@ _OLD_MARATHI_LEXICON = {
     'बोलतां':     'बोलता',
     'पाहतां':     'पाहता',
     'जातां':      'जाता',
+    'करणें':      'करणे',
+    'होणें':      'होणे',
+    'जाणें':      'जाणे',
+    'येणें':      'येणे',
+    'बोलणें':     'बोलणे',
+    'पाहणें':     'पाहणे',
+    'ऐकणें':      'ऐकणे',
+    'देणें':      'देणे',
+    'घेणें':      'घेणे',
+    'म्हणणें':    'म्हणणे',
+    'जाणवतें':    'जाणवते',
+    'होतसे':      'होतसे',       # correct as-is (archaic continuous)
+    'करितसे':     'करितसे',
+    'दिसतसे':     'दिसतसे',
+    # ── Archaic conjunctions/particles ────────────────────────────────
+    'परी':         'परी',          # but (archaic = परंतु)
+    'अथवा':       'अथवा',
+    'कीं':         'की',           # that (conjunction, archaic trailing anusvara)
+    'आणि':        'आणि',
+    'जरी':        'जरी',
+    'म्हणोनि':    'म्हणोनि',     # therefore (archaic)
+    'म्हणोनियां': 'म्हणोनिया',   # therefore (extended)
+    'येणेंकरूनि':  'येणेकरूनि',
     # ── Possessive/emphasis particles ─────────────────────────────────
     # Note: -चि, -ची, -चे are handled contextually — do NOT rewrite
     # them wholesale.  The -चि emphasiser is Palatal affricate [tɕi].
@@ -347,19 +385,46 @@ _OLD_MARATHI_LEXICON = {
     'एकी':        'एकी',          # locative — correct as-is
     'चारी':       'चारी',
     'तीनी':       'तीनी',
-    # ── Common Sant literature content words ──────────────────────────
+    # ── Sant literature deity names & epithets ────────────────────────
     'विठ्ठल':     'विठ्ठल',      # Vitthala deity name
+    'विठोबा':     'विठोबा',
+    'पांडुरंग':   'पांडुरंग',
     'पंढरी':      'पंढरी',
+    'ज्ञानदेव':   'द्न्यानदेव',   # Dnyaneshwar (ज्ञ→द्न्य)
+    'ज्ञानेश्वर':  'द्न्यानेश्वर',
+    'तुकाराम':    'तुकाराम',
+    'नामदेव':     'नामदेव',
+    'एकनाथ':      'एकनाथ',
+    'रामदास':      'रामदास',
+    'चोखामेळा':   'चोखामेळा',
+    # ── Common Sant literature content words ──────────────────────────
     'माळ':        'माळ',          # garland (retroflex ळ must survive)
     'वाळू':       'वाळू',         # sand
     'काळ':        'काळ',
     'वेळ':        'वेळ',
     'आळस':        'आळस',
+    'भक्ती':      'भक्ती',
+    'मुक्ती':     'मुक्ती',
+    'शक्ती':      'शक्ती',
+    'प्रेम':       'प्रेम',
+    'वैराग्य':    'वैराग्य',
+    'संसार':       'संसार',
+    'माया':        'माया',
+    # ── Locative forms with nasalized vowels ──────────────────────────
+    'जीवीं':      'जीवी',         # in the soul (locative)
+    'देहीं':      'देही',
+    'मनीं':       'मनी',
+    'हृदयीं':     'हृदयी',
+    'चित्तीं':    'चित्ती',
+    'नयनीं':      'नयनी',
+    'अंतरीं':     'अंतरी',
     # ── Ovi refrain words ─────────────────────────────────────────────
     'आत्मा':      'आत्मा',
     'परमात्मा':   'परमात्मा',
     'निर्गुण':    'निर्गुण',
     'सगुण':       'सगुण',
+    'ब्रह्म':     'ब्रह्म',
+    'परब्रह्म':   'परब्रह्म',
 }
 
 # ── Classical Marathi trailing anusvara ──────────────────────────────────
@@ -1017,11 +1082,33 @@ def apply_old_marathi_phonetics(text: str) -> str:
     # (not needed as rewrite since gTTS handles this when slow=True)
 
     # ── 5. Anusvara preservation for nasalized vowels in Ovi ─────────
-    # In Ovi metre, words like 'तयां', 'तयाचां', 'जीवां' have ануsvara
+    # In Ovi metre, words like 'तयां', 'तयाचां', 'जीवां' have anusvara
     # that nasalizes the preceding vowel (NOT a consonant).  We preserve
     # the anusvara character — no rewrite needed.  BUT we mark chandrabindu
     # words (ँ) correctly: chandrabindu is lighter nasalization (Sanskrit
     # influence in tatsama words).  Both are kept as-is for gTTS.
+
+    # ── 5b. Trailing anusvara → chandrabindu (prevents TTS y-glide) ──
+    # gTTS and edge-tts insert a y-glide [j] before word-final nasalized
+    # vowels (matra + anusvara): संतीं → "santīy".  Converting word-final
+    # anusvara to chandrabindu marks pure vowel nasalization without
+    # consonant onset, preventing the y-glide.
+    text = re.sub(
+        r'([\u093E-\u094C])\u0902(?=[\s.,;!?\n।॥]|$)',
+        '\\1\u0901', text)
+
+    # ── 5c. Archaic suffix normalization ──────────────────────────────
+    # Old Marathi uses archaic verb/noun suffixes that gTTS trained on
+    # modern Marathi mispronounces.  Pattern-based conversion for forms
+    # not covered by the word-form lexicon.
+    # -तां ending (gerundive) → -ता  (e.g., धावतां → धावता)
+    text = re.sub(
+        r'([\u0915-\u0939][\u093E-\u094C]?)तां(?=[\s.,;!?\n।॥]|$)',
+        '\\1ता', text)
+    # -णें ending (infinitive) → -णे  (e.g., सांगणें → सांगणे)
+    text = re.sub(
+        r'णें(?=[\s.,;!?\n।॥]|$)',
+        'णे', text)
 
     # ── 6. Terminal long vowel protection ────────────────────────────
     # Some Old Marathi words end in long ā, ī, ū intentionally.
