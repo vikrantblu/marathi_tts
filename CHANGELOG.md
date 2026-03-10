@@ -22,6 +22,17 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ## [Unreleased]
 <!-- Changes staged but not yet released go here -->
+### Fixed
+- **BUG-50 [HIGH]**: Accent profiles produced no audible difference — `needs_fx` threshold
+  (>0.05) discarded most accent pitch/speed changes; offsets were 2-8% (imperceptible).
+  Lowered all threshold from >0.05 to >0.01; expanded offsets to 10-18% range.
+- **BUG-49 [MEDIUM]** (mitigated): Male voice only works via edge-tts. Added `voice_note`
+  field so UI shows warning when gTTS pitch-shift approximation is used instead.
+
+### Changed
+- **FEAT-57**: Expanded accent profiles from 5 generic to 9 Maharashtra regional accents:
+  Standard, Mumbai, Pune, Kolhapuri, Vidarbha, Malvani, Marathwada, Khandeshi, Konkan.
+  Updated chip UI in OutputFragment with all 9 profiles.
 ---
 
 ## [4.1.1] — 2026-03-10  (build 19)

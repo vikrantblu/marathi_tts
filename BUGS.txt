@@ -6,9 +6,22 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 <!-- Add new bugs at the top of this section -->
 
-(No open bugs at this time.)
+- BUG-49 [MEDIUM] Male voice only works via edge-tts — gTTS fallback can't produce
+  real male voice, only pitch-shifts female voice ~4 semitones lower. If edge-tts fails
+  (no network), user gets approximate male voice with no UI feedback explaining this.
+  **Mitigated** [Unreleased] — added `voice_note` field to gTTS return dicts and display
+  in OutputFragment engine label ("⚠ Male voice approximated (gTTS pitch-shift)").
+  Full fix requires offline male TTS model (Piper VITS or similar).
 
 ## Recently Fixed (Unreleased)
+
+- ~~BUG-50 [HIGH] Accent profiles produce no audible difference — offsets too small + threshold blocks them~~
+  (fixed [Unreleased] — two root causes: (A) `needs_fx` threshold `>0.05` discarded most accent
+  pitch/speed changes (northern had -0.02 pitch, -0.05 rate — both at or below threshold);
+  (B) offsets were 2-8% which is below human perceptual threshold. Fix: lowered all needs_fx
+  thresholds from >0.05 to >0.01 across verse/prosody/Stage1 paths; expanded accent offsets to
+  10-18% range; added 5 new Maharashtra regional profiles (Pune, Kolhapuri, Vidarbha, Malvani,
+  Marathwada, Khandeshi, Konkan) replacing generic northern/konkanastha/deccani.)
 
 - ~~BUG-48 [MEDIUM] gTTS y-glide on ALL nasalized matras — not just front vowels~~
   (fixed [Unreleased] — apply_gtts_mr_fixes() only blocked y-glide for ें/ैं (front-vowel

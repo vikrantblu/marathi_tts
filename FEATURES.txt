@@ -51,9 +51,10 @@ Track feature requests and shipped features here.
 - FEAT-56 Batch stotra playlist: select multiple -> generate all -> play in order — SHIPPED
   Long-press enters playlist mode. Multi-select with checkboxes. Batch TTS generation
   with progress bar. Sequential playback via AudioPlayerService.playQueueAsync().
-- FEAT-57 Marathi accent profiles (Standard/Mumbai/Northern/Konkanastha/Deccani) — SHIPPED
-  Accent chip group in output screen. Each profile adjusts pitch and rate offsets.
-  Applied in tts_bridge before generation. 5 regional variants available.
+- FEAT-57 Marathi accent profiles (9 Maharashtra regional accents) — SHIPPED (v4.1.0+)
+  Expanded from 5 generic to 9 region-specific profiles: Standard, Mumbai, Pune,
+  Kolhapuri, Vidarbha, Malvani, Marathwada, Khandeshi, Konkan. Offsets increased
+  to 10-18% for audible difference. needs_fx threshold lowered to >0.01.
 - FEAT-58 Smart text clipping: NLP-aware breakpoints for long texts — SHIPPED
   Real-time clip preview in InputFragment when text exceeds 250 chars. Shows segment
   count and first 6 segment previews. Same splitting logic as streaming generation.

@@ -274,24 +274,52 @@
                         style="@style/Widget.Material3.Chip.Filter"/>
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_accent_northern"
+                        android:id="@+id/chip_accent_pune"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/accent_northern"
+                        android:text="@string/accent_pune"
                         style="@style/Widget.Material3.Chip.Filter"/>
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_accent_konkanastha"
+                        android:id="@+id/chip_accent_kolhapuri"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/accent_konkanastha"
+                        android:text="@string/accent_kolhapuri"
                         style="@style/Widget.Material3.Chip.Filter"/>
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_accent_deccani"
+                        android:id="@+id/chip_accent_vidarbha"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/accent_deccani"
+                        android:text="@string/accent_vidarbha"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_malvani"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_malvani"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_marathwada"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_marathwada"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_khandeshi"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_khandeshi"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_konkan"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_konkan"
                         style="@style/Widget.Material3.Chip.Filter"/>
                 </com.google.android.material.chip.ChipGroup>
 

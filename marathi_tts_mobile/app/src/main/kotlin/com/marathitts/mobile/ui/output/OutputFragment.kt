@@ -102,8 +102,10 @@ class OutputFragment : Fragment() {
             binding.playerCard.visibility = if (hasAudio) View.VISIBLE else View.GONE
 
             if (hasAudio) {
-                binding.txtEngine.text = state.engine.takeIf { it.isNotEmpty() }
+                val engineLabel = state.engine.takeIf { it.isNotEmpty() }
                     ?.let { "Engine: $it" } ?: ""
+                val noteLabel = state.voiceNote?.let { "\n⚠ $it" } ?: ""
+                binding.txtEngine.text = "$engineLabel$noteLabel"
             }
 
             // Input text preview
@@ -310,16 +312,24 @@ class OutputFragment : Fragment() {
         val chipToAccent = mapOf(
             R.id.chip_accent_standard to "standard",
             R.id.chip_accent_mumbai to "mumbai",
-            R.id.chip_accent_northern to "northern",
-            R.id.chip_accent_konkanastha to "konkanastha",
-            R.id.chip_accent_deccani to "deccani"
+            R.id.chip_accent_pune to "pune",
+            R.id.chip_accent_kolhapuri to "kolhapuri",
+            R.id.chip_accent_vidarbha to "vidarbha",
+            R.id.chip_accent_malvani to "malvani",
+            R.id.chip_accent_marathwada to "marathwada",
+            R.id.chip_accent_khandeshi to "khandeshi",
+            R.id.chip_accent_konkan to "konkan"
         )
         val accentToDesc = mapOf(
             "standard" to R.string.accent_standard_desc,
             "mumbai" to R.string.accent_mumbai_desc,
-            "northern" to R.string.accent_northern_desc,
-            "konkanastha" to R.string.accent_konkanastha_desc,
-            "deccani" to R.string.accent_deccani_desc
+            "pune" to R.string.accent_pune_desc,
+            "kolhapuri" to R.string.accent_kolhapuri_desc,
+            "vidarbha" to R.string.accent_vidarbha_desc,
+            "malvani" to R.string.accent_malvani_desc,
+            "marathwada" to R.string.accent_marathwada_desc,
+            "khandeshi" to R.string.accent_khandeshi_desc,
+            "konkan" to R.string.accent_konkan_desc
         )
         binding.accentChips.setOnCheckedStateChangeListener { _, checkedIds ->
             val chipId = checkedIds.firstOrNull() ?: R.id.chip_accent_standard

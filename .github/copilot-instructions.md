@@ -1327,18 +1327,24 @@ with `onChunkStart/onAllComplete/onError` callbacks for sequential playback.
 
 ### Accent Profiles (FEAT-57)
 
-**Python:** `ACCENT_PROFILES` dict in `tts_bridge.py` with 5 profiles:
+**Python:** `ACCENT_PROFILES` dict in `tts_bridge.py` with 9 Maharashtra regional profiles:
 
 | Profile | Pitch offset | Rate offset |
 |---------|-------------|-------------|
 | Standard (प्रमाण) | 0.0 | 0.0 |
-| Mumbai (मुंबई) | +0.03 | +0.08 |
-| Northern (उत्तर) | -0.02 | -0.05 |
-| Konkanastha (कोकणस्थ) | +0.05 | -0.03 |
-| Deccani (दख्खनी) | -0.04 | 0.0 |
+| Mumbai (मुंबई) | +0.10 | +0.18 |
+| Pune (पुणे) | +0.06 | -0.08 |
+| Kolhapuri (कोल्हापुरी) | -0.12 | -0.10 |
+| Vidarbha (विदर्भ) | -0.08 | -0.15 |
+| Malvani (मालवणी) | +0.14 | +0.08 |
+| Marathwada (मराठवाडा) | -0.10 | -0.06 |
+| Khandeshi (खान्देशी) | -0.06 | -0.12 |
+| Konkan (कोकण) | +0.08 | -0.06 |
 
 `_apply_accent(speed, pitch, accent)` adjusts params at the start of `generate_tts()`.
 `get_accent_profiles()` returns profile list for UI.
+`needs_fx` threshold lowered to `>0.01` across all code paths to ensure accent offsets
+are always applied to the audio post-processing.
 
 **UI:** `accent_card` with `ChipGroup` (filter chips, singleSelection=true) in
 `fragment_output.xml`. `OutputFragment.setupAccentChips()` maps chip IDs to accent keys

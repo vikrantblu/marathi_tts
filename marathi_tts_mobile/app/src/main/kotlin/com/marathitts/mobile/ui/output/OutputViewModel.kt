@@ -27,6 +27,7 @@ data class OutputState(
     val audioPath: String? = null,
     val streamChunks: List<String> = emptyList(),
     val engine: String = "",
+    val voiceNote: String? = null,
     val error: String? = null,
     val status: String = "",
     val emotionLabel: String? = null,
@@ -155,10 +156,13 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
 
                 if (result.optBoolean("success", false)) {
                     val engineUsed = result.optString("engine", "")
+                    val voiceNote = result.optString("voice_note", "")
+                        .ifEmpty { null }
                     recordSuccess(engineUsed)
                     _state.value = OutputState(
                         audioPath = result.optString("audio_path"),
                         engine = engineUsed,
+                        voiceNote = voiceNote,
                         status = "Audio ready ✓",
                         emotionLabel = emotion,
                         emotionScore = 0f

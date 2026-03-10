@@ -240,31 +240,55 @@ ACCENT_PROFILES = {
         "label": "Standard (प्रमाण)",
         "pitch_offset": 0.0,
         "rate_offset": 0.0,
-        "description": "Standard Marathi accent (Pune/media)"
+        "description": "Standard Marathi — Pune/media (प्रमाण भाषा)"
     },
     "mumbai": {
         "label": "Mumbai (मुंबई)",
-        "pitch_offset": 0.03,
+        "pitch_offset": 0.10,
+        "rate_offset": 0.18,
+        "description": "Mumbai Marathi — fast-paced, upbeat, mixed register"
+    },
+    "pune": {
+        "label": "Pune (पुणेरी)",
+        "pitch_offset": 0.06,
+        "rate_offset": -0.08,
+        "description": "Puneri Marathi — measured pace, slightly sharp, precise diction"
+    },
+    "kolhapuri": {
+        "label": "Kolhapuri (कोल्हापुरी)",
+        "pitch_offset": -0.12,
+        "rate_offset": -0.10,
+        "description": "Kolhapuri — deep, strong, deliberate and authoritative"
+    },
+    "vidarbha": {
+        "label": "Vidarbha (विदर्भ/वऱ्हाडी)",
+        "pitch_offset": -0.08,
+        "rate_offset": -0.15,
+        "description": "Vidarbha/Varhadi — slower, deeper, distinctive Nagpuri style"
+    },
+    "malvani": {
+        "label": "Malvani (मालवणी/कोकणी)",
+        "pitch_offset": 0.14,
         "rate_offset": 0.08,
-        "description": "Mumbai Marathi — faster pace, slightly higher pitch"
+        "description": "Malvani/Konkan — higher pitch, musical, lilting intonation"
     },
-    "northern": {
-        "label": "Northern (उत्तर महाराष्ट्र)",
-        "pitch_offset": -0.02,
-        "rate_offset": -0.05,
-        "description": "Khandesh/Vidarbha — slower, deeper tone"
+    "marathwada": {
+        "label": "Marathwada (मराठवाडी)",
+        "pitch_offset": -0.10,
+        "rate_offset": -0.06,
+        "description": "Marathwada — lower pitch, Deccani/Urdu influence, relaxed"
     },
-    "konkanastha": {
-        "label": "Konkanastha (कोकणस्थ)",
-        "pitch_offset": 0.05,
-        "rate_offset": -0.03,
-        "description": "Konkan region — higher pitch, measured pace"
+    "khandeshi": {
+        "label": "Khandeshi (खानदेशी/अहिराणी)",
+        "pitch_offset": -0.06,
+        "rate_offset": -0.12,
+        "description": "Khandesh — slower pace, deeper tone, Ahirani influence"
     },
-    "deccani": {
-        "label": "Deccani (दख्खनी)",
-        "pitch_offset": -0.04,
-        "rate_offset": 0.0,
-        "description": "Marathwada/Deccani — lower pitch, Urdu influence"
+    "konkan": {
+        "label": "Konkan (कोकणस्थ)",
+        "pitch_offset": 0.08,
+        "rate_offset": -0.06,
+        "description": "Konkan Brahmin — higher pitch, measured pace, formal register"
     },
 }
 
@@ -1020,8 +1044,8 @@ def _generate_prosody_audio(text, speed, pitch, volume, output_path,
         combined.export(output_path, format="mp3")
 
         # Apply user-requested pitch/speed/volume effects to final audio
-        needs_fx = (abs(speed - 1.0) > 0.05 or abs(pitch - 1.0) > 0.05
-                    or abs(volume - 1.0) > 0.05)
+        needs_fx = (abs(speed - 1.0) > 0.01 or abs(pitch - 1.0) > 0.01
+                    or abs(volume - 1.0) > 0.01)
         if needs_fx:
             _apply_pitch_speed(output_path, speed, pitch, volume, output_path)
 
@@ -1147,8 +1171,10 @@ def generate_tts(text: str,
 
     # Apply gender-based pitch shift for gTTS fallback only.
     # gTTS is always female; lower pitch ~4 semitones to approximate male.
+    _gender_fallback = False
     if gender == 'male':
         pitch = pitch * 0.79 if abs(pitch - 1.0) > 0.01 else 0.79
+        _gender_fallback = True
         log.info("[Gender/gTTS fallback] Male pitch adjusted to %.2f", pitch)
 
     if not text or not text.strip():
@@ -1208,15 +1234,16 @@ def generate_tts(text: str,
                      lang_check=False).save(output_path)
                 log.info("[Verse] gTTS saved in %.2fs (slow=%s)", time.time() - t_v, use_slow)
 
-                needs_fx = (abs(speed - 1.0) > 0.05 or abs(pitch - 1.0) > 0.05
-                            or abs(volume - 1.0) > 0.05)
+                needs_fx = (abs(speed - 1.0) > 0.01 or abs(pitch - 1.0) > 0.01
+                            or abs(volume - 1.0) > 0.01)
                 if needs_fx:
                     _apply_pitch_speed(output_path, speed, pitch, volume, output_path)
 
                 elapsed = time.time() - t0
                 log.info("[Verse] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
                 return {"success": True, "audio_path": output_path,
-                        "engine": "gtts_verse", "elapsed_sec": round(elapsed, 2)}
+                        "engine": "gtts_verse", "elapsed_sec": round(elapsed, 2),
+                        **(({"voice_note": "Male voice approximated (gTTS pitch-shift)"} if _gender_fallback else {}))}
         except Exception as exc:
             log.error("[Verse] Failed, falling back to normal: %s", exc)
 
@@ -1229,6 +1256,8 @@ def generate_tts(text: str,
             text, speed, pitch, volume, output_path, language, gtts_language)
         if prosody_result and prosody_result.get("success"):
             prosody_result["elapsed_sec"] = round(time.time() - t0, 2)
+            if _gender_fallback:
+                prosody_result["voice_note"] = "Male voice approximated (gTTS pitch-shift)"
             log.info("[Prosody] SUCCESS -> %s (%d segments, %.2fs)",
                      output_path, prosody_result.get("segments", 0),
                      prosody_result["elapsed_sec"])
@@ -1257,7 +1286,7 @@ def generate_tts(text: str,
         gTTS(text=normalized, lang=gtts_language, slow=(speed < 0.75), lang_check=False).save(raw)
         log.info("[Stage 1] gTTS saved in %.2fs", time.time() - t_gtts)
 
-        needs_fx = abs(speed-1.0)>0.05 or abs(pitch-1.0)>0.05 or abs(volume-1.0)>0.05
+        needs_fx = abs(speed-1.0)>0.01 or abs(pitch-1.0)>0.01 or abs(volume-1.0)>0.01
         if needs_fx:
             _apply_pitch_speed(raw, speed, pitch, volume, output_path)
             try: os.unlink(raw)
@@ -1269,7 +1298,8 @@ def generate_tts(text: str,
         elapsed = time.time() - t0
         log.info("[Stage 1] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
         return {"success": True, "audio_path": output_path, "engine": "gtts_pydub",
-                "elapsed_sec": round(elapsed, 2)}
+                "elapsed_sec": round(elapsed, 2),
+                **(({"voice_note": "Male voice approximated (gTTS pitch-shift)"} if _gender_fallback else {}))}
     except Exception as exc:
         log.error("[Stage 1] gTTS+pydub failed: %s\n%s", exc, traceback.format_exc())
 
@@ -1281,7 +1311,8 @@ def generate_tts(text: str,
         elapsed = time.time() - t0
         log.info("[Stage 2] SUCCESS -> %s  (%.2fs)", output_path, elapsed)
         return {"success": True, "audio_path": output_path, "engine": "gtts_bare",
-                "elapsed_sec": round(elapsed, 2)}
+                "elapsed_sec": round(elapsed, 2),
+                **(({"voice_note": "Male voice approximated (gTTS pitch-shift)"} if _gender_fallback else {}))}
     except Exception as exc:
         log.error("[Stage 2] All TTS stages failed: %s\n%s", exc, traceback.format_exc())
         return {"success": False, "error": str(exc),

@@ -181,14 +181,22 @@
     <string name="accent_label">Accent Profile</string>
     <string name="accent_standard">प्रमाण</string>
     <string name="accent_mumbai">मुंबई</string>
-    <string name="accent_northern">उत्तर</string>
-    <string name="accent_konkanastha">कोकणस्थ</string>
-    <string name="accent_deccani">दख्खनी</string>
+    <string name="accent_pune">पुणे</string>
+    <string name="accent_kolhapuri">कोल्हापुरी</string>
+    <string name="accent_vidarbha">विदर्भ</string>
+    <string name="accent_malvani">मालवणी</string>
+    <string name="accent_marathwada">मराठवाडा</string>
+    <string name="accent_khandeshi">खान्देशी</string>
+    <string name="accent_konkan">कोकण</string>
     <string name="accent_standard_desc">Standard Marathi (Pune/media)</string>
-    <string name="accent_mumbai_desc">Mumbai — faster pace, higher pitch</string>
-    <string name="accent_northern_desc">Khandesh/Vidarbha — slower, deeper tone</string>
-    <string name="accent_konkanastha_desc">Konkan region — higher pitch, measured pace</string>
-    <string name="accent_deccani_desc">Marathwada/Deccani — lower pitch</string>
+    <string name="accent_mumbai_desc">Mumbai — fast-paced, upbeat pitch</string>
+    <string name="accent_pune_desc">Pune — precise enunciation, measured pace</string>
+    <string name="accent_kolhapuri_desc">Kolhapur — deep, deliberate, robust tone</string>
+    <string name="accent_vidarbha_desc">Nagpur/Vidarbha — slower, deeper intonation</string>
+    <string name="accent_malvani_desc">Sindhudurg/Ratnagiri — higher pitch, musical</string>
+    <string name="accent_marathwada_desc">Aurangabad/Marathwada — lower pitch, Deccani influence</string>
+    <string name="accent_khandeshi_desc">North Maharashtra — slower pace, Ahirani influence</string>
+    <string name="accent_konkan_desc">Konkan coast — higher pitch, measured cadence</string>
 
     <!-- Voice Gender (FEAT-74) -->
     <string name="gender_female">स्त्री (Female)</string>
