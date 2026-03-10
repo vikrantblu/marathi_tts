@@ -523,6 +523,7 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
                      generated)
             return None
 
+        combined = _post_process_audio(combined)
         combined.export(output_path, format="mp3")
 
         log.info("[edge-prosody] Combined %d segments -> %s (%.1fs audio)",
@@ -689,6 +690,7 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
                      "falling through", generated)
             return None
 
+        combined = _post_process_audio(combined)
         combined.export(output_path, format="mp3")
 
         log.info("[edge-verse-prosody] Combined %d segments -> %s "
@@ -718,6 +720,51 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _post_process_audio(combined):
+    """Normalize loudness and trim silence from combined audio segment.
+
+    Returns the processed AudioSegment. On failure, returns original unchanged.
+    """
+    try:
+        from pydub import AudioSegment as PydubSeg  # type: ignore
+        from pydub.silence import detect_leading_silence  # type: ignore
+
+        original_duration = len(combined)
+
+        # 1. Loudness normalization — target -16 dBFS (broadcast speech standard)
+        TARGET_DBFS = -16.0
+        if combined.dBFS < -60:
+            log.debug("[post-process] Audio too quiet (%.1f dBFS), skipping", combined.dBFS)
+            return combined
+        change_in_dBFS = TARGET_DBFS - combined.dBFS
+        combined = combined.apply_gain(change_in_dBFS)
+
+        # 2. Trim leading silence (>200ms of silence at -40 dBFS)
+        SILENCE_THRESH = -40
+        leading_ms = detect_leading_silence(combined, silence_threshold=SILENCE_THRESH)
+        trim_start = max(0, leading_ms - 200)
+
+        # 3. Trim trailing silence
+        reversed_audio = combined.reverse()
+        trailing_ms = detect_leading_silence(reversed_audio, silence_threshold=SILENCE_THRESH)
+        trim_end = max(0, trailing_ms - 200)
+
+        if trim_start > 0 or trim_end > 0:
+            end_pos = len(combined) - trim_end
+            if end_pos > trim_start + 500:  # keep at least 500ms
+                combined = combined[trim_start:end_pos]
+
+        log.debug("[post-process] %.1fs -> %.1fs (gain %+.1f dB, trimmed %dms head + %dms tail)",
+                  original_duration / 1000, len(combined) / 1000,
+                  change_in_dBFS, trim_start, trim_end)
+        return combined
+    except ImportError:
+        return combined
+    except Exception as exc:
+        log.warning("[post-process] Failed: %s — returning original", exc)
+        return combined
 
 
 def _apply_pitch_speed(src: str, speed: float, pitch: float, volume: float, dst: str) -> str:
@@ -1056,7 +1103,8 @@ def _generate_prosody_audio(text, speed, pitch, volume, output_path,
                      generated)
             return None
 
-        # Export combined audio
+        # Post-process combined audio (normalize + trim silence)
+        combined = _post_process_audio(combined)
         combined.export(output_path, format="mp3")
 
         # Apply user-requested pitch/speed/volume effects to final audio

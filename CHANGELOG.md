@@ -25,6 +25,9 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 ### Added
 - **FEAT-77**: Home screen widget with "Speak Clipboard" (reads clipboard → auto-generate TTS)
   and "Open" button. AppWidgetProvider + PendingIntent → MainActivity with auto_generate flag.
+- **Audio post-processing** (#19): All prosody-stitched outputs (edge-tts prose/verse, gTTS)
+  now get loudness normalization (target -16 dBFS) and leading/trailing silence trimming.
+  Applied in both mobile and desktop bridges.
 
 ### Fixed
 - **BUG-51 [HIGH]**: Y-glide persisted on word-final matra+anusvara despite BUG-48 ZWNJ fix.

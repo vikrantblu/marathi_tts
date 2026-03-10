@@ -773,6 +773,25 @@ silence pauses.
 - All prosody functions return `None` on failure → transparent fallthrough
 - Temp segment files cleaned up in `finally` block
 
+### Audio Post-Processing (#19)
+
+**Function:** `_post_process_audio(combined)` in both mobile and desktop `tts_bridge.py`
+
+All three prosody-stitched functions (`_generate_edge_prosody()`,
+`_generate_edge_verse_prosody()`, `_generate_prosody_audio()`) run the combined audio
+through `_post_process_audio()` before exporting to MP3.
+
+**What it does:**
+1. **Loudness normalization** — target -16 dBFS (broadcast speech standard). Uses
+   `combined.apply_gain()`. Skips audio below -60 dBFS (effectively silent).
+2. **Leading silence trim** — uses `pydub.silence.detect_leading_silence()` at -40 dBFS.
+   Keeps 200ms of natural onset.
+3. **Trailing silence trim** — reverses audio for `detect_leading_silence()`, trims
+   leaving 200ms of natural tail. Ensures at least 500ms total audio remains.
+
+**Safety:** Returns original audio on any exception (ImportError, processing error).
+Purely in-memory — no temp files created.
+
 ---
 
 ## Gaṇa Pattern Matching + New Metres (FEAT-4 + FEAT-12)
