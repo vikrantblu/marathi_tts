@@ -244,4 +244,11 @@
 
     <!-- Accessibility (FEAT-78) -->
     <string name="spinner_language_desc">Select language</string>
+
+    <!-- Home Screen Widget (FEAT-77) -->
+    <string name="widget_name">मराठी TTS Quick</string>
+    <string name="widget_description">Speak clipboard text with one tap</string>
+    <string name="widget_speak_clipboard">🔊 Speak Clipboard</string>
+    <string name="widget_open_app">Open</string>
+    <string name="widget_clipboard_empty">Clipboard is empty — copy some text first</string>
 </resources>

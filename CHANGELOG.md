@@ -22,7 +22,17 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ## [Unreleased]
 <!-- Changes staged but not yet released go here -->
+### Added
+- **FEAT-77**: Home screen widget with "Speak Clipboard" (reads clipboard → auto-generate TTS)
+  and "Open" button. AppWidgetProvider + PendingIntent → MainActivity with auto_generate flag.
+
 ### Fixed
+- **BUG-51 [HIGH]**: Y-glide persisted on word-final matra+anusvara despite BUG-48 ZWNJ fix.
+  Replaced word-final anusvara with chandrabindu (ं→ँ) at word boundaries; applied
+  `apply_gtts_mr_fixes()` to ALL edge-tts paths (was previously gTTS-only).
+- **BUG-52 [HIGH]**: ज्ञ pronounced as ग्य in verse paths — all verse code paths for default
+  "mr" language skipped `apply_marathi_phonetics()`. Added normalize+phonetics to all verse
+  and edge-tts code paths in both mobile and desktop bridges.
 - **BUG-50 [HIGH]**: Accent profiles produced no audible difference — `needs_fx` threshold
   (>0.05) discarded most accent pitch/speed changes; offsets were 2-8% (imperceptible).
   Lowered all threshold from >0.05 to >0.01; expanded offsets to 10-18% range.

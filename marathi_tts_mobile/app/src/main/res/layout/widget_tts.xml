@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp"
+    android:background="@android:color/white">
+
+    <!-- App icon -->
+    <ImageView
+        android:id="@+id/widget_icon"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="@string/app_name"
+        android:layout_marginEnd="8dp" />
+
+    <!-- Speak Clipboard button -->
+    <TextView
+        android:id="@+id/btn_speak_clipboard"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/widget_speak_clipboard"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:background="#E65C00"
+        android:padding="6dp"
+        android:layout_marginEnd="4dp" />
+
+    <!-- Open App button -->
+    <TextView
+        android:id="@+id/btn_open_app"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/widget_open_app"
+        android:textColor="#E65C00"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:background="#FFF3E0"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp" />
+
+</LinearLayout>

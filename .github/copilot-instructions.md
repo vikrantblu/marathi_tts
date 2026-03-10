@@ -1512,3 +1512,45 @@ attributes mapping to their label strings.
 `importantForAccessibility="no"` (was previously using tab label as contentDescription).
 
 **Export button:** Has explicit `contentDescription` for TalkBack.
+
+---
+
+## Home Screen Widget (FEAT-77)
+
+**4×1 Android AppWidget** for one-tap TTS from the home screen.
+
+### Components
+
+| File | Purpose |
+|------|---------|
+| `widget/TtsWidget.kt` | `AppWidgetProvider` — sets PendingIntents for two buttons |
+| `res/layout/widget_tts.xml` | RemoteViews layout: icon + "Speak Clipboard" + "Open" |
+| `res/xml/appwidget_info.xml` | Widget metadata (4×1, no auto-update) |
+
+### Buttons
+
+| Button | Action |
+|--------|--------|
+| 🔊 Speak Clipboard | Reads clipboard text → launches MainActivity with `ACTION_WIDGET_SPEAK` → navigates to InputFragment with `tts_text` + `auto_generate=true` → auto-taps Generate |
+| Open | Launches MainActivity normally |
+| App icon | Same as Open |
+
+### Intent Flow
+
+1. Widget button tap → `PendingIntent.getActivity()` with `ACTION_WIDGET_SPEAK`
+2. `MainActivity.handleWidgetIntent()` reads clipboard via `ClipboardManager`
+3. If clipboard non-empty → navigates to `inputFragment` with `tts_text` + `auto_generate` args
+4. `InputFragment.onViewCreated()` sees `auto_generate=true` → `binding.btnGenerate.performClick()`
+5. If clipboard empty → shows Toast "Clipboard is empty — copy some text first"
+
+### Manifest Registration
+
+```xml
+<receiver android:name=".widget.TtsWidget" android:exported="false">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+    </intent-filter>
+    <meta-data android:name="android.appwidget.provider"
+               android:resource="@xml/appwidget_info"/>
+</receiver>
+```

@@ -160,8 +160,9 @@ Track feature requests and shipped features here.
 - FEAT-76 ✅ Export to MP3 with metadata: exportAudioWithMetadata() saves to Music/MarathiTTS
   via MediaStore.Audio.Media with TITLE, ARTIST, ALBUM, DURATION columns. Export dialog
   lets user set title. Streaming chunks auto-concatenated before export.
-- FEAT-77 Widget for quick TTS: Android home screen widget with text input and one-tap
-  generate. Uses AppPreferences defaults.
+- FEAT-77 ✅ Widget for quick TTS: Android home screen widget (4×1) with "Speak Clipboard"
+  button that reads clipboard text and auto-generates TTS, plus "Open" button to launch app.
+  Uses AppWidgetProvider + PendingIntent → MainActivity with auto_generate flag.
 - FEAT-78 ✅ Accessibility: contentDescription on sliders (speed, emotion intensity),
   spinner (language), prosody segments (segment + mode + metre description), export button.
   Decorative ImageView marked importantForAccessibility=no. 48dp min touch targets on

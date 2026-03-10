@@ -1,9 +1,12 @@
 package com.marathitts.mobile
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.NavHostFragment
@@ -20,6 +23,8 @@ class MainActivity : AppCompatActivity() {
         // Intent extras for headless automation
         const val EXTRA_NAVIGATE_TO   = "navigate_to"        // e.g. "testDashboard"
         const val EXTRA_AUTO_RUN      = "auto_run"           // boolean
+        // Widget action (FEAT-77)
+        const val ACTION_WIDGET_SPEAK = "com.marathitts.mobile.WIDGET_SPEAK"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +59,9 @@ class MainActivity : AppCompatActivity() {
         // ── Intent-driven automation (adb am start extras) ─────────────────
         handleLaunchIntent(navController)
 
+        // ── Handle widget intents (FEAT-77) ────────────────────────────────
+        handleWidgetIntent(navController)
+
         // ── Handle share intents (URLs and images from other apps) ──────────
         handleShareIntent(navController)
     }
@@ -78,6 +86,38 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * FEAT-77: Widget "Speak Clipboard" button reads clipboard text and
+     * navigates to InputFragment with tts_text + auto_generate flag.
+     */
+    private fun handleWidgetIntent(navController: androidx.navigation.NavController) {
+        if (intent?.action != ACTION_WIDGET_SPEAK) return
+        Log.i(TAG, "Widget speak intent received")
+
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clipText = clipboard.primaryClip
+            ?.takeIf { it.itemCount > 0 }
+            ?.getItemAt(0)
+            ?.text
+            ?.toString()
+            ?.trim()
+
+        if (clipText.isNullOrBlank()) {
+            Toast.makeText(this, getString(R.string.widget_clipboard_empty), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        binding.root.post {
+            navController.navigate(
+                R.id.inputFragment,
+                bundleOf(
+                    "tts_text" to clipText,
+                    "auto_generate" to true
+                )
+            )
         }
     }
 

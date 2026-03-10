@@ -56,6 +56,12 @@ class InputFragment : Fragment() {
             }
         }
 
+        // FEAT-77: Widget auto-generate — trigger Generate button after text is set
+        val autoGenerate = arguments?.getBoolean("auto_generate", false) == true
+        if (autoGenerate && argText != null) {
+            binding.root.post { binding.btnGenerate.performClick() }
+        }
+
         // Accept text returned from child screens (OCR, PDF, Web, STT, BookReader)
         findNavController().currentBackStackEntry
             ?.savedStateHandle
