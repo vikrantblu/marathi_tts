@@ -37,6 +37,11 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
   Marathwada (aspiration reduction), Khandeshi (vowel shortening), Konkan (retroflex emphasis).
   `apply_accent_phonetics()` in marathi_phonetics.py, wired into both bridge scripts.
   7 new test assertions (Section L).
+- **Adaptive text preprocessing** (#18): Content-type classifier detects news, technical,
+  conversational, and address text. Type-specific preprocessors expand units (kg→किलोग्रॅम),
+  pronounce pin codes, normalize colloquialisms (बोलतोय→बोलतो आहे), and expand news
+  acronyms (BJP→भाजप). New `content_classifier.py` module synced to all 3 platforms.
+  9 new test assertions (Section M).
 
 ### Fixed
 - **BUG-51 [HIGH]**: Y-glide persisted on word-final matra+anusvara despite BUG-48 ZWNJ fix.

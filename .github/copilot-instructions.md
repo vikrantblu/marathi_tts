@@ -113,7 +113,7 @@ tts/
     core/             # tts_engine.py
     emotion/          # emotion_analyzer.py
     phonetic/         # marathi_phonetics, sandhi_engine, metre_engine, g2p_engine, …
-    text/             # text_normalizer, text_processor, marathi_grammar, …
+    text/             # text_normalizer, text_processor, marathi_grammar, content_classifier, …
     voice/            # voice_modulator.py  (web only — desktop/mobile use try/except)
 ```
 
@@ -1426,6 +1426,60 @@ and call it in `generate_tts()` after `_apply_accent()` for non-standard Marathi
 **Tests:** Section L in `test_all_platforms.py` — 7 assertions (L1–L7) covering standard
 passthrough, Kolhapuri ळ-merging, Vidarbha dative shift, Khandeshi vowel shortening,
 Marathwada nasal preference, empty accent passthrough, Konkan retroflex.
+
+---
+
+## Adaptive Text Preprocessing (FEAT-18)
+
+**File:** `tts/utils/text/content_classifier.py` — synced to all 3 platforms.
+
+### Content-Type Classifier
+
+`classify_content(text, is_verse=False)` detects the type of input text using
+keyword/pattern heuristics and returns one of: `verse`, `news`, `conversational`,
+`technical`, `address`, `general`.
+
+| Content type | Detection heuristics |
+|-------------|---------------------|
+| Verse | danda markers (।/॥) or `is_verse=True` flag |
+| News | Formal keywords: वार्ताहर, मुख्यमंत्री, निवडणूक, etc. |
+| Technical | Unit suffixes: kg, km, °C, MHz, GB, %, etc. |
+| Address | Pin codes (6-digit), address vocabulary: पिन कोड, सोसायटी, etc. |
+| Conversational | Casual markers: अरे, यार, ना, बरं + English mixing ratio |
+| General | Default — no type-specific expansion needed |
+
+### Type-Specific Preprocessors
+
+`preprocess_by_content_type(text, content_type)` routes to:
+
+| Type | Preprocessor | Key expansions |
+|------|-------------|----------------|
+| Technical | `_preprocess_technical()` | Unit expansion (kg→किलोग्रॅम, km→किलोमीटर, °C→अंश सेल्सियस), percentage (50%→50 टक्के) |
+| Address | `_preprocess_address()` | Pin codes (411001→41 10 01), abbreviations (फ्लॅट नं.→फ्लॅट नंबर) |
+| Conversational | `_preprocess_conversational()` | Progressive contractions (बोलतोय→बोलतो आहे), neuter forms (कसं→कसे) |
+| News | `_preprocess_news()` | Acronyms (BJP→भाजप, IMD→भारतीय हवामान विभाग), English terms (lakh→लाख) |
+
+### Bridge Integration
+
+Called in `generate_tts()` **before** prose preprocessing (abbreviation expansion,
+grammar engine). Only for non-verse, non-Sanskrit/English text.
+
+```python
+content_type = classify_content(text, is_verse=is_verse)
+text = preprocess_by_content_type(text, content_type)
+```
+
+Import with fallback stub (both mobile and desktop bridges):
+```python
+try:
+    from tts.utils.text.content_classifier import classify_content, preprocess_by_content_type
+except ImportError:
+    def classify_content(t, is_verse=False): return "general"
+    def preprocess_by_content_type(t, ct): return t
+```
+
+**Tests:** Section M in `test_all_platforms.py` — 9 assertions (M1–M9) covering
+classifier accuracy and all 4 type-specific preprocessors.
 
 ### Smart Text Clipping (FEAT-58)
 

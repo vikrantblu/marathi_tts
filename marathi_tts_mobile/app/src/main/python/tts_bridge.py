@@ -142,6 +142,15 @@ except ImportError as _e:
     _phonetic_stotra = None
     _phonetic_old_marathi = None
 
+# -- Content-type classifier (FEAT-18 — adaptive preprocessing) ----------
+try:
+    from tts.utils.text.content_classifier import classify_content, preprocess_by_content_type
+    log.info("Content classifier loaded OK")
+except ImportError as _e:
+    log.warning("content_classifier not available (%s) — skipping", _e)
+    def classify_content(t, is_verse=False): return "general"
+    def preprocess_by_content_type(t, ct): return t
+
 
 # ---------------------------------------------------------------------------
 # User phonetic corrections (FEAT-59) — loaded from JSON written by Kotlin
@@ -1253,6 +1262,17 @@ def generate_tts(text: str,
     if output_path is None:
         fd, output_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
         os.close(fd)
+
+    # ── Content-type adaptive preprocessing (FEAT-18) ──────────────────────
+    # Detect content type and apply type-specific expansions (units, pin
+    # codes, colloquialisms, acronyms) before the standard pipeline.
+    if not is_verse and language not in ("sa", "en"):
+        content_type = classify_content(text, is_verse=is_verse)
+        adapted_text = preprocess_by_content_type(text, content_type)
+        if adapted_text != text:
+            log.info("[Adaptive] content_type=%s | orig=%d new=%d chars",
+                     content_type, len(text), len(adapted_text))
+            text = adapted_text
 
     # ── Prose preprocessing (abbreviation expansion + English transliteration) ──
     if not is_verse:

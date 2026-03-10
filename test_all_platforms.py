@@ -623,6 +623,69 @@ def run_tests_for_platform(label, sys_root):
          'बोळ' in r and 'चाळ' in r,
          f'Konkan ल→ळ failed: {repr(r)}')
 
+    # M. CONTENT-TYPE CLASSIFIER + ADAPTIVE PREPROCESSING (FEAT-18)
+    # ══════════════════════════════════════════════════════════════════════
+
+    from tts.utils.text.content_classifier import (
+        classify_content, preprocess_by_content_type,
+        VERSE, NEWS, CONVERSATIONAL, TECHNICAL, ADDRESS, GENERAL,
+    )
+
+    # M1. Verse detection: text with danda markers → verse
+    ct = classify_content('शुक्लांबरधरं विष्णुं ॥ शशिवर्णं चतुर्भुजम् ॥')
+    _chk(failures, 'Classifier: verse detect',
+         ct == VERSE,
+         f'Expected verse, got {ct}')
+
+    # M2. Technical unit expansion: "5 kg" → "5 किलोग्रॅम"
+    r = preprocess_by_content_type('माझे वजन 70 kg आहे', TECHNICAL)
+    _chk(failures, 'Technical: kg expansion',
+         'किलोग्रॅम' in r,
+         f'kg not expanded: {repr(r)}')
+
+    # M3. Technical percentage: "50%" → "50 टक्के"
+    r = preprocess_by_content_type('यश दर 85% आहे', TECHNICAL)
+    _chk(failures, 'Technical: percent expansion',
+         'टक्के' in r,
+         f'% not expanded: {repr(r)}')
+
+    # M4. Address pin code: 6-digit → paired reading
+    r = preprocess_by_content_type('पिन कोड 411001', ADDRESS)
+    _chk(failures, 'Address: pin code expansion',
+         '41 10 01' in r,
+         f'Pin code not expanded: {repr(r)}')
+
+    # M5. Conversational: बोलतोय → बोलतो आहे
+    r = preprocess_by_content_type('तो बोलतोय', CONVERSATIONAL)
+    _chk(failures, 'Conversational: progressive expansion',
+         'बोलतो आहे' in r,
+         f'Conversational not expanded: {repr(r)}')
+
+    # M6. News: acronym expansion (BJP → भाजप)
+    r = preprocess_by_content_type('BJP ने निवडणूक जिंकली', NEWS)
+    _chk(failures, 'News: acronym expansion',
+         'भाजप' in r,
+         f'News acronym not expanded: {repr(r)}')
+
+    # M7. General text passthrough: no modifications
+    orig = 'मी आज बाजारात गेलो'
+    r = preprocess_by_content_type(orig, GENERAL)
+    _chk(failures, 'General: passthrough',
+         r == orig,
+         f'General modified text: {repr(r)}')
+
+    # M8. Classify news text
+    ct = classify_content('मुख्यमंत्री यांनी आज जाहीर केले की सरकार नवीन योजना आणेल')
+    _chk(failures, 'Classifier: news detect',
+         ct == NEWS,
+         f'Expected news, got {ct}')
+
+    # M9. Classify conversational text
+    ct = classify_content('अरे यार तू कुठं जातोय ना बोलतोय काल चल')
+    _chk(failures, 'Classifier: conversational detect',
+         ct == CONVERSATIONAL,
+         f'Expected conversational, got {ct}')
+
     sys.path.remove(sys_root)
     return failures
 
