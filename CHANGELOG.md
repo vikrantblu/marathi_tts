@@ -6,7 +6,27 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
+
+---
+
 ## [Unreleased]
+<!-- Changes staged but not yet released go here -->
+---
+
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
 ### Fixed
 - **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
   word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
@@ -97,9 +117,37 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
+
+---
+
 ## [Unreleased]
 
 <!-- Changes staged but not yet released go here -->
+---
+
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
+
 ---
 
 ## [4.1.0] — 2026-03-09  (build 18)
@@ -178,6 +226,20 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - SDLC maturity (10 gaps): PR template, VS Code tasks (10), validate CI workflow (4 jobs),
   agent prompts (6→12), MCP tools (9→21), VS Code settings enhanced, docs/ folder (16 specs),
   version.json system, pre-commit hooks documented, feature flags pattern
+
+---
+
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
 
 ---
 
@@ -284,6 +346,20 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
+
+---
+
 ## [4.1.0] — 2026-03-09  (build 18)
 ### Minor release
 ### Added
@@ -360,6 +436,20 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - SDLC maturity (10 gaps): PR template, VS Code tasks (10), validate CI workflow (4 jobs),
   agent prompts (6→12), MCP tools (9→21), VS Code settings enhanced, docs/ folder (16 specs),
   version.json system, pre-commit hooks documented, feature flags pattern
+
+---
+
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
 
 ---
 
@@ -425,6 +515,20 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 
 ---
 
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
+
+---
+
 ## [4.1.0] — 2026-03-09  (build 18)
 ### Minor release
 ### Added
@@ -501,6 +605,20 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 - SDLC maturity (10 gaps): PR template, VS Code tasks (10), validate CI workflow (4 jobs),
   agent prompts (6→12), MCP tools (9→21), VS Code settings enhanced, docs/ folder (16 specs),
   version.json system, pre-commit hooks documented, feature flags pattern
+
+---
+
+## [4.1.1] — 2026-03-10  (build 19)
+### Hotfix / patch
+- fix ZWNJ
+### Fixed
+- **BUG-47 [HIGH]**: Schwa deletion lexicon never matched Devanagari words — Python `re \b`
+  word boundary treats matras (ा ी ू etc.) as `\W`, so `\bमुलगा\b` never matched. Replaced
+  regex-based lexicon lookup with token-splitting approach. Expanded `_SCHWA_DELETION_LEXICON`
+  from ~20 to ~200 entries covering common verbs, nouns, adjectives, pronouns, and adverbs.
+  Added rule-based medial schwa deletion for unlisted words (conservative: only fires when
+  a consonant with inherent schwa sits between two syllables with explicit matras).
+  Sanskrit/tatsama prefixes excluded from rule-based deletion to avoid incorrect changes.
 
 ---
 
