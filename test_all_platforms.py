@@ -575,6 +575,54 @@ def run_tests_for_platform(label, sys_root):
         _chk(failures, 'number_to_words: import / init', False,
              f'Exception: {exc}')
 
+    # ══════════════════════════════════════════════════════════════════════
+    # L. ACCENT-SPECIFIC PHONETIC RULES (apply_accent_phonetics)
+    # ══════════════════════════════════════════════════════════════════════
+
+    from tts.utils.phonetic.marathi_phonetics import apply_accent_phonetics
+
+    # L1. Standard accent: no change
+    r = apply_accent_phonetics('काळा केळा', 'standard')
+    _chk(failures, 'Accent: standard no change',
+         r == 'काळा केळा',
+         f'Standard accent modified text: {repr(r)}')
+
+    # L2. Kolhapuri: ळा → ला at word end
+    r = apply_accent_phonetics('काळा केळा', 'kolhapuri')
+    _chk(failures, 'Accent: Kolhapuri ळा→ला',
+         'काला' in r and 'केला' in r,
+         f'Kolhapuri ळा merging failed: {repr(r)}')
+
+    # L3. Vidarbha: terminal ला → ले
+    r = apply_accent_phonetics('मला त्याला', 'vidarbha')
+    _chk(failures, 'Accent: Vidarbha ला→ले',
+         'मले' in r and 'त्याले' in r,
+         f'Vidarbha ला→ले failed: {repr(r)}')
+
+    # L4. Khandeshi: word-final vowel shortening ी→ि
+    r = apply_accent_phonetics('नदी पाणी', 'khandeshi')
+    _chk(failures, 'Accent: Khandeshi ी→ि',
+         'नदि' in r and 'पाणि' in r,
+         f'Khandeshi vowel shortening failed: {repr(r)}')
+
+    # L5. Marathwada: terminal णे → ने
+    r = apply_accent_phonetics('बोलणे करणे', 'marathwada')
+    _chk(failures, 'Accent: Marathwada णे→ने',
+         'बोलने' in r and 'करने' in r,
+         f'Marathwada णे→ने failed: {repr(r)}')
+
+    # L6. Empty/None accent: no change
+    r = apply_accent_phonetics('राम', '')
+    _chk(failures, 'Accent: empty accent no change',
+         r == 'राम',
+         f'Empty accent modified text: {repr(r)}')
+
+    # L7. Konkan: word-final ल → ळ
+    r = apply_accent_phonetics('बोल चाल', 'konkan')
+    _chk(failures, 'Accent: Konkan ल→ळ',
+         'बोळ' in r and 'चाळ' in r,
+         f'Konkan ल→ळ failed: {repr(r)}')
+
     sys.path.remove(sys_root)
     return failures
 

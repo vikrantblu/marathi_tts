@@ -1400,6 +1400,33 @@ are always applied to the audio post-processing.
 `fragment_output.xml`. `OutputFragment.setupAccentChips()` maps chip IDs to accent keys
 and updates description label. `OutputState.accent`, `OutputViewModel.setAccent()`.
 
+### Accent-Specific Phonetic Rules (#16)
+
+**Function:** `apply_accent_phonetics(text, accent)` in `marathi_phonetics.py` (all 3 platforms).
+
+**Architecture:** `_ACCENT_PHONETIC_RULES` dict maps accent keys to lists of
+`(compiled_regex, replacement)` pairs. Called in `generate_tts()` after `_apply_accent()`
+speed/pitch adjustment, only for Marathi text (not Sanskrit/English) and non-standard accents.
+
+| Accent | Rules | Key phonological change |
+|--------|-------|------------------------|
+| Kolhapuri | 3 | ळ→ल merging (inter-vowel + word-final ळा/ळे) |
+| Vidarbha | 3 | ए→ये word-initial, ला→ले dative, ते→ती verbal |
+| Malvani | 2 | शे→शें nasalization, चा→च्या genitive shift |
+| Marathwada | 3 | ख→क/घ→ग aspiration reduction, णे→ने dental preference |
+| Khandeshi | 3 | ी→ि/ू→ु vowel shortening, ला→लं nasalized |
+| Konkan | 2 | ल→ळ hypercorrect retroflex, anusvara→chandrabindu |
+
+**Standard/Pune/Mumbai:** No phonetic rules (return text unchanged). Their distinctiveness
+comes from pitch/rate offsets only.
+
+**Bridge integration:** Both mobile and desktop `tts_bridge.py` import `apply_accent_phonetics`
+and call it in `generate_tts()` after `_apply_accent()` for non-standard Marathi accents.
+
+**Tests:** Section L in `test_all_platforms.py` — 7 assertions (L1–L7) covering standard
+passthrough, Kolhapuri ळ-merging, Vidarbha dative shift, Khandeshi vowel shortening,
+Marathwada nasal preference, empty accent passthrough, Konkan retroflex.
+
 ### Smart Text Clipping (FEAT-58)
 
 **UI:** `clip_preview_card` in `fragment_input.xml` — appears when text exceeds 250 chars.

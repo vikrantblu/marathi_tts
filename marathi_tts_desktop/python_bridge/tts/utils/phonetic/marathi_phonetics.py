@@ -44,6 +44,7 @@ Usage::
         apply_sanskrit_phonetics,
         apply_marathi_phonetics,
         apply_old_marathi_phonetics,
+        apply_accent_phonetics,
         preprocess_stotra_text,
         preprocess_old_marathi_text,
     )
@@ -1172,3 +1173,117 @@ def preprocess_old_marathi_text(text: str) -> str:
     text = re.sub(r'\n{3,}', '\n\n', text)
 
     return text.strip()
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PART 4 – ACCENT-SPECIFIC PHONETIC RULES (Regional Maharashtra Dialects)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Each accent maps to a list of (compiled_regex, replacement) pairs.
+# Rules are applied in order after apply_marathi_phonetics() but before G2P.
+# Only non-standard accents have rules; "standard" and "pune" use default.
+
+_ACCENT_PHONETIC_RULES = {
+    # ── Kolhapuri (कोल्हापुरी) ────────────────────────────────────────
+    # Southern Maharashtra: strong, earthy, deeper pronunciation.
+    # - ळ→ल merging in certain positions (less retroflex distinction)
+    "kolhapuri": [
+        # ळ between vowels → ल (partial retroflex merging)
+        (re.compile(r'(?<=[\u093E-\u094C])ळ(?=[\u093E-\u094C])'), 'ल'),
+        # Word-final ळा → ला (e.g., काळा → काला, केळा → केला)
+        (re.compile(r'ळा(?=[\s.,;!?\n।॥]|$)'), 'ला'),
+        # Word-final ळे → ले (e.g., मुळे → मुले)
+        (re.compile(r'ळे(?=[\s.,;!?\n।॥]|$)'), 'ले'),
+    ],
+
+    # ── Vidarbha / Varhadi (विदर्भ / वऱ्हाडी) ────────────────────────
+    # Eastern Maharashtra (Nagpur/Amravati): Hindi-adjacent, slower,
+    # distinctive vowel patterns.
+    # - ए→ये before certain consonants (characteristic y-onset)
+    # - Terminal ला often becomes ले (case-marking shift)
+    "vidarbha": [
+        # Word-initial ए → ये (Varhadi characteristic y-onset)
+        (re.compile(r'(?<![.\u0900-\u097F])ए(?=[\u0915-\u0939])'), 'ये'),
+        # Terminal ला → ले (dative case: मला → मले, त्याला → त्याले)
+        (re.compile(r'ला(?=[\s.,;!?\n।॥]|$)'), 'ले'),
+        # -ते → -ती verbal ending (present tense shift)
+        (re.compile(r'ते(?=[\s.,;!?\n।॥]|$)'), 'ती'),
+    ],
+
+    # ── Malvani / Konkani (मालवणी / कोकणी) ────────────────────────────
+    # Coastal Maharashtra (Sindhudurg/Ratnagiri): higher pitch,
+    # Portuguese loanword influence, nasal vowel patterns.
+    "malvani": [
+        # Common Malvani: word-final शे → शें (nasalized, more emphatic)
+        (re.compile(r'(?<=[\u0915-\u0939])शे(?=[\s.,;!?\n।॥]|$)'), 'शें'),
+        # Word-final चा → च्या (genitive shift, characteristic of Konkan)
+        (re.compile(r'चा(?=[\s.,;!?\n।॥]|$)'), 'च्या'),
+    ],
+
+    # ── Marathwada (मराठवाडी) ──────────────────────────────────────────
+    # Aurangabad/Latur region: Deccani/Urdu influence, deeper,
+    # relaxed articulation.
+    # - Aspiration reduction (ख→क, घ→ग in colloquial speech)
+    "marathwada": [
+        # Aspiration reduction: word-medial ख → क (colloquial)
+        (re.compile(r'(?<=[\u093E-\u094C])ख(?=[\u093E-\u094C])'), 'क'),
+        # Aspiration reduction: word-medial घ → ग
+        (re.compile(r'(?<=[\u093E-\u094C])घ(?=[\u093E-\u094C])'), 'ग'),
+        # Terminal -णे → -ने (dental nasal preference)
+        (re.compile(r'णे(?=[\s.,;!?\n।॥]|$)'), 'ने'),
+    ],
+
+    # ── Khandeshi / Ahirani (खानदेशी / अहिराणी) ──────────────────────
+    # Northern Maharashtra (Jalgaon/Dhule): Gujarati-adjacent,
+    # unique vowel shortening patterns.
+    "khandeshi": [
+        # Long ई → short इ at word end (vowel shortening)
+        (re.compile(r'ी(?=[\s.,;!?\n।॥]|$)'), 'ि'),
+        # Long ऊ → short उ at word end
+        (re.compile(r'ू(?=[\s.,;!?\n।॥]|$)'), 'ु'),
+        # Terminal -ला → -लं (nasalized, Ahirani characteristic)
+        (re.compile(r'ला(?=[\s.,;!?\n।॥]|$)'), 'लं'),
+    ],
+
+    # ── Konkan Brahmin (कोकणस्थ) ──────────────────────────────────────
+    # Coastal formal register: precise diction, Sanskrit-leaning.
+    "konkan": [
+        # Word-final ल → ळ (hypercorrect retroflex, formal register)
+        (re.compile(r'ल(?=[\s.,;!?\n।॥]|$)'), 'ळ'),
+        # Preserve nasalization: ensure chandrabindu on nasal vowels
+        (re.compile(r'([\u093E-\u094C])\u0902(?=[\s.,;!?\n।॥]|$)'), '\\1\u0901'),
+    ],
+}
+
+
+def apply_accent_phonetics(text: str, accent: str) -> str:
+    """Apply region-specific phonetic rules based on accent profile.
+
+    Called after ``apply_marathi_phonetics()`` but before G2P/gTTS.
+    Only non-standard accents with distinct phonological features have
+    rules; ``standard``, ``pune``, and ``mumbai`` return the text unchanged
+    (their distinctiveness comes from pitch/rate offsets in the bridge).
+
+    Parameters
+    ----------
+    text : str
+        Devanagari text already processed by ``apply_marathi_phonetics()``.
+    accent : str
+        Accent key from ACCENT_PROFILES (e.g. ``"kolhapuri"``, ``"vidarbha"``).
+
+    Returns
+    -------
+    str
+        Text with accent-specific phonetic adjustments applied.
+    """
+    if not text or not accent:
+        return text
+
+    rules = _ACCENT_PHONETIC_RULES.get(accent)
+    if not rules:
+        return text
+
+    for pattern, replacement in rules:
+        text = pattern.sub(replacement, text)
+
+    return text

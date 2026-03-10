@@ -32,6 +32,11 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
   (archaic pronouns, verb forms, Sant poet names, locative forms). Added trailing anusvara→
   chandrabindu conversion and archaic suffix normalization (-तां→-ता, -णें→-णे). Three new
   test assertions (E5/E6/E7).
+- **Accent-specific phonetic rules** (#16): Per-region G2P overrides for 6 Maharashtra
+  dialects: Kolhapuri (ळ→ल merging), Vidarbha (ला→ले, ए→ये), Malvani (genitive shift),
+  Marathwada (aspiration reduction), Khandeshi (vowel shortening), Konkan (retroflex emphasis).
+  `apply_accent_phonetics()` in marathi_phonetics.py, wired into both bridge scripts.
+  7 new test assertions (Section L).
 
 ### Fixed
 - **BUG-51 [HIGH]**: Y-glide persisted on word-final matra+anusvara despite BUG-48 ZWNJ fix.

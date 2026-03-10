@@ -126,6 +126,7 @@ try:
         apply_sanskrit_phonetics,
         apply_marathi_phonetics,
         apply_old_marathi_phonetics,
+        apply_accent_phonetics,
         apply_gtts_mr_fixes,
         preprocess_stotra_text as _phonetic_stotra,
         preprocess_old_marathi_text as _phonetic_old_marathi,
@@ -136,6 +137,7 @@ except ImportError as _e:
     def apply_sanskrit_phonetics(t): return t
     def apply_marathi_phonetics(t): return t
     def apply_old_marathi_phonetics(t): return t
+    def apply_accent_phonetics(t, a="standard"): return t
     def apply_gtts_mr_fixes(t): return t
     _phonetic_stotra = None
     _phonetic_old_marathi = None
@@ -1159,6 +1161,11 @@ def generate_tts(text: str,
 
     # Apply accent profile modifiers to speed and pitch
     speed, pitch = _apply_accent(speed, pitch, accent)
+
+    # Apply accent-specific phonetic rules (FEAT-16: per-region G2P overrides)
+    # Only for Marathi text — Sanskrit/English skip accent phonetics
+    if accent != "standard" and language in ("mr", "mr-old"):
+        text = apply_accent_phonetics(text, accent)
 
     # Map unsupported gTTS languages to closest supported one.
     # Sanskrit → Hindi (phonologically much closer than Marathi; same Devanagari TTS voice)
