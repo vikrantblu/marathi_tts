@@ -19,7 +19,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
+import android.util.Log
 import java.util.concurrent.atomic.AtomicInteger
 
 data class OutputState(
@@ -45,6 +47,10 @@ data class OutputState(
 private const val STREAMING_THRESHOLD = 250
 
 class OutputViewModel(app: Application) : AndroidViewModel(app) {
+
+    companion object {
+        private const val TAG = "OutputViewModel"
+    }
 
     private val _state = MutableLiveData(OutputState())
     val state: LiveData<OutputState> get() = _state
@@ -118,22 +124,32 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
      * Auto-routes to streaming for long Marathi prose.
      */
     fun generate(text: String, langCode: String, isVerse: Boolean) {
-        if (hasStartedGeneration) return
+        if (hasStartedGeneration) {
+            Log.w(TAG, "generate() blocked — hasStartedGeneration is true")
+            return
+        }
         hasStartedGeneration = true
+        Log.i(TAG, "generate() START | len=${text.length} lang=$langCode verse=$isVerse")
 
         // FEAT-51: launch prosody analysis concurrently (fast, no network)
         val emotion = null // will be detected below; prosody starts with neutral
         analyzeProsody(text, langCode, isVerse, emotion)
 
         if (langCode == "mr" && !isVerse && text.length > STREAMING_THRESHOLD) {
+            Log.i(TAG, "generate() → STREAMING (${text.length} > $STREAMING_THRESHOLD)")
             generateStreaming(text, langCode)
         } else {
+            Log.i(TAG, "generate() → SINGLE")
             generateSingle(text, langCode, isVerse)
         }
     }
 
     private fun generateSingle(text: String, langCode: String, isVerse: Boolean) {
-        _state.value = OutputState(isLoading = true, status = "Generating audio…")
+        Log.i(TAG, "generateSingle START | len=${text.length} lang=$langCode verse=$isVerse")
+        _state.value = (_state.value ?: OutputState()).copy(
+            isLoading = true, status = "Generating audio\u2026",
+            audioPath = null, streamChunks = emptyList(), error = null
+        )
 
         currentJob = viewModelScope.launch {
             try {
@@ -143,6 +159,7 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                 val accent = _state.value?.accent ?: "standard"
 
                 val gender = _state.value?.gender ?: "female"
+                Log.i(TAG, "generateSingle: calling engineManager.generate()")
                 val result = engineManager.generate(
                     text = text,
                     engineIndex = resolveEngineIndex(),
@@ -158,21 +175,35 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
                     val engineUsed = result.optString("engine", "")
                     val voiceNote = result.optString("voice_note", "")
                         .ifEmpty { null }
+                    val audioPath = result.optString("audio_path")
+                    Log.i(TAG, "generateSingle SUCCESS | engine=$engineUsed path=$audioPath")
                     recordSuccess(engineUsed)
-                    _state.value = OutputState(
-                        audioPath = result.optString("audio_path"),
+                    _state.value = (_state.value ?: OutputState()).copy(
+                        isLoading = false,
+                        audioPath = audioPath,
                         engine = engineUsed,
                         voiceNote = voiceNote,
                         status = "Audio ready ✓",
                         emotionLabel = emotion,
-                        emotionScore = 0f
+                        emotionScore = 0f,
+                        error = null
                     )
                 } else {
-                    _state.value = OutputState(
-                        error = result.optString("error", "TTS failed"),
-                        status = "Error: ${result.optString("error", "TTS failed")}"
+                    val errMsg = result.optString("error", "TTS failed")
+                    Log.e(TAG, "generateSingle FAILED | error=$errMsg")
+                    _state.value = (_state.value ?: OutputState()).copy(
+                        isLoading = false,
+                        error = errMsg,
+                        status = "Error: $errMsg"
                     )
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "generateSingle exception", e)
+                _state.value = (_state.value ?: OutputState()).copy(
+                    isLoading = false,
+                    error = "Generation failed: ${e.message}",
+                    status = "Error: ${e.message}"
+                )
             } finally {
                 hasStartedGeneration = false
                 currentJob = null
@@ -187,99 +218,148 @@ class OutputViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
 
-        _state.value = OutputState(
+        _state.value = (_state.value ?: OutputState()).copy(
             isLoading = true,
-            status = "Streaming: preparing ${sentences.size} chunks…"
+            status = "Streaming: preparing ${sentences.size} chunks\u2026",
+            audioPath = null, streamChunks = emptyList(), error = null
         )
 
         currentJob = viewModelScope.launch {
             try {
+                Log.i(TAG, "generateStreaming: ${sentences.size} chunks, lang=$langCode")
                 val emotion = detectEmotion(text)
                 val intensity = _state.value?.emotionIntensity ?: 0.5f
                 val accent = _state.value?.accent ?: "standard"
-
                 val gender = _state.value?.gender ?: "female"
+
+                // BUG-64: 30s timeout per chunk prevents infinite hangs
+                val chunkTimeoutMs = 30_000L
+
                 // First chunk — determines which engine to lock
+                Log.i(TAG, "Streaming: generating first chunk (${sentences.first().length} chars)")
                 val firstResult = withContext(Dispatchers.IO) {
-                    engineManager.generate(
-                    text = sentences.first(),
-                    engineIndex = resolveEngineIndex(),
-                    langCode = langCode,
-                    gender = gender,
-                    emotion = emotion,
-                    emotionIntensity = intensity,
-                    accent = accent
-                )
-            }
-
-            val firstPath = if (firstResult.optBoolean("success", false))
-                firstResult.optString("audio_path").takeIf { it.isNotEmpty() }
-            else null
-
-            val lockedEngine = when {
-                firstResult.optString("engine", "").startsWith("system") ->
-                    TtsEngineManager.ENGINE_SYSTEM
-                firstResult.optString("engine", "").contains("gtts") ||
-                firstResult.optString("engine", "").contains("edge") ->
-                    TtsEngineManager.ENGINE_GTTS
-                else -> TtsEngineManager.ENGINE_AUTO
-            }
-
-            val completedCount = AtomicInteger(1)
-            _state.postValue(_state.value?.copy(
-                status = "Streaming: 1 of ${sentences.size} ✓"
-            ))
-
-            val remainingDeferreds: List<Deferred<String?>> =
-                sentences.drop(1).map { chunk ->
-                    async(Dispatchers.IO) {
-                        streamingSemaphore.withPermit {
-                            try {
-                                val r = engineManager.generate(
-                                    text = chunk,
-                                    engineIndex = lockedEngine,
-                                    langCode = langCode,
-                                    gender = gender,
-                                    emotion = emotion,
-                                    emotionIntensity = intensity,
-                                    accent = accent
-                                )
-                                if (r.optBoolean("success", false))
-                                    r.optString("audio_path").takeIf { it.isNotEmpty() }
-                                else null
-                            } catch (_: Exception) { null }
-                        }
+                    withTimeoutOrNull(chunkTimeoutMs) {
+                        engineManager.generate(
+                            text = sentences.first(),
+                            engineIndex = resolveEngineIndex(),
+                            langCode = langCode,
+                            gender = gender,
+                            emotion = emotion,
+                            emotionIntensity = intensity,
+                            accent = accent,
+                            isStreamingChunk = true  // BUG-63: skip internal prosody
+                        )
                     }
                 }
 
-            val remainingPaths = remainingDeferreds.map { d ->
-                d.await().also {
-                    val done = completedCount.incrementAndGet()
-                    _state.postValue(_state.value?.copy(
-                        status = "Streaming: $done of ${sentences.size} ✓"
-                    ))
+                val firstSuccess = firstResult?.optBoolean("success", false) == true
+                val firstPath = if (firstSuccess)
+                    firstResult?.optString("audio_path")?.takeIf { it.isNotEmpty() }
+                else null
+                Log.i(TAG, "Streaming: first chunk success=$firstSuccess path=$firstPath " +
+                        "engine=${firstResult?.optString("engine", "?")}")
+
+                if (firstPath == null) {
+                    Log.e(TAG, "Streaming: first chunk failed/timed out — aborting")
+                    _state.value = (_state.value ?: OutputState()).copy(
+                        isLoading = false,
+                        error = "First chunk failed — try again or use shorter text",
+                        status = "Error: first chunk failed"
+                    )
+                    return@launch
                 }
-            }.filterNotNull()
 
-            val paths = listOfNotNull(firstPath) + remainingPaths
+                val lockedEngine = when {
+                    firstResult!!.optString("engine", "").startsWith("system") ->
+                        TtsEngineManager.ENGINE_SYSTEM
+                    firstResult.optString("engine", "").contains("gtts") ||
+                    firstResult.optString("engine", "").contains("edge") ->
+                        TtsEngineManager.ENGINE_GTTS
+                    else -> TtsEngineManager.ENGINE_AUTO
+                }
 
-            if (paths.isEmpty()) {
-                _state.value = OutputState(
-                    error = "Streaming TTS failed",
-                    status = "Error: streaming failed"
-                )
-            } else {
-                // Record the engine that worked for the first chunk
                 val firstEngine = firstResult.optString("engine", "")
                 if (firstEngine.isNotEmpty()) recordSuccess(firstEngine)
-                _state.value = OutputState(
-                    audioPath = paths.first(),
-                    streamChunks = paths,
-                    engine = "stream",
-                    status = "All ${paths.size} chunks ready ✓",
-                    emotionLabel = emotion
+
+                // Keep isLoading=true — wait for ALL chunks before triggering autoPlay.
+                // Progressive playback (BUG-65 attempt) caused fragment re-creation and
+                // coroutine cancellation making most chunks fail.
+                _state.value = (_state.value ?: OutputState()).copy(
+                    isLoading = true,
+                    status = "Streaming: 1 of ${sentences.size} \u2713",
+                    emotionLabel = emotion,
+                    error = null
                 )
-            }
+
+                // Generate remaining chunks
+                val completedCount = AtomicInteger(1)
+                val allPaths = mutableListOf(firstPath)
+
+                val remainingDeferreds: List<Deferred<String?>> =
+                    sentences.drop(1).map { chunk ->
+                        async(Dispatchers.IO) {
+                            streamingSemaphore.withPermit {
+                                try {
+                                    withTimeoutOrNull(chunkTimeoutMs) {
+                                        val r = engineManager.generate(
+                                            text = chunk,
+                                            engineIndex = lockedEngine,
+                                            langCode = langCode,
+                                            gender = gender,
+                                            emotion = emotion,
+                                            emotionIntensity = intensity,
+                                            accent = accent,
+                                            isStreamingChunk = true  // BUG-63
+                                        )
+                                        if (r.optBoolean("success", false))
+                                            r.optString("audio_path").takeIf { it.isNotEmpty() }
+                                        else {
+                                            Log.w(TAG, "Streaming chunk fail: " +
+                                                    r.optString("error", "unknown"))
+                                            null
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Streaming chunk exception", e)
+                                    null
+                                }
+                            }
+                        }
+                    }
+
+                // Collect results in order, appending to streamChunks progressively
+                for (d in remainingDeferreds) {
+                    val path = d.await()
+                    val done = completedCount.incrementAndGet()
+                    if (path != null) {
+                        allPaths.add(path)
+                    } else {
+                        Log.w(TAG, "Streaming chunk $done/${sentences.size} null/timed out")
+                    }
+                    // Update streamChunks progressively so the player queue grows
+                    _state.value = _state.value?.copy(
+                        streamChunks = allPaths.toList(),
+                        status = "Streaming: $done of ${sentences.size} ✓"
+                    )
+                }
+
+                Log.i(TAG, "Streaming DONE: ${allPaths.size}/${sentences.size} chunks succeeded")
+                _state.value = (_state.value ?: OutputState()).copy(
+                    isLoading = false,
+                    audioPath = allPaths.firstOrNull(),
+                    streamChunks = allPaths.toList(),
+                    engine = "stream ($firstEngine)",
+                    status = "All ${allPaths.size} chunks ready \u2713",
+                    emotionLabel = emotion,
+                    error = null
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "generateStreaming failed unexpectedly", e)
+                _state.value = (_state.value ?: OutputState()).copy(
+                    isLoading = false,
+                    error = "Streaming failed: ${e.message}",
+                    status = "Error: ${e.message}"
+                )
             } finally {
                 hasStartedGeneration = false
                 currentJob = null

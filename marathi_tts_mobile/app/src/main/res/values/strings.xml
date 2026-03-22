@@ -251,4 +251,10 @@
     <string name="widget_speak_clipboard">🔊 Speak Clipboard</string>
     <string name="widget_open_app">Open</string>
     <string name="widget_clipboard_empty">Clipboard is empty — copy some text first</string>
+
+    <!-- Back-nav dialog (FEAT-82) -->
+    <string name="back_nav_dialog_title">Audio is playing</string>
+    <string name="back_nav_dialog_message">Audio is currently playing. What would you like to do?</string>
+    <string name="back_nav_stop_and_go">Stop &amp; Go Back</string>
+    <string name="back_nav_keep_playing">Keep Playing</string>
 </resources>

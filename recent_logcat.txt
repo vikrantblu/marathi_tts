@@ -1,0 +1,45 @@
+﻿--------- beginning of main
+03-21 18:15:08.296 12502  7113 D SQLiteQueryBuilder: SELECT _id FROM backlog WHERE (account_id = '') AND ((1<>1) and upload_flag = 1 and retrycount <= 5) GROUP BY _id ORDER BY file_size asc
+03-21 18:15:08.298 12502  7115 D SQLiteQueryBuilder: SELECT _id FROM backlog WHERE (account_id = '') AND ((1<>1) and upload_flag = 1 and retrycount <= 5) GROUP BY _id ORDER BY file_size asc
+03-21 18:15:08.299 12502  7113 D SQLiteQueryBuilder: SELECT * FROM tools_and_settings
+03-21 18:15:08.300 12502  7115 D SQLiteQueryBuilder: SELECT * FROM tools_and_settings
+03-21 18:15:09.010  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:09.026  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:09.042  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:10.430 12502  7119 D SQLiteQueryBuilder: SELECT _id FROM backlog WHERE (account_id = '') AND ((1<>1) and upload_flag = 1 and retrycount <= 5) GROUP BY _id ORDER BY file_size asc
+03-21 18:15:10.432 12502  7122 D SQLiteQueryBuilder: SELECT _id FROM backlog WHERE (account_id = '') AND ((1<>1) and upload_flag = 1 and retrycount <= 5) GROUP BY _id ORDER BY file_size asc
+03-21 18:15:10.432 12502  7119 D SQLiteQueryBuilder: SELECT * FROM tools_and_settings
+03-21 18:15:10.433 12502  7122 D SQLiteQueryBuilder: SELECT * FROM tools_and_settings
+03-21 18:15:16.378  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.395  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.411  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.428  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.445  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.462  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.477  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.494  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.511  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.528  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.544  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.561  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.578  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.594  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.611  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.628  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.645  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.661  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.677  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.694  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.710  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.727  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.745  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.760  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:16.777  6529  6571 D SurfaceComposerClient: Transaction::setDataspace: 142671872
+03-21 18:15:20.322 12502  7127 D SQLiteQueryBuilder: SELECT _id FROM backlog WHERE (account_id = '') AND ((1<>1) and upload_flag = 1 and retrycount <= 5) GROUP BY _id ORDER BY file_size asc
+03-21 18:15:20.323 12502  7127 D SQLiteQueryBuilder: SELECT * FROM tools_and_settings
+03-21 18:15:20.326 12502  7130 D SQLiteQueryBuilder: SELECT _id FROM backlog WHERE (account_id = '') AND ((1<>1) and upload_flag = 1 and retrycount <= 5) GROUP BY _id ORDER BY file_size asc
+03-21 18:15:20.328 12502  7130 D SQLiteQueryBuilder: SELECT * FROM tools_and_settings
+03-21 18:15:21.415 11937 12102 E MQTTBypassDGWStreamGroupCallbacks.cpp: onStreamGroupError TransientError domain: MNSQUICConnection code: 1 detail: Local error: 0x40000015: 35 seconds timeout
+03-21 18:15:21.416 11937 12102 W MQTTBypassDGWStreamGroupConnection.cpp: Restarting due to reason: StreamError
+03-21 18:15:21.421 11937 12369 E msys    : E[N mns]_OnDiskCacheGetData(632)=>Start post callback cache refresh DNS resolution
+03-21 18:15:21.459 11937 12369 E msys    : E[N mns]_OnSystemDNSSuccessCallback(340)=>Cache refresh succeeded with system DNS resolver. IP count: 2

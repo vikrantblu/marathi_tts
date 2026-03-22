@@ -171,7 +171,8 @@ Old drawer menu (deprecated): `res/menu/bottom_nav_menu.xml`
 
 | File | Used by |
 |------|---------|
-| `activity_main.xml` | `MainActivity` — Toolbar + NavHostFragment + BottomNavigationView |
+| `activity_main.xml` | `MainActivity` — Toolbar + NavHostFragment + Mini-player + BottomNavigationView |
+| `mini_player.xml` | Persistent mini-player bar (FEAT-81) — title marquee + play/pause + stop |
 | `fragment_input.xml` | InputFragment — text entry + source chips + generate |
 | `fragment_output.xml` | OutputFragment — playback + emotion + actions |
 | `fragment_me.xml` | MeFragment — hub cards for stotra/history/modi/settings |
@@ -231,6 +232,12 @@ intent filters. When a user shares content from another app (browser, gallery, e
 | `OutputActions` | Static helpers: copyText, shareText, shareAudio (FileProvider), saveTextToDownloads, saveAudioToDownloads (MediaStore for API 29+) |
 | `HistoryLogger` | Fire-and-forget Room DB logger; IO dispatcher; truncates to 2000 chars |
 | `AppPreferences` | SharedPreferences wrapper: theme, TTS defaults, draft text, dev mode toggle |
+
+### Activity-scoped ViewModels
+
+| Class | Purpose |
+|-------|---------|
+| `ui/PlaybackViewModel` | Activity-scoped ViewModel — owns the single `AudioPlayerService` instance so playback survives tab switches. Exposes `PlaybackState` LiveData (isPlaying, isPaused, currentChunkIndex, totalChunks, inputText, audioFiles). Methods: `startPlayback()`, `pause()`, `resume()`, `stop()`, `setSpeed()`. Mini-player bar in `activity_main.xml` observes this. |
 
 ### Python bridge scripts (called via `PythonBridge`)
 

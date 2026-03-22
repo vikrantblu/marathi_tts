@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Persistent mini-player bar: shown between NavHostFragment and BottomNav
+     when audio is playing or paused. Survives tab switches. -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mini_player_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardElevation="4dp"
+    app:cardCornerRadius="0dp"
+    android:visibility="gone">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp"
+        android:background="?attr/colorSurfaceVariant">
+
+        <!-- Animated equalizer indicator -->
+        <View
+            android:id="@+id/mini_playing_indicator"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/colorPrimary"/>
+
+        <!-- Title text with marquee -->
+        <TextView
+            android:id="@+id/mini_player_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"/>
+
+        <!-- Play / Pause toggle -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/mini_btn_play_pause"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:icon="@android:drawable/ic_media_pause"
+            android:contentDescription="@string/btn_play"/>
+
+        <!-- Stop -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/mini_btn_stop"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            app:icon="@android:drawable/ic_delete"
+            android:contentDescription="@string/btn_stop"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

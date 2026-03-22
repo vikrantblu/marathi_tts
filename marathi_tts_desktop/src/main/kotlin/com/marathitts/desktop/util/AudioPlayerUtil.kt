@@ -92,12 +92,23 @@ class AudioPlayerUtil {
             onAllFinished?.invoke()
             return
         }
-        val uri = java.io.File(paths[index]).toURI().toString()
+        val file = java.io.File(paths[index])
+        if (!file.exists() || file.length() == 0L) {
+            System.err.println("Skipping missing/empty chunk: ${paths[index]}")
+            playQueueInternal(paths, index + 1, onAllFinished)
+            return
+        }
+        val uri = file.toURI().toString()
         val media = Media(uri)
         mediaPlayer = MediaPlayer(media).apply {
             this.rate = this@AudioPlayerUtil.rate
             this.volume = this@AudioPlayerUtil.volume
             setOnEndOfMedia {
+                dispose()
+                playQueueInternal(paths, index + 1, onAllFinished)
+            }
+            setOnError {
+                System.err.println("Playback error on chunk $index: ${this.error?.message}")
                 dispose()
                 playQueueInternal(paths, index + 1, onAllFinished)
             }

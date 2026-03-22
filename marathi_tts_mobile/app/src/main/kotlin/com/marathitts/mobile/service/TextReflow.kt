@@ -30,6 +30,9 @@ object TextReflow {
         '!',   // Exclamation
         '?',   // Question mark
         ';',   // Semicolon (sometimes used as list separator)
+        ':',   // Colon (verse numbering, list headers)
+        '–',   // En dash (clause boundary)
+        '—',   // Em dash (clause boundary)
     )
 
     /**

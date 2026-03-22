@@ -1,6 +1,7 @@
 package com.marathitts.mobile.ui.output
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,11 +9,12 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.marathitts.mobile.R
 import com.marathitts.mobile.databinding.FragmentOutputBinding
-import com.marathitts.mobile.service.AudioPlayerService
+import com.marathitts.mobile.ui.PlaybackViewModel
 import com.marathitts.mobile.util.OutputActions
 
 class OutputFragment : Fragment() {
@@ -21,10 +23,17 @@ class OutputFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: OutputViewModel by viewModels()
-    private val audioPlayer = AudioPlayerService()
+    private val playbackVM: PlaybackViewModel by activityViewModels()
+
+    companion object {
+        private const val TAG = "OutputFragment"
+    }
+
     private var inputText: String = ""
     private var language: String = "mr"
     private var isVerse: Boolean = false
+    private var accent: String = "standard"
+    private var gender: String = "female"
 
     private lateinit var prosodyAdapter: ProsodySegmentAdapter
     private var hasAutoPlayed = false
@@ -42,13 +51,17 @@ class OutputFragment : Fragment() {
         inputText = arguments?.getString("input_text").orEmpty()
         language = arguments?.getString("language") ?: "mr"
         isVerse = arguments?.getBoolean("is_verse", false) ?: false
+        accent = arguments?.getString("accent") ?: "standard"
+        gender = arguments?.getString("gender") ?: "female"
+
+        // Apply accent/gender from Input screen before generation starts
+        viewModel.setAccent(accent)
+        viewModel.setGender(gender)
 
         setupProsodyPreview()
         setupPlaybackControls()
         setupOutputActions()
         setupEmotionIntensity()
-        setupAccentChips()
-        setupGenderChips()
         applySmartSpeed(isVerse)
         observeState()
         observePhoneticExplanation()
@@ -56,8 +69,11 @@ class OutputFragment : Fragment() {
 
         // Auto-trigger generation when text is provided
         if (inputText.isNotBlank()) {
+            Log.i(TAG, "Auto-triggering generate: len=${inputText.length} lang=$language verse=$isVerse")
             hasAutoPlayed = false
             viewModel.generate(inputText, language, isVerse)
+        } else {
+            Log.w(TAG, "No input text — generation skipped")
         }
     }
 
@@ -143,7 +159,8 @@ class OutputFragment : Fragment() {
             }
 
             // Auto-play when generation completes
-            if (hasAudio && !hasAutoPlayed && !audioPlayer.isPlaying) {
+            if (hasAudio && !hasAutoPlayed && !playbackVM.audioPlayer.isPlaying) {
+                Log.i(TAG, "autoPlay triggered: chunks=${state.streamChunks.size} path=${state.audioPath}")
                 hasAutoPlayed = true
                 autoPlay(state)
             }
@@ -151,52 +168,41 @@ class OutputFragment : Fragment() {
     }
 
     private fun autoPlay(state: OutputState) {
-        if (state.streamChunks.size > 1) {
-            binding.txtPlaybackStatus.text = getString(R.string.output_playing)
-            audioPlayer.playQueueAsync(
-                paths = state.streamChunks,
-                onChunkStart = { idx ->
-                    activity?.runOnUiThread {
-                        binding.txtPlaybackStatus.text =
-                            getString(R.string.output_streaming, idx + 1, state.streamChunks.size)
-                        // FEAT-75: highlight the current playing segment
-                        viewModel.setActivePlayingIndex(idx)
-                    }
-                },
-                onAllComplete = {
-                    activity?.runOnUiThread {
-                        binding.txtPlaybackStatus.text = getString(R.string.output_playback_done)
-                        viewModel.setActivePlayingIndex(-1)
-                    }
-                },
-                onError = { err ->
-                    activity?.runOnUiThread {
-                        binding.txtPlaybackStatus.text = "Playback error: $err"
-                        viewModel.setActivePlayingIndex(-1)
-                    }
-                }
-            )
+        val files = if (state.streamChunks.size > 1) {
+            state.streamChunks
         } else {
             val path = state.audioPath ?: return
-            binding.txtPlaybackStatus.text = getString(R.string.output_playing)
-            // FEAT-75: single file — highlight segment 0
-            viewModel.setActivePlayingIndex(0)
-            audioPlayer.playAsync(
-                filePath = path,
-                onComplete = {
-                    activity?.runOnUiThread {
-                        binding.txtPlaybackStatus.text = getString(R.string.output_playback_done)
-                        viewModel.setActivePlayingIndex(-1)
-                    }
-                },
-                onError = { err ->
-                    activity?.runOnUiThread {
-                        binding.txtPlaybackStatus.text = "Playback error: $err"
-                        viewModel.setActivePlayingIndex(-1)
-                    }
-                }
-            )
+            listOf(path)
         }
+
+        binding.txtPlaybackStatus.text = getString(R.string.output_playing)
+        // FEAT-75: highlight segment 0 for single file
+        if (files.size == 1) viewModel.setActivePlayingIndex(0)
+
+        playbackVM.startPlayback(
+            files = files,
+            inputText = inputText,
+            onChunkStart = { idx ->
+                activity?.runOnUiThread {
+                    binding.txtPlaybackStatus.text =
+                        if (files.size > 1) getString(R.string.output_streaming, idx + 1, files.size)
+                        else getString(R.string.output_playing)
+                    viewModel.setActivePlayingIndex(idx)
+                }
+            },
+            onAllComplete = {
+                activity?.runOnUiThread {
+                    binding.txtPlaybackStatus.text = getString(R.string.output_playback_done)
+                    viewModel.setActivePlayingIndex(-1)
+                }
+            },
+            onError = { err ->
+                activity?.runOnUiThread {
+                    binding.txtPlaybackStatus.text = "Playback error: $err"
+                    viewModel.setActivePlayingIndex(-1)
+                }
+            }
+        )
     }
 
     private fun applySmartSpeed(isVerse: Boolean) {
@@ -210,15 +216,20 @@ class OutputFragment : Fragment() {
     private fun setupPlaybackControls() {
         binding.btnPlay.setOnClickListener {
             val state = viewModel.state.value ?: return@setOnClickListener
-            if (audioPlayer.isPlaying) {
-                audioPlayer.stop()
+            if (playbackVM.audioPlayer.isPlaying) {
+                playbackVM.pause()
+                return@setOnClickListener
+            }
+            val pbState = playbackVM.playback.value
+            if (pbState?.isPaused == true) {
+                playbackVM.resume()
                 return@setOnClickListener
             }
             autoPlay(state)
         }
 
         binding.btnStop.setOnClickListener {
-            audioPlayer.stop()
+            playbackVM.stop()
             binding.txtPlaybackStatus.text = getString(R.string.output_stopped)
             viewModel.setActivePlayingIndex(-1)
         }
@@ -228,7 +239,7 @@ class OutputFragment : Fragment() {
         }
 
         binding.sliderSpeed.addOnChangeListener { _, value, _ ->
-            audioPlayer.setSpeed(value)
+            playbackVM.setSpeed(value)
         }
     }
 
@@ -307,58 +318,6 @@ class OutputFragment : Fragment() {
         }
     }
 
-    /** FEAT-57: Accent profile chip wiring. */
-    private fun setupAccentChips() {
-        val chipToAccent = mapOf(
-            R.id.chip_accent_standard to "standard",
-            R.id.chip_accent_mumbai to "mumbai",
-            R.id.chip_accent_pune to "pune",
-            R.id.chip_accent_kolhapuri to "kolhapuri",
-            R.id.chip_accent_vidarbha to "vidarbha",
-            R.id.chip_accent_malvani to "malvani",
-            R.id.chip_accent_marathwada to "marathwada",
-            R.id.chip_accent_khandeshi to "khandeshi",
-            R.id.chip_accent_konkan to "konkan"
-        )
-        val accentToDesc = mapOf(
-            "standard" to R.string.accent_standard_desc,
-            "mumbai" to R.string.accent_mumbai_desc,
-            "pune" to R.string.accent_pune_desc,
-            "kolhapuri" to R.string.accent_kolhapuri_desc,
-            "vidarbha" to R.string.accent_vidarbha_desc,
-            "malvani" to R.string.accent_malvani_desc,
-            "marathwada" to R.string.accent_marathwada_desc,
-            "khandeshi" to R.string.accent_khandeshi_desc,
-            "konkan" to R.string.accent_konkan_desc
-        )
-        binding.accentChips.setOnCheckedStateChangeListener { _, checkedIds ->
-            val chipId = checkedIds.firstOrNull() ?: R.id.chip_accent_standard
-            val accent = chipToAccent[chipId] ?: "standard"
-            viewModel.setAccent(accent)
-            binding.accentDescription.text =
-                getString(accentToDesc[accent] ?: R.string.accent_standard_desc)
-        }
-    }
-
-    /** FEAT-74: Voice gender chip wiring. */
-    private fun setupGenderChips() {
-        val chipToGender = mapOf(
-            R.id.chip_gender_female to "female",
-            R.id.chip_gender_male to "male"
-        )
-        val genderToDesc = mapOf(
-            "female" to R.string.gender_female_desc,
-            "male" to R.string.gender_male_desc
-        )
-        binding.genderChips.setOnCheckedStateChangeListener { _, checkedIds ->
-            val chipId = checkedIds.firstOrNull() ?: R.id.chip_gender_female
-            val gender = chipToGender[chipId] ?: "female"
-            viewModel.setGender(gender)
-            binding.genderDescription.text =
-                getString(genderToDesc[gender] ?: R.string.gender_female_desc)
-        }
-    }
-
     /** FEAT-55: Observe phonetic explanation results and show dialog. */
     private fun observePhoneticExplanation() {
         viewModel.phoneticExplanation.observe(viewLifecycleOwner) { explanation ->
@@ -421,7 +380,7 @@ class OutputFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        audioPlayer.stop()
+        // NOTE: Do NOT stop audio here — PlaybackViewModel survives tab switches (FEAT-81)
         _binding = null
     }
 }

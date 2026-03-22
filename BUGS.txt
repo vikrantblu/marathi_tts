@@ -15,6 +15,115 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 ## Recently Fixed (Unreleased)
 
+- ~~BUG-70 [CRITICAL] Audio stops when switching tabs — OutputFragment.onDestroyView()
+  killed playback~~
+  (fixed [Unreleased] — OutputFragment created a local AudioPlayerService and called
+  audioPlayer.stop() in onDestroyView(). When user switched to Input or Me tab, the
+  Fragment was destroyed, stopping audio immediately. Fix: moved AudioPlayerService to
+  activity-scoped PlaybackViewModel. OutputFragment now delegates to PlaybackViewModel
+  for all playback. onDestroyView() no longer stops audio. Mini-player bar shows
+  persistent playback controls across all tabs. FEAT-81/82.)
+
+- ~~BUG-69 [HIGH] ZWNJ insertions in edge-tts paths caused pronunciation artifacts~~
+  (fixed [Unreleased] — apply_gtts_mr_fixes() was designed for gTTS concatenative
+  synthesis but was applied to all edge-tts neural paths. ZWNJ insertions confused
+  the neural model. Fix: created apply_edge_tts_fixes() with only chandrabindu +
+  halant rules, no ZWNJ. Updated all 6 edge-tts functions across mobile + desktop.)
+
+- ~~BUG-68 [HIGH] Accent/gender chips hidden behind collapsed "Options" toggle on Input screen~~
+  (fixed [Unreleased] — after moving accent/gender from Output to Input screen, the chips
+  were placed inside the options_card MaterialCardView which starts with visibility="gone".
+  Users had to tap an "Options" button to reveal them. Fix: set options_card visibility to
+  "visible" by default and optionsExpanded=true in the InputFragment.)
+
+- ~~BUG-67 [CRITICAL] Prosody word highlighting broken — PauseType IntEnum not JSON-serializable~~
+  (fixed [Unreleased] — analyze_prosody() in tts_bridge.py returns prosody segments with
+  seg.pause_after_ms as a PauseType IntEnum. Chaquopy serializes this as
+  "<PauseType.COMMA: 180>" instead of 180, causing JSON parse failure on the Kotlin side.
+  PythonBridge.call() fails with "Unterminated object at character 117" → no prosody
+  segments → no word highlighting during playback. Fix: explicitly cast to int/bool/str
+  in the result dict: int(seg.pause_after_ms), bool(seg.is_verse), str(seg.metre_name).
+  Applied to both mobile and desktop bridges.)
+
+- ~~BUG-66 [CRITICAL] Streaming produces only 1-2 chunks — progressive playback causes
+  fragment recreation and coroutine cancellation~~
+  (fixed [Unreleased] — BUG-65's progressive playback set isLoading=false after the first
+  chunk, which triggered autoPlay with only 1 file. When the user switched tabs, the Fragment
+  was recreated (ViewModel survives) but the coroutine job received JobCancellationException,
+  killing all remaining streaming chunks. The re-created Fragment's autoPlay then played
+  with only 2 available chunks. Fix: reverted to wait-for-all approach — isLoading stays
+  true until ALL chunks complete, then isLoading=false + full streamChunks list triggers
+  a single autoPlay with the complete queue.)
+
+- ~~BUG-61 [MEDIUM] No catch block in streaming coroutine — silent failures~~
+  (fixed [Unreleased] — generateStreaming() had try/finally but no catch block.
+  If an unexpected exception occurred (e.g. Chaquopy init failure), the error state
+  was never set and the UI stayed stuck on "Streaming: preparing N chunks…" forever.
+  Fix: added catch(e: Exception) that sets error state and logs the exception.
+  Same fix applied to generateSingle().)
+
+- ~~BUG-62 [BLOCKER] fragment_input.xml had duplicate view IDs — app failed to build~~
+  (fixed [Unreleased] — the Input screen reorder intended to move source chips above
+  the text box, but instead duplicated the chip_group_sources, btn_options_toggle,
+  options_card, spinner_language, and switch_verse views. This caused a data binding
+  error ("conflicts with another tag that has the same ID") and the app could not
+  compile. All previous fixes (BUG-57/58/59, BUG-60/61) were never deployed because
+  the build was broken. Fix: removed the duplicate XML block.)
+
+- ~~BUG-60 [CRITICAL] Streaming UI stuck in loading state — postValue race condition~~
+  (fixed [Unreleased] — generateStreaming() used _state.postValue() for progress
+  updates and _state.value for the final success state. Since postValue is async
+  (queued on the main handler), the stale progress update arrived AFTER the final
+  setValue, overwriting streamChunks/isLoading with stale values. This made the UI
+  appear stuck in "Streaming: N of M" forever with the player card hidden, even
+  though audio was actually generated. Fix: replaced all postValue() calls with
+  direct setValue() — safe because the coroutine runs on Dispatchers.Main.)
+
+- ~~BUG-59 [MEDIUM] Desktop queue playback stalls on corrupt/missing chunk files~~
+  (fixed [Unreleased] — AudioPlayerUtil.playQueueInternal() had no setOnError handler, so
+  a corrupt or missing chunk file would cause playback to stall indefinitely. Fix: added
+  file existence check before playback and setOnError handler that skips to next chunk.)
+
+- ~~BUG-58 [MEDIUM] Desktop streaming progress counter inflated — counts failed chunks~~
+  (fixed [Unreleased] — in runStreamingGeneration(), completedCount.incrementAndGet()
+  was called BEFORE checking result["success"], so failed chunks were counted as
+  successful. Fix: moved counter increment inside the success branch.)
+
+- ~~BUG-57 [CRITICAL] Streaming loses UI state (accent, gender, prosody, emotion intensity)~~
+  (fixed [Unreleased] — both generateSingle() and generateStreaming() in OutputViewModel
+  replaced _state.value with a brand-new OutputState(), discarding all existing state
+  including prosodySegments, accent, gender, emotionIntensity, isVerseDetected, and
+  detectedMetre. This caused the prosody preview to disappear and user-selected accent/
+  gender to reset. Fix: replaced all OutputState() assignments with .copy() to preserve
+  existing state. Also fixed streaming progress counter to only count successful chunks,
+  and added error logging for chunk failures.)
+
+- ~~BUG-55 [HIGH] Old Marathi verse + edge-tts combination never calls stotra preprocessing~~
+  (fixed [Unreleased] — in _generate_edge_tts(), the if-elif structure for language == "mr-old"
+  did not include _preprocess_stotra_text() for verse mode. Fix: added _preprocess_stotra_text()
+  call when is_verse=True for Old Marathi in both mobile and desktop bridges.)
+
+- ~~BUG-54 [HIGH] _normalize_marathi() missing for Old Marathi in all edge-tts paths~~
+  (fixed [Unreleased] — Unicode NFC normalization (BUG-29 fix) was being skipped for Old
+  Marathi in _generate_edge_tts(), _generate_edge_prosody(), and _generate_edge_verse_prosody().
+  This caused unnormalized text to reach phonetic processing. Fix: added _normalize_marathi()
+  before apply_old_marathi_phonetics() in all edge-tts code paths on both mobile and desktop.)
+
+- ~~BUG-53 [CRITICAL] Content classifier, prose preprocessing, and grammar engine all skipped
+  when edge-tts succeeds~~
+  (fixed [Unreleased] — in generate_tts(), the content-type adaptive preprocessing (FEAT-18),
+  abbreviation expansion, English transliteration, and grammar engine were all positioned AFTER
+  the edge-tts block. Since edge-tts returns early on success (which is the common path for users
+  with internet), none of these preprocessing steps were ever applied. Fix: moved all three
+  preprocessing blocks (content classifier, prose preprocessor, grammar engine) BEFORE the
+  network check and edge-tts block in both mobile and desktop bridges.)
+
+- ~~BUG-56 [MEDIUM] Sanskrit anusvara only assimilated before sibilants, not varga stops~~
+  (fixed [Unreleased] — SandhiEngine.fix_anusvara_sibilant() only handled anusvara before
+  शषसह but not before varga stop consonants (कखगघ, चछजझ, etc.). Added new
+  fix_anusvara_varga() method using class-nasal mapping: anusvara before velar→ङ्,
+  palatal→ञ्, retroflex→ण्, dental→न्, labial→म्. Synced across all 3 platforms.)
+
 - ~~BUG-52 [HIGH] ज्ञ pronounced as ग्य (Hindi) instead of द्न्य (Marathi) in verse paths~~
   (fixed [Unreleased] — all verse code paths (edge-tts verse prosody, edge-tts single-call,
   gTTS verse) for default language "mr" skipped `apply_marathi_phonetics()`, so the

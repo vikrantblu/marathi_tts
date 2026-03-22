@@ -159,7 +159,20 @@ _ANUSVARA_SIBILANT_MAP: List[Tuple[str, str]] = [
 ]
 
 # anusvara before semivowels — remains as nasalized vowel (no rewrite needed)
-# anusvara before varga stops — keep anusvara (gTTS handles these)
+# anusvara before varga stops — assimilate to class nasal for correct recitation
+
+_ANUSVARA_VARGA_MAP: Dict[str, str] = {
+    # Velar class (anusvara → ङ्)
+    'क': 'ङ्', 'ख': 'ङ्', 'ग': 'ङ्', 'घ': 'ङ्', 'ङ': 'ङ्',
+    # Palatal class (anusvara → ञ्)
+    'च': 'ञ्', 'छ': 'ञ्', 'ज': 'ञ्', 'झ': 'ञ्', 'ञ': 'ञ्',
+    # Retroflex class (anusvara → ण्)
+    'ट': 'ण्', 'ठ': 'ण्', 'ड': 'ण्', 'ढ': 'ण्', 'ण': 'ण्',
+    # Dental class (anusvara → न्)
+    'त': 'न्', 'थ': 'न्', 'द': 'न्', 'ध': 'न्', 'न': 'न्',
+    # Labial class (anusvara → म्)
+    'प': 'म्', 'फ': 'म्', 'ब': 'म्', 'भ': 'म्', 'म': 'म्',
+}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -305,6 +318,7 @@ class SandhiEngine:
           4. Visarga + vowel sandhi fix (most impactful)
           4b. Visarga + voiced consonant → r  (FEAT-5)
           5. Anusvara + sibilant assimilation
+          5b. Anusvara + varga stop assimilation
           6. Word-level overrides (applied last to protect key words)
         """
         if not text:
@@ -316,6 +330,7 @@ class SandhiEngine:
         text = self.fix_visarga_vowel_sandhi(text)
         text = self.fix_visarga_voiced_consonant(text)
         text = self.fix_anusvara_sibilant(text)
+        text = self.fix_anusvara_varga(text)
         text = self._apply_word_overrides(text)
 
         return text
@@ -440,6 +455,35 @@ class SandhiEngine:
         for pattern, replacement in _ANUSVARA_SIBILANT_MAP:
             text = text.replace(pattern, replacement)
         return text
+
+    def fix_anusvara_varga(self, text: str) -> str:
+        """Assimilate anusvara to class nasal before varga (stop) consonants.
+
+        Sanskrit: anusvara before a varga consonant assimilates to the nasal
+        of that varga (class).  This is mandatory in correct recitation:
+            संकल्प   → सङ्कल्प   (velar ङ before क)
+            संचय     → सञ्चय     (palatal ञ before च)
+            संतोष    → सन्तोष    (dental न before त)
+            संपूर्ण  → सम्पूर्ण  (labial म before प)
+
+        TTS engines often read anusvara as a generic nasal 'm', which is
+        incorrect before non-labial stops.  Rewriting to explicit class nasal
+        gives the TTS engine the correct phonetic target.
+        """
+        result = []
+        i = 0
+        while i < len(text):
+            if text[i] == ANUSVARA and i + 1 < len(text):
+                next_char = text[i + 1]
+                if next_char in _ANUSVARA_VARGA_MAP:
+                    # Replace anusvara with class nasal; keep the consonant
+                    result.append(_ANUSVARA_VARGA_MAP[next_char])
+                else:
+                    result.append(text[i])
+            else:
+                result.append(text[i])
+            i += 1
+        return ''.join(result)
 
     # ── Step 5: Word-level overrides ─────────────────────────────────────
 

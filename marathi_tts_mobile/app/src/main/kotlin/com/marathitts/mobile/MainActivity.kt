@@ -7,16 +7,21 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.marathitts.mobile.databinding.ActivityMainBinding
+import com.marathitts.mobile.ui.PlaybackViewModel
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    val playbackViewModel: PlaybackViewModel by viewModels()
 
     companion object {
         private const val TAG = "MainActivity"
@@ -64,12 +69,93 @@ class MainActivity : AppCompatActivity() {
 
         // ── Handle share intents (URLs and images from other apps) ──────────
         handleShareIntent(navController)
+
+        // ── Mini-player wiring (FEAT-81) ───────────────────────────────────
+        setupMiniPlayer()
+
+        // ── Back-press dialog when audio is playing (FEAT-82) ──────────────
+        setupBackNavDialog(navController)
     }
 
     override fun onSupportNavigateUp(): Boolean {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         return navHostFragment.navController.navigateUp() || super.onSupportNavigateUp()
+    }
+
+    // ── Mini-player (FEAT-81) ──────────────────────────────────────────────
+
+    private fun setupMiniPlayer() {
+        val miniCard = binding.miniPlayerCard
+        val miniTitle = binding.miniPlayerTitle
+        val miniBtnPlayPause = binding.miniBtnPlayPause
+        val miniBtnStop = binding.miniBtnStop
+        val miniIndicator = binding.miniPlayingIndicator
+
+        playbackViewModel.playback.observe(this) { state ->
+            val visible = state.isPlaying || state.isPaused
+            miniCard.visibility = if (visible) View.VISIBLE else View.GONE
+
+            if (visible) {
+                val label = state.inputText.take(60).ifBlank { "Playing audio…" }
+                miniTitle.text = label
+                miniTitle.isSelected = true // enable marquee
+
+                // Toggle play/pause icon
+                miniBtnPlayPause.setIconResource(
+                    if (state.isPlaying) android.R.drawable.ic_media_pause
+                    else android.R.drawable.ic_media_play
+                )
+
+                // Pulsing indicator
+                miniIndicator.alpha = if (state.isPlaying) 1f else 0.4f
+            }
+        }
+
+        miniBtnPlayPause.setOnClickListener {
+            val state = playbackViewModel.playback.value ?: return@setOnClickListener
+            if (state.isPlaying) {
+                playbackViewModel.pause()
+            } else if (state.isPaused) {
+                playbackViewModel.resume()
+            }
+        }
+
+        miniBtnStop.setOnClickListener {
+            playbackViewModel.stop()
+        }
+    }
+
+    // ── Back-nav dialog (FEAT-82) ──────────────────────────────────────────
+
+    private fun setupBackNavDialog(navController: androidx.navigation.NavController) {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (playbackViewModel.hasActivePlayback) {
+                    MaterialAlertDialogBuilder(this@MainActivity)
+                        .setTitle(getString(R.string.back_nav_dialog_title))
+                        .setMessage(getString(R.string.back_nav_dialog_message))
+                        .setPositiveButton(R.string.back_nav_stop_and_go) { _, _ ->
+                            playbackViewModel.stop()
+                            isEnabled = false
+                            onBackPressedDispatcher.onBackPressed()
+                            isEnabled = true
+                        }
+                        .setNeutralButton(R.string.back_nav_keep_playing) { _, _ ->
+                            // Keep playing, just navigate back
+                            isEnabled = false
+                            onBackPressedDispatcher.onBackPressed()
+                            isEnabled = true
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        })
     }
 
     private fun handleLaunchIntent(navController: androidx.navigation.NavController) {

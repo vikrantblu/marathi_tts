@@ -94,6 +94,7 @@ def run_tests_for_platform(label, sys_root):
             apply_old_marathi_phonetics,
             apply_marathi_phonetics,
             apply_gtts_mr_fixes,
+            apply_edge_tts_fixes,
         )
         from tts.utils.audio.prosody_engine import MarathiProsodyEngine
         from tts.constants.g2p_constants import EXCEPTION_LEXICON
@@ -140,6 +141,24 @@ def run_tests_for_platform(label, sys_root):
     _chk(failures, 'Anusvara+sibilant (ष)',
          'न्ष' in r,
          f'Expected न्ष in output, got {repr(r)}')
+
+    # A4b. Anusvara + velar stop  संकल्प → सङ्कल्प
+    r = se.fix_anusvara_varga('संकल्प')
+    _chk(failures, 'Anusvara+velar (क→ङ)',
+         'ङ्क' in r,
+         f'Expected ङ्कल्प, got {repr(r)}')
+
+    # A4c. Anusvara + labial stop  संपूर्ण → सम्पूर्ण
+    r = se.fix_anusvara_varga('संपूर्ण')
+    _chk(failures, 'Anusvara+labial (प→म)',
+         'म्प' in r,
+         f'Expected म्पूर्ण, got {repr(r)}')
+
+    # A4d. Anusvara + dental  संतोष → सन्तोष
+    r = se.fix_anusvara_varga('संतोष')
+    _chk(failures, 'Anusvara+dental (त→न)',
+         'न्त' in r,
+         f'Expected न्तोष, got {repr(r)}')
 
     # A5. Visarga + voiced vowel  → र् + vowel  (r-sandhi)
     r = se.process('रामः आगच्छति')
@@ -447,6 +466,40 @@ def run_tests_for_platform(label, sys_root):
     # H5. Empty / None input handled gracefully
     r = apply_gtts_mr_fixes('')
     _chk(failures, 'gTTS fix: empty input OK',
+         r == '',
+         f'Non-empty result for empty input: {repr(r)}')
+
+    # ══════════════════════════════════════════════════════════════════════
+    # H2. EDGE-TTS FIXES (apply_edge_tts_fixes) — BUG-69
+    # ══════════════════════════════════════════════════════════════════════
+
+    # H2a. No ZWNJ inserted — edge-tts fix must NOT break grapheme clusters
+    r = apply_edge_tts_fixes('रामाचा')
+    _chk(failures, 'edge-tts fix: no ZWNJ inserted',
+         '\u200C' not in r,
+         f'ZWNJ wrongly inserted for edge-tts: {repr(r)}')
+
+    # H2b. Word-final anusvara → chandrabindu still applied
+    r = apply_edge_tts_fixes('संतीं बोलती')
+    _chk(failures, 'edge-tts fix: word-final anusvara → chandrabindu',
+         'ीँ' in r,
+         f'Anusvara not converted to chandrabindu: {repr(r)}')
+
+    # H2c. Terminal halant removed at sentence boundary
+    r = apply_edge_tts_fixes('ध्यायेत्.')
+    _chk(failures, 'edge-tts fix: terminal halant removed',
+         'त\u094D' not in r.replace('त\u094Dय', 'त\u094Dय'),
+         f'Terminal halant not removed: {repr(r)}')
+
+    # H2d. Mid-word anusvara before consonant NOT affected (e.g. "संत")
+    r = apply_edge_tts_fixes('संत')
+    _chk(failures, 'edge-tts fix: mid-word anusvara preserved',
+         'ं' in r,
+         f'Mid-word anusvara wrongly replaced: {repr(r)}')
+
+    # H2e. Empty input handled gracefully
+    r = apply_edge_tts_fixes('')
+    _chk(failures, 'edge-tts fix: empty input OK',
          r == '',
          f'Non-empty result for empty input: {repr(r)}')
 

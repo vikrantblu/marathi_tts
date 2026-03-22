@@ -13,6 +13,251 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Input Source Chips (shown first for feature discovery) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/input_sources_label"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_sources"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:singleLine="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_camera"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_camera_ocr"
+                app:chipIcon="@drawable/ic_camera_24"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_pdf"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_pdf"
+                app:chipIcon="@drawable/ic_pdf"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_web"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_web"
+                app:chipIcon="@drawable/ic_web"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_mic"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_mic"
+                app:chipIcon="@drawable/ic_mic"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_book"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_book"
+                app:chipIcon="@drawable/ic_book"/>
+
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- Options toggle (progressive disclosure) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_options_toggle"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/input_options"
+            app:icon="@drawable/ic_expand_less"
+            app:iconGravity="end"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Language & Mode Options (expanded by default for accent/gender visibility) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/options_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardElevation="1dp"
+            app:cardCornerRadius="12dp"
+            android:layout_marginBottom="16dp"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <!-- Language + Verse row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Spinner
+                        android:id="@+id/spinner_language"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:contentDescription="@string/spinner_language_desc"/>
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/switch_verse"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/switch_verse_mode"/>
+
+                </LinearLayout>
+
+                <!-- Voice Gender (FEAT-74) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_voice_gender"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_marginTop="12dp"/>
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/gender_chips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_gender_female"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/gender_female"
+                        android:checked="true"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_gender_male"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/gender_male"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+                </com.google.android.material.chip.ChipGroup>
+
+                <TextView
+                    android:id="@+id/gender_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:text="@string/gender_female_desc"/>
+
+                <!-- Accent Profile (FEAT-57) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/accent_label"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_marginTop="12dp"/>
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/accent_chips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_standard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_standard"
+                        android:checked="true"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_mumbai"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_mumbai"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_pune"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_pune"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_kolhapuri"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_kolhapuri"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_vidarbha"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_vidarbha"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_malvani"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_malvani"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_marathwada"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_marathwada"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_khandeshi"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_khandeshi"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_accent_konkan"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/accent_konkan"
+                        style="@style/Widget.Material3.Chip.Filter"/>
+                </com.google.android.material.chip.ChipGroup>
+
+                <TextView
+                    android:id="@+id/accent_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="11sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:text="@string/accent_standard_desc"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Text Input Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
@@ -85,108 +330,6 @@
                         app:icon="@drawable/ic_spellcheck"/>
 
                 </LinearLayout>
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Input Source Chips -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/input_sources_label"
-            android:textAppearance="?attr/textAppearanceTitleSmall"
-            android:layout_marginBottom="8dp"/>
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chip_group_sources"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:singleLine="false">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_camera"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/chip_camera_ocr"
-                app:chipIcon="@drawable/ic_camera_24"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_pdf"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/chip_pdf"
-                app:chipIcon="@drawable/ic_pdf"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_web"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/chip_web"
-                app:chipIcon="@drawable/ic_web"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_mic"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/chip_mic"
-                app:chipIcon="@drawable/ic_mic"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_book"
-                style="@style/Widget.Material3.Chip.Assist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/chip_book"
-                app:chipIcon="@drawable/ic_book"/>
-
-        </com.google.android.material.chip.ChipGroup>
-
-        <!-- Options toggle (progressive disclosure) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_options_toggle"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/input_options"
-            app:icon="@drawable/ic_expand_more"
-            app:iconGravity="end"
-            android:layout_marginBottom="4dp"/>
-
-        <!-- Language & Mode Options (collapsed by default) -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/options_card"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardElevation="1dp"
-            app:cardCornerRadius="12dp"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="12dp">
-
-                <Spinner
-                    android:id="@+id/spinner_language"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:contentDescription="@string/spinner_language_desc"/>
-
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switch_verse"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/switch_verse_mode"/>
 
             </LinearLayout>
 

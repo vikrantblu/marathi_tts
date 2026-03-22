@@ -53,6 +53,14 @@
             android:name="is_verse"
             app:argType="boolean"
             android:defaultValue="false"/>
+        <argument
+            android:name="accent"
+            app:argType="string"
+            android:defaultValue="standard"/>
+        <argument
+            android:name="gender"
+            app:argType="string"
+            android:defaultValue="female"/>
 
         <action
             android:id="@+id/action_output_to_emotion"

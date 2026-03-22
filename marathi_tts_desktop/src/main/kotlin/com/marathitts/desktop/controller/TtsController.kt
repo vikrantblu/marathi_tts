@@ -278,13 +278,16 @@ class TtsController : Initializable {
                                 task.run()   // run synchronously in pool thread
                                 task.value
                             }
-                            val done = completedCount.incrementAndGet()
-                            Platform.runLater {
-                                setStatus("Streaming: $done of $total \u2713", busy = true)
-                            }
-                            if (result["success"] == true)
+                            if (result["success"] == true) {
+                                val done = completedCount.incrementAndGet()
+                                Platform.runLater {
+                                    setStatus("Streaming: $done of $total ✓", busy = true)
+                                }
                                 result["audio_path"] as? String
-                            else null
+                            } else {
+                                System.err.println("Streaming chunk failed: ${result["error"]}")
+                                null
+                            }
                         } finally {
                             concurrencyLimit.release()
                         }
@@ -313,7 +316,9 @@ class TtsController : Initializable {
                 }
                 setStatus("All ${paths.size} chunks ready \u2713")
             } catch (e: Exception) {
-                setStatus("Streaming error: ${e.message}")
+                System.err.println("Streaming error: ${e.javaClass.simpleName}: ${e.message}")
+                e.printStackTrace()
+                setStatus("Streaming error: ${e.message ?: "unknown"}")
                 Platform.runLater { generateBtn.isDisable = false }
             }
         }

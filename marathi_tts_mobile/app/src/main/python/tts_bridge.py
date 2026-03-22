@@ -128,6 +128,7 @@ try:
         apply_old_marathi_phonetics,
         apply_accent_phonetics,
         apply_gtts_mr_fixes,
+        apply_edge_tts_fixes,
         preprocess_stotra_text as _phonetic_stotra,
         preprocess_old_marathi_text as _phonetic_old_marathi,
     )
@@ -139,6 +140,7 @@ except ImportError as _e:
     def apply_old_marathi_phonetics(t): return t
     def apply_accent_phonetics(t, a="standard"): return t
     def apply_gtts_mr_fixes(t): return t
+    def apply_edge_tts_fixes(t): return t
     _phonetic_stotra = None
     _phonetic_old_marathi = None
 
@@ -354,10 +356,14 @@ def _generate_edge_tts(text: str, language: str, gender: str,
     pitch_str  = f"{int((pitch  - 1.0) * 100):+d}Hz"
 
     if language == "mr-old":
+        # BUG-54 fix: always normalize before phonetics; handle verse+old-mr
+        processed = _normalize_marathi(text)
         if _phonetic_old_marathi is not None:
-            processed = _phonetic_old_marathi(text)
+            processed = _phonetic_old_marathi(processed)
         else:
-            processed = apply_old_marathi_phonetics(text)
+            processed = apply_old_marathi_phonetics(processed)
+        if is_verse:
+            processed = _preprocess_stotra_text(processed)
         processed = _apply_g2p(processed)
         log.info("[edge-tts] [Old Marathi] Preprocessed | orig=%d  new=%d chars", len(text), len(processed))
     elif is_verse:
@@ -369,7 +375,7 @@ def _generate_edge_tts(text: str, language: str, gender: str,
         processed = _normalize_marathi(text)
         processed = apply_marathi_phonetics(processed)
         processed = _apply_g2p(processed)
-    processed = apply_gtts_mr_fixes(processed)
+    processed = apply_edge_tts_fixes(processed)
 
     log.info("[edge-tts] voice=%s rate=%s pitch=%s text_len=%d",
              voice, rate_str, pitch_str, len(processed))
@@ -470,14 +476,16 @@ def _generate_edge_prosody(text, language, gender, speed, pitch, volume,
                 continue
 
             # Preprocess segment (same as single-call edge-tts prose path)
+            # BUG-54 fix: always normalize Old Marathi before phonetics
             if language == "mr-old":
-                processed = apply_old_marathi_phonetics(seg_text)
+                processed = _normalize_marathi(seg_text)
+                processed = apply_old_marathi_phonetics(processed)
                 processed = _apply_g2p(processed)
             else:
                 processed = _normalize_marathi(seg_text)
                 processed = apply_marathi_phonetics(processed)
                 processed = _apply_g2p(processed)
-            processed = apply_gtts_mr_fixes(processed)
+            processed = apply_edge_tts_fixes(processed)
 
             if not processed.strip():
                 continue
@@ -622,12 +630,14 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
             if language == "sa":
                 processed = _preprocess_stotra_text(seg_text)
             elif language == "mr-old":
+                # BUG-54 fix: normalize before phonetics
+                normalized_seg = _normalize_marathi(seg_text)
                 if _phonetic_old_marathi is not None:
                     processed = _preprocess_stotra_text(
-                        _phonetic_old_marathi(seg_text))
+                        _phonetic_old_marathi(normalized_seg))
                 else:
                     processed = _preprocess_stotra_text(
-                        apply_old_marathi_phonetics(seg_text))
+                        apply_old_marathi_phonetics(normalized_seg))
             else:
                 # Default Marathi: apply Marathi phonetics (ज्ञ→द्न्य etc.)
                 # before stotra structural cleanup.
@@ -636,7 +646,7 @@ def _generate_edge_verse_prosody(text, language, gender, speed, pitch, volume,
                 processed = _preprocess_stotra_text(processed)
 
             processed = _apply_g2p(processed)
-            processed = apply_gtts_mr_fixes(processed)
+            processed = apply_edge_tts_fixes(processed)
             if not processed.strip():
                 continue
 
@@ -1158,12 +1168,21 @@ def generate_tts(text: str,
                  is_verse: bool = False,
                  language: str = "mr",
                  gender: str = "female",
-                 accent: str = "standard") -> dict:
-    """Generate Marathi TTS audio. Returns {success, audio_path} or {success:False, error}."""
+                 accent: str = "standard",
+                 is_streaming_chunk: bool = False) -> dict:
+    """Generate Marathi TTS audio. Returns {success, audio_path} or {success:False, error}.
+
+    Args:
+        is_streaming_chunk: When True, skip internal prosody sub-segmentation
+            (edge-tts prosody / gTTS prosody) because the caller already split
+            the text at sentence boundaries. This avoids redundant API calls.
+    """
     t0 = time.time()
     log.info("=== generate_tts START | text_len=%d speed=%.2f pitch=%.2f "
-             "volume=%.2f emotion=%s verse=%s lang=%s gender=%s accent=%s ===",
-             len(text), speed, pitch, volume, emotion, is_verse, language, gender, accent)
+             "volume=%.2f emotion=%s verse=%s lang=%s gender=%s accent=%s "
+             "streaming_chunk=%s ===",
+             len(text), speed, pitch, volume, emotion, is_verse, language,
+             gender, accent, is_streaming_chunk)
 
     # Apply accent profile modifiers to speed and pitch
     speed, pitch = _apply_accent(speed, pitch, accent)
@@ -1198,6 +1217,37 @@ def generate_tts(text: str,
     except Exception as exc:
         log.warning("[Custom] Custom voice failed: %s", exc)
 
+    # ── Content-type adaptive preprocessing (FEAT-18) ──────────────────────
+    # Detect content type and apply type-specific expansions (units, pin
+    # codes, colloquialisms, acronyms) before ANY TTS engine.
+    # BUG-53 fix: moved BEFORE edge-tts so all engines benefit.
+    if not is_verse and language not in ("sa", "en"):
+        content_type = classify_content(text, is_verse=is_verse)
+        adapted_text = preprocess_by_content_type(text, content_type)
+        if adapted_text != text:
+            log.info("[Adaptive] content_type=%s | orig=%d new=%d chars",
+                     content_type, len(text), len(adapted_text))
+            text = adapted_text
+
+    # ── Prose preprocessing (abbreviation expansion + English transliteration) ──
+    # BUG-53 fix: moved BEFORE edge-tts so abbreviations are expanded for all engines.
+    if not is_verse:
+        preprocessed_text = _preprocess_prose_text(text)
+        if preprocessed_text != text:
+            log.info("[Prose] Preprocessed | orig=%d new=%d chars",
+                     len(text), len(preprocessed_text))
+        text = preprocessed_text
+
+    # ── Grammar engine (FEAT-3) — spelling, sandhi, vibhakti, punctuation ──
+    # Applied to Marathi prose only (not Sanskrit, not verse).
+    # BUG-53 fix: moved BEFORE edge-tts so grammar fixes apply to all engines.
+    if not is_verse and language not in ("sa", "en"):
+        grammar_text = _apply_grammar(text)
+        if grammar_text != text:
+            log.info("[Grammar] Applied | orig=%d new=%d chars",
+                     len(text), len(grammar_text))
+        text = grammar_text
+
     # ── Network pre-check (BUG-21) ───────────────────────────────────────
     # Both edge-tts and gTTS require internet.  Fail fast with a clear
     # message instead of waiting 30 s for a socket timeout.
@@ -1214,8 +1264,13 @@ def generate_tts(text: str,
     if _edge_tts_available():
         _edge_output = output_path if output_path else \
             tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
-        # Try prosody-segmented edge-tts first
-        if is_verse:
+        # BUG-63: When called from Kotlin streaming, the text is already a
+        # single sentence chunk — skip internal prosody sub-segmentation
+        # to avoid redundant API calls (31 chunks × 2-3 sub-segments each).
+        if is_streaming_chunk:
+            log.info("[Stage 0] streaming chunk — skipping prosody, "
+                     "using single-call edge-tts")
+        elif is_verse:
             # Verse-specific prosody with metre-aware pauses & pitch contour
             prosody_result = _generate_edge_verse_prosody(
                 text, language, gender, speed, pitch, volume, _edge_output,
@@ -1238,7 +1293,7 @@ def generate_tts(text: str,
                          prosody_result.get("segments", 0),
                          prosody_result["elapsed_sec"])
                 return prosody_result
-        # Single-call edge-tts (fallback)
+        # Single-call edge-tts (fallback, or primary for streaming chunks)
         result = _generate_edge_tts(text, language, gender, speed, pitch, volume,
                                     _edge_output, is_verse)
         if result.get("success"):
@@ -1262,34 +1317,6 @@ def generate_tts(text: str,
     if output_path is None:
         fd, output_path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
         os.close(fd)
-
-    # ── Content-type adaptive preprocessing (FEAT-18) ──────────────────────
-    # Detect content type and apply type-specific expansions (units, pin
-    # codes, colloquialisms, acronyms) before the standard pipeline.
-    if not is_verse and language not in ("sa", "en"):
-        content_type = classify_content(text, is_verse=is_verse)
-        adapted_text = preprocess_by_content_type(text, content_type)
-        if adapted_text != text:
-            log.info("[Adaptive] content_type=%s | orig=%d new=%d chars",
-                     content_type, len(text), len(adapted_text))
-            text = adapted_text
-
-    # ── Prose preprocessing (abbreviation expansion + English transliteration) ──
-    if not is_verse:
-        preprocessed_text = _preprocess_prose_text(text)
-        if preprocessed_text != text:
-            log.info("[Prose] Preprocessed | orig=%d new=%d chars",
-                     len(text), len(preprocessed_text))
-        text = preprocessed_text
-
-    # ── Grammar engine (FEAT-3) — spelling, sandhi, vibhakti, punctuation ──
-    # Applied to Marathi prose only (not Sanskrit, not verse).
-    if not is_verse and language not in ("sa", "en"):
-        grammar_text = _apply_grammar(text)
-        if grammar_text != text:
-            log.info("[Grammar] Applied | orig=%d new=%d chars",
-                     len(text), len(grammar_text))
-        text = grammar_text
 
     # ── Verse / Shloka mode ──────────────────────────────────────────────
     if is_verse:
@@ -1341,7 +1368,8 @@ def generate_tts(text: str,
     # For prose text, use ProsodyEngine to split at natural clause/sentence
     # boundaries, generate audio per segment, and stitch with calibrated
     # silence pauses.  Falls through to single-call if unavailable.
-    if not is_verse:
+    # BUG-63: Skip for streaming chunks (already sentence-level).
+    if not is_verse and not is_streaming_chunk:
         prosody_result = _generate_prosody_audio(
             text, speed, pitch, volume, output_path, language, gtts_language)
         if prosody_result and prosody_result.get("success"):
@@ -1554,12 +1582,12 @@ def analyze_prosody(text: str,
             result_segments.append({
                 "index": i,
                 "text": seg.text,
-                "pause_after_ms": seg.pause_after_ms,
+                "pause_after_ms": int(seg.pause_after_ms),
                 "emotion": seg.emotion,
                 "emphasis": round(seg.emphasis, 2),
                 "pitch_shift": round(scaled_pitch, 2),
-                "is_verse": seg.is_verse,
-                "metre_name": seg.metre_name,
+                "is_verse": bool(seg.is_verse),
+                "metre_name": str(seg.metre_name) if seg.metre_name else "",
                 "tts_rate": round(scaled_rate, 2),
             })
             if seg.is_verse:

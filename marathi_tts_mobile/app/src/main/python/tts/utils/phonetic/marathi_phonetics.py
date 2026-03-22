@@ -923,6 +923,42 @@ def apply_gtts_mr_fixes(text: str) -> str:
     return text
 
 
+def apply_edge_tts_fixes(text: str) -> str:
+    """Apply edge-tts-specific pronunciation fixes.
+
+    Edge-tts is a neural model — unlike gTTS's concatenative synthesis,
+    it interprets ZWNJ characters as tokenisation boundaries, which can
+    cause mispronunciation (e.g. ज sounds like ज्य, or extra y-glide
+    on matra+anusvara).  This function applies ONLY the fixes that help
+    edge-tts and SKIPS the ZWNJ insertion rules (1 & 2 above) which
+    were designed for gTTS.
+
+    Fixes applied:
+      1. Word-boundary matra+anusvara → matra+chandrabindu (broader
+         pattern than the gTTS version — matches any non-Devanagari
+         boundary, not just a fixed set of punctuation chars).
+      2. Terminal halant removal (same as gTTS rule 4).
+    """
+    if not text:
+        return text
+
+    # ── 1. Matra + anusvara → chandrabindu at word boundaries ────────
+    # Broader pattern: matches matra+anusvara when followed by anything
+    # that is NOT a Devanagari letter/matra/conjunct character OR at
+    # end-of-string.  This captures punctuation, whitespace, quotes,
+    # brackets, and any other non-Devanagari character.
+    text = re.sub(
+        r'([\u093E-\u094C])\u0902(?=[^\u0900-\u097F]|$)',
+        '\\1\u0901', text)
+
+    # ── 2. Terminal halant removal ───────────────────────────────────
+    text = re.sub(
+        r'\u094D(?=[\s.,;!?\n।॥\u0964\u0965]|$)',
+        '', text)
+
+    return text
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # CONVENIENCE: Combined Sanskrit Verse Preprocessing
 # ═══════════════════════════════════════════════════════════════════════════

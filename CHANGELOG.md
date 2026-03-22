@@ -23,11 +23,21 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 ## [Unreleased]
 <!-- Changes staged but not yet released go here -->
 ### Added
+- **FEAT-81**: Persistent mini-player bar — activity-scoped PlaybackViewModel holds
+  AudioPlayerService so audio playback survives tab switches. Mini-player bar with title
+  marquee, play/pause, and stop buttons appears between NavHostFragment and BottomNav.
+- **FEAT-82**: Back-nav dialog — when audio is playing and user presses Back, a dialog
+  offers "Stop & Go Back", "Keep Playing", or "Cancel" options.
 - **FEAT-77**: Home screen widget with "Speak Clipboard" (reads clipboard → auto-generate TTS)
   and "Open" button. AppWidgetProvider + PendingIntent → MainActivity with auto_generate flag.
 - **Audio post-processing** (#19): All prosody-stitched outputs (edge-tts prose/verse, gTTS)
   now get loudness normalization (target -16 dBFS) and leading/trailing silence trimming.
   Applied in both mobile and desktop bridges.
+### Fixed
+- **BUG-70**: Audio stopped when switching tabs — OutputFragment.onDestroyView() called
+  audioPlayer.stop(). Now playback is managed by activity-scoped PlaybackViewModel.
+- **BUG-69**: ZWNJ insertions in edge-tts paths caused pronunciation artifacts — created
+  apply_edge_tts_fixes() with only chandrabindu + halant rules for neural model paths.
 - **Old Marathi pronunciation** (#14): Expanded _OLD_MARATHI_LEXICON from ~40 to ~100 entries
   (archaic pronouns, verb forms, Sant poet names, locative forms). Added trailing anusvara→
   chandrabindu conversion and archaic suffix normalization (-तां→-ता, -णें→-णे). Three new
@@ -42,8 +52,72 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
   pronounce pin codes, normalize colloquialisms (बोलतोय→बोलतो आहे), and expand news
   acronyms (BJP→भाजप). New `content_classifier.py` module synced to all 3 platforms.
   9 new test assertions (Section M).
+- **BookReader memory safety**: Wrapped bitmap operations in `processBookSpread()` with
+  try/catch to ensure bitmap recycle on errors.
+- **TextReflow sentence enders**: Added colon, en-dash, and em-dash to sentence-ending
+  characters for better Devanagari text reflow.
 
 ### Fixed
+- **BUG-66 [CRITICAL]**: Streaming produces only 1-2 chunks out of 31 — progressive playback
+  (BUG-65 attempt) set `isLoading=false` after the first chunk, triggering autoPlay with a
+  single file. When the user switched tabs, the Fragment was recreated causing the remaining
+  streaming coroutines to receive `JobCancellationException`. Reverted to wait-for-all approach:
+  `isLoading` stays true with live progress status until ALL chunks complete, then a single
+  autoPlay fires with the full queue.
+- **BUG-67 [CRITICAL]**: Prosody word highlighting broken — `analyze_prosody()` in both bridge
+  scripts returned `PauseType` IntEnum objects (e.g. `<PauseType.COMMA: 180>`) that Chaquopy
+  couldn't serialize to JSON, causing "Unterminated object" parse failure on the Kotlin side.
+  No prosody segments → no highlighting. Fixed by explicitly casting to `int()`/`bool()`/`str()`
+  in the result dict.
+- **BUG-68 [HIGH]**: Accent/gender chips invisible on Input screen — placed inside collapsed
+  `options_card` with `visibility="gone"`. Users had to tap an "Options" toggle to find them.
+  Fixed by defaulting options to expanded (`visibility="visible"`, `optionsExpanded=true`).
+- **BUG-62 [BLOCKER]**: `fragment_input.xml` had duplicate view IDs (chip_group_sources,
+  chip_camera, chip_pdf, chip_web, chip_mic, chip_book, btn_options_toggle, options_card,
+  spinner_language, switch_verse) — the Input screen reorder duplicated elements instead of
+  moving them, causing a data binding compile error. **This was the actual root cause of
+  "streaming not working" — the app could not build, so none of the BUG-57/58/59/60/61
+  fixes were ever deployed.** Removed the duplicate XML block.
+- **BUG-60 [CRITICAL]**: Streaming UI stuck in loading state forever — `generateStreaming()`
+  used `_state.postValue()` for intermediate progress updates and `_state.value` for the
+  final success state. Since `postValue` is async, the stale progress update (with
+  `isLoading=true` and empty `streamChunks`) could arrive AFTER the final `setValue`,
+  overwriting the completed state. The player card disappeared and the progress indicator
+  stayed visible even though audio was generated. Fixed by replacing all `postValue()`
+  with direct `setValue()` — safe because the streaming coroutine runs on `Dispatchers.Main`.
+- **BUG-61 [MEDIUM]**: Silent failure on streaming exceptions — both `generateStreaming()`
+  and `generateSingle()` had `try/finally` but no `catch` block. An unexpected exception
+  (Chaquopy init failure, coroutine cancellation edge case) would leave the UI stuck on
+  the loading state with no error message. Added proper `catch(e: Exception)` that sets
+  an error state and logs the exception.
+- Added comprehensive logging throughout the mobile streaming pipeline (OutputFragment,
+  OutputViewModel) to aid in debugging: generate() entry/routing, chunk success/failure,
+  autoPlay trigger, engine selection.
+- **BUG-57 [CRITICAL]**: Streaming and single-call TTS generation replaced `_state.value`
+  with a new `OutputState()`, wiping all existing UI state — prosody segments, accent,
+  gender, emotion intensity, verse detection, and metre info all lost on generation complete.
+  Prosody preview disappeared and user-selected accent/gender reset to defaults. Fixed by
+  using `.copy()` to preserve existing state in all state assignments.
+- **BUG-58 [MEDIUM]**: Desktop streaming progress counter inflated — `completedCount` was
+  incremented before checking if TTS succeeded, so failed chunks showed as "✓" in the
+  status. Moved counter inside success branch.
+- **BUG-59 [MEDIUM]**: Desktop AudioPlayerUtil.playQueueInternal had no error handler — a
+  corrupt or missing chunk file caused playback to stall indefinitely. Added `setOnError`
+  handler that skips to next chunk, and file existence check before playback.
+- Streaming chunk failures now log errors instead of silently swallowing exceptions (both
+  mobile and desktop).
+- **BUG-53 [CRITICAL]**: Content classifier, prose preprocessing, and grammar engine were all
+  skipped when edge-tts succeeded (the common path for users with internet). Preprocessing was
+  positioned after edge-tts early return. Moved content classifier, prose preprocessor, and
+  grammar engine before the edge-tts block in both mobile and desktop bridges.
+- **BUG-54 [HIGH]**: `_normalize_marathi()` (Unicode NFC normalization) was missing for Old
+  Marathi in all edge-tts paths (single-call, prose prosody, verse prosody). Added normalization
+  before phonetic processing in both mobile and desktop bridges.
+- **BUG-55 [HIGH]**: Old Marathi verse + edge-tts combination never called `_preprocess_stotra_text()`.
+  Fixed if-elif structure in `_generate_edge_tts()` for both bridges.
+- **BUG-56 [MEDIUM]**: Sanskrit anusvara only assimilated before sibilants, not varga stop
+  consonants. Added `fix_anusvara_varga()` to SandhiEngine for full class-nasal assimilation
+  (velar→ङ्, palatal→ञ्, retroflex→ण्, dental→न्, labial→म्).
 - **BUG-51 [HIGH]**: Y-glide persisted on word-final matra+anusvara despite BUG-48 ZWNJ fix.
   Replaced word-final anusvara with chandrabindu (ं→ँ) at word boundaries; applied
   `apply_gtts_mr_fixes()` to ALL edge-tts paths (was previously gTTS-only).

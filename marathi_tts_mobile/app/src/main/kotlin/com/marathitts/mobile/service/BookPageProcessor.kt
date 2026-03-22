@@ -103,37 +103,47 @@ object BookPageProcessor {
         )
         if (preprocessed !== bitmap) preprocessed.recycle()
 
-        // Step 4: Crop margins (remove spine shadow + edge noise)
-        val leftCropped = cropPageMargins(leftFull, isLeftPage = true)
-        val rightCropped = cropPageMargins(rightFull, isLeftPage = false)
-        leftFull.recycle()
-        rightFull.recycle()
+        // Step 4-7 wrapped in try/finally for bitmap memory safety
+        var leftCropped: Bitmap? = null
+        var rightCropped: Bitmap? = null
+        try {
+            // Step 4: Crop margins (remove spine shadow + edge noise)
+            leftCropped = cropPageMargins(leftFull, isLeftPage = true)
+            rightCropped = cropPageMargins(rightFull, isLeftPage = false)
+            leftFull.recycle()
+            rightFull.recycle()
 
-        // Step 5: OCR each page using block-based extraction
-        val leftRaw = ocrPageStructured(leftCropped)
-        val rightRaw = ocrPageStructured(rightCropped)
-        leftCropped.recycle()
-        rightCropped.recycle()
-        Log.i(TAG, "OCR: left=${leftRaw.length}c, right=${rightRaw.length}c")
+            // Step 5: OCR each page using block-based extraction
+            val leftRaw = ocrPageStructured(leftCropped)
+            val rightRaw = ocrPageStructured(rightCropped)
+            leftCropped.recycle(); leftCropped = null
+            rightCropped.recycle(); rightCropped = null
+            Log.i(TAG, "OCR: left=${leftRaw.length}c, right=${rightRaw.length}c")
 
-        // Step 6: Clean and reflow
-        val leftClean = cleanPageText(leftRaw)
-        val rightClean = cleanPageText(rightRaw)
-        Log.i(TAG, "Cleaned: left=${leftClean.length}c, right=${rightClean.length}c")
+            // Step 6: Clean and reflow
+            val leftClean = cleanPageText(leftRaw)
+            val rightClean = cleanPageText(rightRaw)
+            Log.i(TAG, "Cleaned: left=${leftClean.length}c, right=${rightClean.length}c")
 
-        // Step 7: Merge
-        val merged = buildString {
-            if (leftClean.isNotBlank()) append(leftClean)
-            if (leftClean.isNotBlank() && rightClean.isNotBlank()) append("\n\n")
-            if (rightClean.isNotBlank()) append(rightClean)
-        }.trim()
+            // Step 7: Merge
+            val merged = buildString {
+                if (leftClean.isNotBlank()) append(leftClean)
+                if (leftClean.isNotBlank() && rightClean.isNotBlank()) append("\n\n")
+                if (rightClean.isNotBlank()) append(rightClean)
+            }.trim()
 
-        return BookReadResult(
-            leftPageText = leftClean,
-            rightPageText = rightClean,
-            mergedText = merged,
-            pageCount = listOf(leftClean, rightClean).count { it.isNotBlank() }
-        )
+            return BookReadResult(
+                leftPageText = leftClean,
+                rightPageText = rightClean,
+                mergedText = merged,
+                pageCount = listOf(leftClean, rightClean).count { it.isNotBlank() }
+            )
+        } catch (e: Exception) {
+            // Recycle any remaining bitmaps on error
+            leftCropped?.recycle()
+            rightCropped?.recycle()
+            throw e
+        }
     }
 
     /**

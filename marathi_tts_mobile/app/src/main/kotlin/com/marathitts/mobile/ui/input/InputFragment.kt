@@ -19,7 +19,9 @@ class InputFragment : Fragment() {
 
     private var _binding: FragmentInputBinding? = null
     private val binding get() = _binding!!
-    private var optionsExpanded = false
+    private var optionsExpanded = true
+    private var selectedAccent = "standard"
+    private var selectedGender = "female"
 
     companion object {
         private val LANGUAGES = listOf("Auto-detect", "Marathi", "Sanskrit", "Hindi")
@@ -43,6 +45,8 @@ class InputFragment : Fragment() {
         setupGenerateButton()
         setupOptionsToggle()
         setupSmartClipPreview()
+        setupAccentChips()
+        setupGenderChips()
 
         // Accept text passed from other screens (Correction, Emotion, History, Modi, Stotra)
         val argText = arguments?.getString("tts_text")
@@ -143,6 +147,8 @@ class InputFragment : Fragment() {
                 putString("input_text", text)
                 putString("language", langCode)
                 putBoolean("is_verse", isVerse)
+                putString("accent", selectedAccent)
+                putString("gender", selectedGender)
             }
             findNavController().navigate(R.id.action_input_to_output, bundle)
         }
@@ -155,6 +161,56 @@ class InputFragment : Fragment() {
             binding.btnOptionsToggle.setIconResource(
                 if (optionsExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
             )
+        }
+    }
+
+    /** FEAT-57: Accent profile chip wiring (moved from OutputFragment). */
+    private fun setupAccentChips() {
+        val chipToAccent = mapOf(
+            R.id.chip_accent_standard to "standard",
+            R.id.chip_accent_mumbai to "mumbai",
+            R.id.chip_accent_pune to "pune",
+            R.id.chip_accent_kolhapuri to "kolhapuri",
+            R.id.chip_accent_vidarbha to "vidarbha",
+            R.id.chip_accent_malvani to "malvani",
+            R.id.chip_accent_marathwada to "marathwada",
+            R.id.chip_accent_khandeshi to "khandeshi",
+            R.id.chip_accent_konkan to "konkan"
+        )
+        val accentToDesc = mapOf(
+            "standard" to R.string.accent_standard_desc,
+            "mumbai" to R.string.accent_mumbai_desc,
+            "pune" to R.string.accent_pune_desc,
+            "kolhapuri" to R.string.accent_kolhapuri_desc,
+            "vidarbha" to R.string.accent_vidarbha_desc,
+            "malvani" to R.string.accent_malvani_desc,
+            "marathwada" to R.string.accent_marathwada_desc,
+            "khandeshi" to R.string.accent_khandeshi_desc,
+            "konkan" to R.string.accent_konkan_desc
+        )
+        binding.accentChips.setOnCheckedStateChangeListener { _, checkedIds ->
+            val chipId = checkedIds.firstOrNull() ?: R.id.chip_accent_standard
+            selectedAccent = chipToAccent[chipId] ?: "standard"
+            binding.accentDescription.text =
+                getString(accentToDesc[selectedAccent] ?: R.string.accent_standard_desc)
+        }
+    }
+
+    /** FEAT-74: Voice gender chip wiring (moved from OutputFragment). */
+    private fun setupGenderChips() {
+        val chipToGender = mapOf(
+            R.id.chip_gender_female to "female",
+            R.id.chip_gender_male to "male"
+        )
+        val genderToDesc = mapOf(
+            "female" to R.string.gender_female_desc,
+            "male" to R.string.gender_male_desc
+        )
+        binding.genderChips.setOnCheckedStateChangeListener { _, checkedIds ->
+            val chipId = checkedIds.firstOrNull() ?: R.id.chip_gender_female
+            selectedGender = chipToGender[chipId] ?: "female"
+            binding.genderDescription.text =
+                getString(genderToDesc[selectedGender] ?: R.string.gender_female_desc)
         }
     }
 
