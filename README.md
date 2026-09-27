@@ -2,6 +2,7 @@
 
 [![CI - TTS Engine Tests](https://github.com/vikrantblu/marathi_tts/actions/workflows/test.yml/badge.svg)](https://github.com/vikrantblu/marathi_tts/actions/workflows/test.yml)
 [![CI - Validate](https://github.com/vikrantblu/marathi_tts/actions/workflows/validate.yml/badge.svg)](https://github.com/vikrantblu/marathi_tts/actions/workflows/validate.yml)
+[![CodeQL Analysis](https://github.com/vikrantblu/marathi_tts/actions/workflows/codeql.yml/badge.svg)](https://github.com/vikrantblu/marathi_tts/actions/workflows/codeql.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Python: 3.10 | 3.11](https://img.shields.io/badge/Python-3.10%20%7C%203.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Android: API 26+](https://img.shields.io/badge/Android-API%2026%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
