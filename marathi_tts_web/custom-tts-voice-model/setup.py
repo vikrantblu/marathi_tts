@@ -3,8 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='custom-tts-voice-model',
     version='0.1.0',
-    author='Your Name',
-    author_email='your.email@example.com',
+    author='Marathi TTS Contributors',
     description='A custom voice model for text-to-speech using open-source Python libraries.',
     packages=find_packages(),
     install_requires=[
