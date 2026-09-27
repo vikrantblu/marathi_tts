@@ -1,0 +1,112 @@
+# Dependabot configuration for Marathi TTS
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot-yml-file
+
+version: 2
+updates:
+  # GitHub Actions Workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci(deps)"
+
+  # Python Dependencies — Root Engine
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      python-root:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "build(deps)"
+
+  # Python Dependencies — Web Platform
+  - package-ecosystem: "pip"
+    directory: "/marathi_tts_web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      python-web:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "build(deps-web)"
+
+  # Python Dependencies — Custom Voice Model
+  - package-ecosystem: "pip"
+    directory: "/marathi_tts_web/custom-tts-voice-model"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      python-voice-model:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "build(deps-model)"
+
+  # Python Dependencies — CI Workflows
+  - package-ecosystem: "pip"
+    directory: "/.github"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    groups:
+      python-ci:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci(deps-python)"
+
+  # Gradle Dependencies — Desktop Application (Kotlin / JavaFX)
+  - package-ecosystem: "gradle"
+    directory: "/marathi_tts_desktop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      gradle-desktop:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "build(deps-desktop)"
+
+  # Gradle Dependencies — Mobile Application (Android / Chaquopy)
+  - package-ecosystem: "gradle"
+    directory: "/marathi_tts_mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      gradle-mobile:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "build(deps-mobile)"
+
+  # Docker Container Dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "build(docker)"
