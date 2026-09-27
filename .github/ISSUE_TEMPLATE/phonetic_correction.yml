@@ -1,0 +1,52 @@
+name: Phonetic / Pronunciation Correction
+description: Report an incorrect pronunciation or propose a new phonetic / sandhi rule
+title: "[PHONETIC]: "
+labels: ["phonetics", "quality"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to propose pronunciation improvements or add linguistic edge-cases for Marathi and Sanskrit.
+  - type: dropdown
+    id: language_context
+    attributes:
+      label: Language Context
+      description: Select the linguistic context of the word or phrase.
+      options:
+        - Modern Marathi
+        - Classical / Old Marathi
+        - Sanskrit (Stotra / Shloka)
+    validations:
+      required: true
+  - type: input
+    id: input_text
+    attributes:
+      label: Input Word or Phrase (Devanagari)
+      description: The exact word or text in native Devanagari script.
+      placeholder: e.g. दुःख, निःशब्द, ॐ, जगन्नाथ, रामायण
+    validations:
+      required: true
+  - type: textarea
+    id: current_pronunciation
+    attributes:
+      label: Current Engine Pronunciation
+      description: How does the TTS engine pronounce it currently (or what audio artifact is heard)?
+    validations:
+      required: true
+  - type: textarea
+    id: expected_pronunciation
+    attributes:
+      label: Expected / Correct Recitation
+      description: How should native Marathi speakers or traditional Vedic recitation pronounce it?
+    validations:
+      required: true
+  - type: textarea
+    id: grammatical_justification
+    attributes:
+      label: Grammatical / Sandhi Rule Justification
+      description: Explain the underlying phonetic rule (e.g. Visarga Sandhi, Schwa Deletion, Anusvara nasalization).
+  - type: input
+    id: metre_stotra
+    attributes:
+      label: Relevant Stotra or Metre (Optional)
+      description: If this occurred within a specific stotra or poetic metre (e.g. Anushtup, Bhujangaprayat).

@@ -1,0 +1,62 @@
+name: Bug Report
+description: File a bug report for Marathi TTS
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please check existing issues first before submitting.
+  - type: checkboxes
+    id: affected_platform
+    attributes:
+      label: Affected Platform(s)
+      description: Check all platforms where you observed this issue.
+      options:
+        - label: Web (`marathi_tts_web`)
+        - label: Desktop (`marathi_tts_desktop`)
+        - label: Mobile (`marathi_tts_mobile`)
+        - label: Shared Engine (`tts/` core)
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what happened...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide step-by-step instructions to reproduce the problem.
+      placeholder: |
+        1. Go to '...'
+        2. Input text '...'
+        3. Click '...'
+        4. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Operating system, Python version, Android version, or hardware architecture.
+      placeholder: e.g., Windows 11 / Python 3.11 / Android 14 (Pixel 7)
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Stack Trace
+      description: Paste any error tracebacks, console output, or logcat logs here.
+      render: shell

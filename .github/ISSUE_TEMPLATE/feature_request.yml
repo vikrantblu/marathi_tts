@@ -1,0 +1,45 @@
+name: Feature Request
+description: Propose an idea or enhancement for Marathi TTS
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an enhancement for the Marathi TTS platform!
+  - type: checkboxes
+    id: target_platform
+    attributes:
+      label: Target Platform(s)
+      description: Check all platforms this feature request relates to.
+      options:
+        - label: Web (`marathi_tts_web`)
+        - label: Desktop (`marathi_tts_desktop`)
+        - label: Mobile (`marathi_tts_mobile`)
+        - label: Shared Engine (`tts/` core)
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem or limitation?
+      placeholder: I am trying to [...] but currently [...]
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: A clear and concise description of the feature or behavior you'd like.
+      placeholder: Describe how you envision the feature working...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative approaches or workarounds you've evaluated.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any relevant mockups, diagrams, audio samples, or references.
