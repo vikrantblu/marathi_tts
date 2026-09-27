@@ -1,0 +1,31 @@
+{
+  "id": 24078705,
+  "name": "Protect Release Tags",
+  "target": "tag",
+  "source_type": "Repository",
+  "source": "vikrantblu/marathi_tts",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "refs/tags/v*"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "update"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "always"
+    }
+  ]
+}
