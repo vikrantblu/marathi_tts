@@ -1,7 +1,7 @@
 {
-    "version": "4.0.0",
-    "buildNumber": 17,
-    "date": "2026-03-07",
+    "version": "4.1.1",
+    "buildNumber": 19,
+    "date": "2026-09-27",
     "platforms": {
         "web": "Django 4.x",
         "desktop": "JavaFX + Kotlin",
