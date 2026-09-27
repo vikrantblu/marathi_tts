@@ -16,6 +16,8 @@ class WebFetchFragment : Fragment() {
     private var _binding: FragmentWebFetchBinding? = null
     private val binding get() = _binding!!
     private val viewModel: WebFetchViewModel by viewModels()
+    private var isSharedUrl = false
+    private var autoSentToTts = false
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         _binding = FragmentWebFetchBinding.inflate(i, c, false)
@@ -27,6 +29,7 @@ class WebFetchFragment : Fragment() {
 
         // Handle URL shared from another app (browser, etc.)
         arguments?.getString("shared_url")?.let { url ->
+            isSharedUrl = true
             binding.urlInput.setText(url)
             viewModel.fetchUrl(url)
         }
@@ -64,6 +67,16 @@ class WebFetchFragment : Fragment() {
             state.text?.let {
                 binding.contentText.setText(it)
                 binding.sendToTtsBtn.isEnabled = it.isNotBlank()
+            }
+
+            // Auto-send to TTS when URL was shared from another app (skip manual taps)
+            if (isSharedUrl && !autoSentToTts && !state.isLoading && state.text != null && state.text.isNotBlank()) {
+                autoSentToTts = true
+                findNavController().previousBackStackEntry
+                    ?.savedStateHandle?.set("extracted_text", state.text)
+                findNavController().previousBackStackEntry
+                    ?.savedStateHandle?.set("auto_generate_extracted", true)
+                findNavController().popBackStack()
             }
         }
     }

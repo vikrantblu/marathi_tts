@@ -33,7 +33,7 @@ Checklist after every structural change:
 project root to ensure you are working on the latest code.**
 
 ```powershell
-cd d:\marathi_tts
+# In project root:
 git pull
 ```
 
@@ -266,9 +266,10 @@ you MUST apply the identical change to the same relative path in all three platf
 ```python
 import shutil, os
 
-WEB  = r'd:\marathi_tts\marathi_tts_web\tts'
-DESK = r'd:\marathi_tts\marathi_tts_desktop\python_bridge\tts'
-MOB  = r'd:\marathi_tts\marathi_tts_mobile\app\src\main\python\tts'
+ROOT = os.path.dirname(os.path.abspath(__file__))  # or repository root
+WEB  = os.path.join(ROOT, 'marathi_tts_web', 'tts')
+DESK = os.path.join(ROOT, 'marathi_tts_desktop', 'python_bridge', 'tts')
+MOB  = os.path.join(ROOT, 'marathi_tts_mobile', 'app', 'src', 'main', 'python', 'tts')
 
 def sync(relative_path: str):
     src = os.path.join(WEB, relative_path)
@@ -325,7 +326,7 @@ the output shows `RESULT: ALL PASS`.**
 ### Run the test
 
 ```powershell
-cd d:\marathi_tts
+# From project root:
 python test_all_platforms.py
 ```
 

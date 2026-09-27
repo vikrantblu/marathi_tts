@@ -83,14 +83,20 @@ class MainActivity : AppCompatActivity() {
         return navHostFragment.navController.navigateUp() || super.onSupportNavigateUp()
     }
 
+    /** Switch to the Output tab programmatically (called from InputFragment on Generate). */
+    fun selectOutputTab() {
+        binding.bottomNav.selectedItemId = R.id.outputFragment
+    }
+
     // ── Mini-player (FEAT-81) ──────────────────────────────────────────────
 
     private fun setupMiniPlayer() {
-        val miniCard = binding.miniPlayerCard
-        val miniTitle = binding.miniPlayerTitle
-        val miniBtnPlayPause = binding.miniBtnPlayPause
-        val miniBtnStop = binding.miniBtnStop
-        val miniIndicator = binding.miniPlayingIndicator
+        val mp = binding.miniPlayer
+        val miniCard = mp.miniPlayerCard
+        val miniTitle = mp.miniPlayerTitle
+        val miniBtnPlayPause = mp.miniBtnPlayPause
+        val miniBtnStop = mp.miniBtnStop
+        val miniIndicator = mp.miniPlayingIndicator
 
         playbackViewModel.playback.observe(this) { state ->
             val visible = state.isPlaying || state.isPaused

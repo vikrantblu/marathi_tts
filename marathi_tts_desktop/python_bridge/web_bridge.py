@@ -11,6 +11,7 @@ Returns: JSON { success, text, title, image_texts_count }
 """
 
 import sys, os, json, argparse, traceback, time, re
+# urllib3 warning suppression removed for security — TLS errors should be visible
 
 _BRIDGE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _BRIDGE_DIR)
@@ -27,9 +28,9 @@ log = get_logger("web_bridge")
 
 _PROJECT_ROOT = os.environ.get(
     "MARATHI_TTS_PROJECT_ROOT",
-    _BRIDGE_DIR
+    os.path.abspath(os.path.join(_BRIDGE_DIR, "..", "marathi_tts_web"))
 )
-if _PROJECT_ROOT not in sys.path:
+if _PROJECT_ROOT not in sys.path and os.path.isdir(_PROJECT_ROOT):
     sys.path.insert(0, _PROJECT_ROOT)
 os.environ.setdefault("MARATHI_TTS_STANDALONE", "1")
 
@@ -112,35 +113,31 @@ def _try_abhyaskosh(html: str, url: str) -> str:
             pass
 
     # Extract Shlokas (Gita verses embedded with chapter)
-    # shlokaStr JSON is sometimes malformed (trailing comma); use a tolerant parse
     m = re.search(r'var\s+shlokaStr\s*=\s*(\{.*?\})\s*;', html, re.DOTALL)
     if m:
         raw_json = m.group(1)
-        # Fix common JSON issues: trailing commas before ] or }
         raw_json = re.sub(r',\s*([}\]])', r'\1', raw_json)
         try:
             data = _json.loads(raw_json)
             for shloka in data.get('data', []):
-                narration = shloka.get('narration', '').strip()
                 text = shloka.get('text', '').strip()
-                if narration and not lines:  # Add narration only at start
-                    lines.append(narration)
                 if text:
                     lines.append(text)
         except (ValueError, KeyError):
             pass
 
     # Extract chapter conclusion
-    if m:
-        try:
-            data = _json.loads(re.search(r'var\s+adhyayStr\s*=\s*(\{.*?\});', html, re.DOTALL).group(1))
+    try:
+        m2 = re.search(r'var\s+adhyayStr\s*=\s*(\{.*?\});', html, re.DOTALL)
+        if m2:
+            data = _json.loads(m2.group(1))
             entries = data.get('data', [])
             if entries:
                 conclusion = entries[0].get('conclusion', '')
                 if conclusion:
                     lines.append(conclusion)
-        except Exception:
-            pass
+    except Exception:
+        pass
 
     result = '\n'.join(lines)
     log.info("[abhyaskosh] Extracted %d lines, %d chars", len(lines), len(result))
@@ -218,30 +215,22 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
         t_req = time.time()
         resp = requests.get(url, headers=_HEADERS, timeout=20, verify=True)
         resp.raise_for_status()
-        log.info("HTTP %d | %.2fs | content_len=%d",
-                 resp.status_code, time.time() - t_req, len(resp.content))
+        log.info("HTTP %d | %.2fs | encoding=%s | content_len=%d",
+                 resp.status_code, time.time() - t_req,
+                 resp.encoding, len(resp.content))
 
-        # Detect encoding from Content-Type header only (avoid slow chardet scan)
-        content_type = resp.headers.get("content-type", "")
-        ct_charset = None
-        for part in content_type.split(";"):
-            part = part.strip()
-            if part.lower().startswith("charset="):
-                ct_charset = part.split("=", 1)[1].strip()
-                break
-        encoding = ct_charset if ct_charset else "utf-8"
-        # iso-8859-1 is a browser default placeholder; real Marathi pages are utf-8
-        if encoding.lower() == "iso-8859-1":
-            encoding = "utf-8"
-        html = resp.content.decode(encoding, errors="replace")
-        log.info("Decoded with encoding=%s", encoding)
+        # Handle encoding
+        if resp.encoding and resp.encoding.lower() != "iso-8859-1":
+            html = resp.text
+        else:
+            resp.encoding = resp.apparent_encoding or "utf-8"
+            html = resp.text
 
         # ── Special site handlers (JS-heavy sites) ────────────────────
         if _is_abhyaskosh_url(url):
             special_text = _try_abhyaskosh(html, url)
             if special_text and len(special_text) > 50:
                 log.info("[Special] abhyaskosh.org handler extracted %d chars", len(special_text))
-                # Extract title from HTML
                 try:
                     from bs4 import BeautifulSoup as _BS
                     _soup = _BS(html, "html.parser")
@@ -259,13 +248,7 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
                     "elapsed_sec": round(time.time() - t0, 2),
                 }
 
-        # Use lxml for faster parsing; fall back to html.parser if unavailable
-        try:
-            soup = BeautifulSoup(html, "lxml")
-            log.debug("HTML parsed with lxml")
-        except Exception:
-            soup = BeautifulSoup(html, "html.parser")
-            log.debug("HTML parsed with html.parser (lxml unavailable)")
+        soup = BeautifulSoup(html, "html.parser")
 
         # Remove noise tags
         for tag in soup(["script", "style", "nav", "footer", "header", "aside", "form",
@@ -275,7 +258,7 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
         # Title
         title_tag = soup.find("title") or soup.find("h1") or soup.find("h2")
         title = title_tag.get_text(strip=True) if title_tag else ""
-        log.info("Page title: %s", title[:100])
+        log.info("Page title extracted | len=%d", len(title))
 
         # Main content
         content_tag = (
@@ -294,30 +277,63 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
         if title:
             cleaned_text = f"{title}\n\n{cleaned_text}"
 
-        # Image OCR (optional) — capped at 30 s total
+        # Image OCR — skipped on mobile (PIL/pytesseract unavailable)
+        # Instead, extract alt text + captions and return image URLs for
+        # Kotlin-side ML Kit OCR.
         image_texts = []
-        if process_images:
-            img_tags = soup.find_all("img", src=True)[:5]
-            log.info("Processing %d images for OCR (budget=30s)", len(img_tags))
-            ocr_budget = 30.0
-            for img_tag in img_tags:
-                if ocr_budget <= 0:
-                    log.info("OCR time budget exhausted, skipping remaining images")
-                    break
-                t_img = time.time()
+        image_urls = []
+        _has_pil = False
+        try:
+            import PIL  # noqa: F401
+            _has_pil = True
+        except ImportError:
+            pass
+
+        img_tags = soup.find_all("img", src=True)
+        for img_tag in img_tags[:10]:
+            # Collect alt text and title attributes
+            alt = (img_tag.get("alt") or "").strip()
+            img_title = (img_tag.get("title") or "").strip()
+            if alt and len(alt) > 5:
+                image_texts.append(alt)
+            elif img_title and len(img_title) > 5:
+                image_texts.append(img_title)
+
+            # Collect full image URLs for Kotlin-side OCR
+            src = img_tag["src"]
+            if not src.startswith("http"):
+                from urllib.parse import urljoin
+                src = urljoin(url, src)
+            # Skip tiny icons/UI images (common patterns)
+            width = img_tag.get("width", "")
+            height = img_tag.get("height", "")
+            if width and width.isdigit() and int(width) < 50:
+                continue
+            if height and height.isdigit() and int(height) < 50:
+                continue
+            image_urls.append(src)
+
+        # Extract figcaption text
+        for fig in soup.find_all("figcaption"):
+            cap = fig.get_text(strip=True)
+            if cap and len(cap) > 5:
+                image_texts.append(cap)
+
+        if process_images and _has_pil:
+            for img_tag in img_tags[:5]:
                 ocr_text = _ocr_image_url(img_tag["src"], url)
-                ocr_budget -= time.time() - t_img
                 if ocr_text and len(ocr_text) > 20:
                     image_texts.append(ocr_text)
 
         if image_texts:
             cleaned_text += "\n\n[Image Text]\n" + "\n".join(image_texts)
 
-        log.info("=== fetch_url DONE | chars=%d img_texts=%d elapsed=%.2fs ===",
-                 len(cleaned_text), len(image_texts), time.time() - t0)
+        log.info("=== fetch_url DONE | chars=%d img_texts=%d images=%d elapsed=%.2fs ===",
+                 len(cleaned_text), len(image_texts), len(image_urls), time.time() - t0)
         return {
             "success": True, "text": cleaned_text, "title": title,
             "image_texts_count": len(image_texts),
+            "image_urls": image_urls,
             "char_count": len(cleaned_text),
             "elapsed_sec": round(time.time() - t0, 2),
         }

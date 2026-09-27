@@ -27,7 +27,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.marathitts.mobile.databinding.FragmentBookReaderBinding
+import com.marathitts.mobile.service.BookPdfBuilder
 import com.marathitts.mobile.service.TtsEngineManager
+import com.google.android.material.snackbar.Snackbar
 import java.io.File
 
 class BookReaderFragment : Fragment() {
@@ -58,21 +60,41 @@ class BookReaderFragment : Fragment() {
 
     // ── Activity Result contracts ────────────────────────────────
 
-    /** Launches BookCameraActivity; receives back the deskewed image path. */
+    /** Launches BookCameraActivity; receives back one or more deskewed image paths. */
     private val launchBookCamera = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val imagePath = result.data
-                ?.getStringExtra(BookCameraActivity.EXTRA_IMAGE_PATH)
+        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val data = result.data ?: return@registerForActivityResult
+
+        // Sync single/spread mode from what was toggled inside the camera
+        val spreadMode = data.getBooleanExtra(
+            BookCameraActivity.EXTRA_SPREAD_MODE, !isSinglePageMode
+        )
+        isSinglePageMode = !spreadMode
+
+        // Multi-page (bulk-scan) result takes priority over single-path result.
+        // BookCameraActivity already auto-splits spreads into separate page
+        // images, so every path here is a single page regardless of mode.
+        val paths: List<String> =
+            data.getStringArrayListExtra(BookCameraActivity.EXTRA_IMAGE_PATHS)
+                ?: data.getStringExtra(BookCameraActivity.EXTRA_IMAGE_PATH)
+                    ?.let { listOf(it) }
                 ?: return@registerForActivityResult
-            // Sync single/spread mode from what was toggled inside the camera
-            val spreadMode = result.data
-                ?.getBooleanExtra(BookCameraActivity.EXTRA_SPREAD_MODE, !isSinglePageMode)
-                ?: !isSinglePageMode
-            isSinglePageMode = !spreadMode
-            binding.imagePreview.setImageURI(Uri.fromFile(File(imagePath)))
-            processImage(imagePath)
+        if (paths.isEmpty()) return@registerForActivityResult
+
+        binding.imagePreview.setImageURI(Uri.fromFile(File(paths.first())))
+
+        if (paths.size == 1) {
+            processImage(paths.first())
+        } else {
+            // Bulk-scan returned multiple pages — process them all (already split)
+            // and offer the user a one-tap "Export as PDF" action.
+            stopReaderService()
+            val append = isAppendMode
+            isAppendMode = false
+            viewModel.processMultiplePages(paths, append)
+            offerPdfExport(paths)
         }
     }
 
@@ -461,6 +483,40 @@ class BookReaderFragment : Fragment() {
             cacheFile.outputStream().use { output -> input.copyTo(output) }
         }
         return cacheFile
+    }
+
+    /**
+     * Show a Snackbar that lets the user export the just-captured pages as a
+     * single PDF in the public Downloads folder.  Runs the build off-thread to
+     * avoid stalling the UI on big sessions.
+     */
+    private fun offerPdfExport(paths: List<String>) {
+        val view = _binding?.root ?: return
+        Snackbar.make(view, "${paths.size} pages captured", Snackbar.LENGTH_LONG)
+            .setAction("Export PDF") {
+                Toast.makeText(requireContext(), "Building PDF…", Toast.LENGTH_SHORT).show()
+                Thread {
+                    try {
+                        val result = BookPdfBuilder.build(requireContext().applicationContext, paths)
+                        requireActivity().runOnUiThread {
+                            Toast.makeText(
+                                requireContext(),
+                                "Saved ${result.displayName} to Downloads/MarathiTTS",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    } catch (e: Exception) {
+                        requireActivity().runOnUiThread {
+                            Toast.makeText(
+                                requireContext(),
+                                "PDF export failed: ${e.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }.start()
+            }
+            .show()
     }
 
     override fun onDestroyView() {

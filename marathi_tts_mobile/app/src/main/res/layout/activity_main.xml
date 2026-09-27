@@ -33,7 +33,9 @@
         app:navGraph="@navigation/nav_graph"/>
 
     <!-- Persistent mini-player: survives tab switches (FEAT-81) -->
-    <include layout="@layout/mini_player"/>
+    <include
+        android:id="@+id/mini_player"
+        layout="@layout/mini_player"/>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"

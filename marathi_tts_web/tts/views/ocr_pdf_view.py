@@ -1,4 +1,10 @@
-import PyPDF2
+try:
+    import pypdf as _pdf_lib
+except ImportError:
+    try:
+        import PyPDF2 as _pdf_lib
+    except ImportError:
+        _pdf_lib = None
 import io
 import os
 import logging
@@ -129,9 +135,12 @@ def _extract_with_pymupdf(pdf_bytes: bytes) -> str:
 
 
 def _extract_with_pypdf2(pdf_bytes: bytes) -> str:
-    """Extract text from PDF bytes using PyPDF2."""
+    """Extract text from PDF bytes using pypdf or PyPDF2."""
+    if _pdf_lib is None:
+        logger.warning("Neither pypdf nor PyPDF2 is installed.")
+        return ""
     try:
-        pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
+        pdf_reader = _pdf_lib.PdfReader(io.BytesIO(pdf_bytes))
         pages = []
         for page in pdf_reader.pages:
             page_text = page.extract_text() or ""

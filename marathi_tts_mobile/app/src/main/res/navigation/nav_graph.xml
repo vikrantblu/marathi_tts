@@ -30,9 +30,6 @@
         <action
             android:id="@+id/action_input_to_book"
             app:destination="@id/bookReaderFragment"/>
-        <action
-            android:id="@+id/action_input_to_output"
-            app:destination="@id/outputFragment"/>
     </fragment>
 
     <!-- ═══ Tab 2: OUTPUT ═══ -->
@@ -53,10 +50,6 @@
             android:name="is_verse"
             app:argType="boolean"
             android:defaultValue="false"/>
-        <argument
-            android:name="accent"
-            app:argType="string"
-            android:defaultValue="standard"/>
         <argument
             android:name="gender"
             app:argType="string"

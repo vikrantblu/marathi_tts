@@ -81,11 +81,14 @@ def _extract_pymupdf(pdf_bytes: bytes) -> tuple:
 
 def _extract_pypdf2(pdf_bytes: bytes) -> tuple:
     """Returns (text, page_count) or raises."""
-    from PyPDF2 import PdfReader  # type: ignore
+    try:
+        from pypdf import PdfReader  # type: ignore
+    except ImportError:
+        from PyPDF2 import PdfReader  # type: ignore
     reader = PdfReader(io.BytesIO(pdf_bytes))
     pages = [p.extract_text() or "" for p in reader.pages]
     text = "\n\n".join(p for p in pages if p.strip())
-    log.debug("PyPDF2: %d pages, %d chars extracted", len(reader.pages), len(text))
+    log.debug("pypdf/PyPDF2: %d pages, %d chars extracted", len(reader.pages), len(text))
     return text, len(reader.pages)
 
 

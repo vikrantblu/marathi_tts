@@ -1,4 +1,4 @@
-# filepath: d:\marathi_tts\tts\models\__init__.py
+# filepath: tts/models/__init__.py
 from .user_input import UserInput, ScanResult
 from .user_profile import UserProfile
 from .tts_feedback import TTSFeedback

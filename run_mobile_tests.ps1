@@ -1,4 +1,4 @@
-﻿# run_mobile_tests.ps1 - Build, install, and run Test Dashboard on device
+# run_mobile_tests.ps1 - Build, install, and run Test Dashboard on device
 param(
     [switch]$SkipBuild,
     [int]$Timeout = 300
@@ -13,11 +13,15 @@ $MOBILE_DIR    = "$PSScriptRoot\marathi_tts_mobile"
 $SEP           = "-" * 72
 
 # Locate ADB
-$adb = @(
-    "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe",
-    "$env:ANDROID_HOME\platform-tools\adb.exe",
-    "C:\Android\Sdk\platform-tools\adb.exe"
-) | Where-Object { Test-Path $_ } | Select-Object -First 1
+$adbCmd = Get-Command adb -ErrorAction SilentlyContinue
+$adb = if ($adbCmd) { $adbCmd.Source } else {
+    @(
+        "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe",
+        "$env:ANDROID_HOME\platform-tools\adb.exe",
+        "$env:ANDROID_SDK_ROOT\platform-tools\adb.exe",
+        $(if ($env:SystemDrive) { "$env:SystemDrive\Android\Sdk\platform-tools\adb.exe" })
+    ) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+}
 
 if (-not $adb) { Write-Error "adb.exe not found." }
 Write-Host "[adb] $adb" -ForegroundColor DarkGray

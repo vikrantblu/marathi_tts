@@ -91,6 +91,47 @@ class PlaybackViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * Start progressive playback for streaming — plays chunks as they arrive.
+     * Uses a provider function instead of a fixed path list.
+     */
+    fun startProgressivePlayback(
+        getPathAtIndex: (Int) -> String?,
+        isComplete: () -> Boolean,
+        inputText: String,
+        onChunkStart: ((Int) -> Unit)? = null,
+        onAllComplete: (() -> Unit)? = null,
+        onError: ((String) -> Unit)? = null
+    ) {
+        Log.i(TAG, "startProgressivePlayback")
+
+        _playback.value = PlaybackState(
+            isPlaying = true,
+            currentChunkIndex = 0,
+            totalChunks = 0,
+            inputText = inputText,
+            audioFiles = emptyList()
+        )
+
+        audioPlayer.playProgressiveQueue(
+            getPathAtIndex = getPathAtIndex,
+            isComplete = isComplete,
+            onChunkStart = { idx ->
+                _playback.postValue(_playback.value?.copy(currentChunkIndex = idx))
+                onChunkStart?.invoke(idx)
+            },
+            onAllComplete = {
+                _playback.postValue(PlaybackState(inputText = inputText))
+                onAllComplete?.invoke()
+            },
+            onError = { err ->
+                Log.e(TAG, "Progressive playback error: $err")
+                _playback.postValue(PlaybackState(inputText = inputText))
+                onError?.invoke(err)
+            }
+        )
+    }
+
     fun pause() {
         audioPlayer.pause()
         _playback.value = _playback.value?.copy(isPlaying = false, isPaused = true)

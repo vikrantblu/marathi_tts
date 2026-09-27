@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 TTS Bridge - Marathi Text-to-Speech
 ====================================
@@ -105,6 +105,12 @@ def _cleanup_output_dir():
         pass  # cleanup is best-effort, never crash the bridge
 
 _cleanup_output_dir()
+
+def _safe_temp_mp3() -> str:
+    """Create a secure temporary mp3 file and return its path."""
+    fd, path = tempfile.mkstemp(suffix=".mp3", dir=_OUTPUT_DIR)
+    os.close(fd)
+    return path
 
 # -- Network pre-check (BUG-21) --------------------------------------------
 def _is_network_available(timeout: float = 3.0) -> bool:
@@ -231,16 +237,17 @@ def _apply_g2p(text: str) -> str:
 # Same voice map as the desktop bridge.
 # ---------------------------------------------------------------------------
 _EDGE_VOICE_MAP = {
-    ("mr", "female"): "mr-IN-AarohiNeural",
-    ("mr", "male"):   "mr-IN-ManoharNeural",
+    # BUG-69 fix: Hindi voices avoid ज→ज्य / च→च्य y-glide from mr-IN neural model
+    ("mr", "female"): "hi-IN-SwaraNeural",
+    ("mr", "male"):   "hi-IN-MadhurNeural",
     ("hi", "female"): "hi-IN-SwaraNeural",
     ("hi", "male"):   "hi-IN-MadhurNeural",
     # Sanskrit → Hindi voices (best Devanagari phonology available)
     ("sa", "female"): "hi-IN-SwaraNeural",
     ("sa", "male"):   "hi-IN-MadhurNeural",
-    # Old Marathi → Marathi voices (phonetic preprocessing handles the rest)
-    ("mr-old", "female"): "mr-IN-AarohiNeural",
-    ("mr-old", "male"):   "mr-IN-ManoharNeural",
+    # Old Marathi → Hindi voices (phonetic preprocessing handles the rest)
+    ("mr-old", "female"): "hi-IN-SwaraNeural",
+    ("mr-old", "male"):   "hi-IN-MadhurNeural",
 }
 
 # ---------------------------------------------------------------------------
@@ -1262,8 +1269,7 @@ def generate_tts(text: str,
     # Tried first because it provides a genuine ManoharNeural male voice,
     # unlike gTTS which is always female and only pitch-shifted for male.
     if _edge_tts_available():
-        _edge_output = output_path if output_path else \
-            tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        _edge_output = output_path if output_path else _safe_temp_mp3()
         # BUG-63: When called from Kotlin streaming, the text is already a
         # single sentence chunk — skip internal prosody sub-segmentation
         # to avoid redundant API calls (31 chunks × 2-3 sub-segments each).
@@ -1840,7 +1846,7 @@ def regenerate_segment(text: str,
 
     # Try edge-tts first (best quality, single segment = fast)
     if _edge_tts_available():
-        out = tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        out = _safe_temp_mp3()
         try:
             r = _generate_edge_tts(text, language, gender, speed, pitch,
                                    volume, out, is_verse=is_verse)
@@ -1853,7 +1859,7 @@ def regenerate_segment(text: str,
     # Fallback: gTTS
     try:
         from gtts import gTTS
-        out = tempfile.mktemp(suffix=".mp3", dir=_OUTPUT_DIR)
+        out = _safe_temp_mp3()
         gTTS(text=text, lang=gtts_language, slow=is_verse,
              lang_check=False).save(out)
         if os.path.exists(out) and os.path.getsize(out) > 0:

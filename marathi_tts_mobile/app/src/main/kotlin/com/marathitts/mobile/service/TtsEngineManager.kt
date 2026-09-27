@@ -98,11 +98,12 @@ class TtsEngineManager(private val context: Context) {
             ENGINE_GTTS -> listOf(ENGINE_GTTS)
             ENGINE_SYSTEM -> listOf(ENGINE_SYSTEM)
             ENGINE_SHERPA -> listOf(ENGINE_SHERPA, ENGINE_SYSTEM, ENGINE_GTTS)
-            else -> listOf(ENGINE_SHERPA, ENGINE_SYSTEM, ENGINE_GTTS)  // Auto
+            else -> listOf(ENGINE_GTTS, ENGINE_SYSTEM)  // Auto: edge-tts first, system fallback
         }
 
         for (engine in engines) {
             try {
+                Log.i(TAG, "Trying engine $engine (${ENGINE_NAMES.getOrElse(engine) { "?" }}) for lang=$langCode gender=$gender")
                 val result = when (engine) {
                     ENGINE_SHERPA -> trySherpa(text, langCode, speed, pitch, volume, isVerse)
                     ENGINE_SYSTEM -> trySystemTts(text, langCode, gender, speed, pitch)
@@ -110,11 +111,12 @@ class TtsEngineManager(private val context: Context) {
                     else -> null
                 }
                 if (result != null && result.optBoolean("success", false)) {
-                    Log.i(TAG, "Engine ${ENGINE_NAMES.getOrElse(engine) { "?" }} succeeded")
+                    Log.i(TAG, "Engine ${ENGINE_NAMES.getOrElse(engine) { "?" }} succeeded, audio=${result.optString("audio_path", "?")}")
                     return result
                 }
+                Log.w(TAG, "Engine $engine returned failure: ${result?.optString("error", "null result")}")
             } catch (e: Exception) {
-                Log.w(TAG, "Engine $engine failed: ${e.message}")
+                Log.e(TAG, "Engine $engine threw exception: ${e.javaClass.simpleName}: ${e.message}", e)
             }
         }
 
@@ -142,6 +144,91 @@ class TtsEngineManager(private val context: Context) {
 
     // ── System TTS ───────────────────────────────────────────────────────────
 
+    /**
+     * Preprocess text for System TTS (Android built-in TextToSpeech).
+     * Mirrors key rules from Python tts_bridge preprocessing since the
+     * Python bridge (edge-tts/gTTS) may not be available on Android.
+     */
+    private fun preprocessForSystemTts(text: String, @Suppress("UNUSED_PARAMETER") langCode: String = "mr"): String {
+        var t = text
+            .replace("\u200D", "")  // ZWJ
+            .replace("\u200B", "")  // ZWSP
+            .replace("\uFEFF", "")  // BOM
+
+        // ── Marathi pronunciation rules (mirrors Python marathi_phonetics.py) ──
+
+        // ज्ञ → द्न्य (Marathi pronunciation of the conjunct)
+        t = t.replace("ज्ञ", "द्न्य")
+
+        // ॐ → ओम् (ensures TTS speaks the symbol)
+        t = t.replace("ॐ", "ओम्")
+
+        // ॠ → री (rare vocalic R)
+        t = t.replace("ॠ", "री")
+
+        // ── Sanskrit / stotra-specific rules ──
+
+        // Avagraha ऽ → अ (dropped in speech, replaced with short 'a')
+        t = t.replace("ऽ", "अ")
+
+        // Strip Vedic accent marks (U+0951 udātta, U+0952 anudātta)
+        t = t.replace("\u0951", "").replace("\u0952", "")
+
+        // Visarga before voiced consonant → र् (r-sandhi)
+        // e.g. पुनः दर्शनम् → पुनर् दर्शनम्
+        val voicedConsonants = "गघङजझञडढणदधनबभमयरलवह"
+        val sb = StringBuilder()
+        var i = 0
+        while (i < t.length) {
+            if (t[i] == 'ः' && i + 1 < t.length) {
+                // Check next non-space char
+                val nextIdx = t.indexOfFirst(i + 1) { !it.isWhitespace() }
+                if (nextIdx >= 0 && t[nextIdx] in voicedConsonants) {
+                    sb.append("र्")
+                    i++
+                    continue
+                }
+            }
+            sb.append(t[i])
+            i++
+        }
+        t = sb.toString()
+
+        // ── Common abbreviation expansions ──
+        t = t.replace("इ.", "इत्यादी")
+        t = t.replace("श्री.", "श्री")
+        t = t.replace("डॉ.", "डॉक्टर")
+        t = t.replace("प्रा.", "प्राध्यापक")
+        t = t.replace("रु.", "रुपये")
+        t = t.replace("रु ", "रुपये ")
+        t = t.replace("₹", "रुपये")
+        t = t.replace("प्रमाणे", "प्रमाणे") // placeholder for more
+
+        // ── gTTS y-glide ZWNJ/chandrabindu fixes (ported from Python) ──
+        // 1. "चा" y-glide: insert ZWNJ between च and ा when preceded by a matra
+
+        t = Regex("(?<=[\\u093E\\u093F\\u0940\\u0941\\u0942\\u0947\\u0948\\u094B\\u094C\\u0902])च(?=ा)").replace(t, "च\u200C")
+
+        // 2. Matra + anusvara y-glide: insert ZWNJ between consonant and matra before anusvara
+        t = Regex("([\\u0915-\\u0939])(?=[\\u093E-\\u094C]\\u0902)").replace(t, "$1\u200C")
+
+        // 3. Word-final matra + anusvara → matra + chandrabindu
+        t = Regex("([\\u093E-\\u094C])\\u0902(?=[\\s.,;!?\\n।॥\\u0964\\u0965]|$)").replace(t, "$1\u0901")
+
+        // 4. Terminal halant removal at sentence/verse boundaries
+        t = Regex("\\u094D(?=[\\s.,;!?\\n।॥]|$)").replace(t, "")
+
+        return t.trim()
+    }
+
+    /** Find first index >= [start] where [predicate] is true. */
+    private fun String.indexOfFirst(start: Int, predicate: (Char) -> Boolean): Int {
+        for (idx in start until length) {
+            if (predicate(this[idx])) return idx
+        }
+        return -1
+    }
+
     private suspend fun trySystemTts(
         text: String, langCode: String, gender: String, speed: Float, pitch: Float
     ): JSONObject = withContext(Dispatchers.IO) {
@@ -153,9 +240,10 @@ class TtsEngineManager(private val context: Context) {
             }
         }
 
+        val cleanText = preprocessForSystemTts(text, langCode)
         val outFile = File(context.cacheDir, "tts_system_${System.currentTimeMillis()}.wav")
         val path = engine.synthesize(
-            text = text,
+            text = cleanText,
             langCode = langCode,
             gender = gender,
             speed = speed,

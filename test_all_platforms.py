@@ -5,7 +5,7 @@ Offline test — runs on all three platforms without Django.
 Usage:
     python test_all_platforms.py
 
-Run this script from d:\marathi_tts\ before finishing any task that touches
+Run this script from the repository root before finishing any task that touches
 the tts/ engine code.  All assertions must pass before the work is complete.
 """
 import sys

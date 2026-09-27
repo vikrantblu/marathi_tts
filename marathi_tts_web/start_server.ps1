@@ -1,22 +1,36 @@
 # Marathi TTS - Start Server (PowerShell)
-# Usage: .\start_server.ps1 [-Port 9000] [-WslPort 8888]
+# Usage: .\start_server.ps1 [-Port 9000] [-WslPort 8888] [-WslDistro <distro>] [-WslVenv <path>]
 #
 # Django runs inside WSL2 on WslPort. A TCP proxy on Windows forwards
 # Port -> WslPort so that Chrome/Edge can reach the server (WSL2 mirrored
 # networking ports are not always reachable from browsers directly).
 
 param(
-    [int]$Port    = 9000,   # Windows-side port (what you open in Chrome)
-    [int]$WslPort = 8888    # WSL-side Django port
+    [int]$Port        = 9000,   # Windows-side port (what you open in Chrome)
+    [int]$WslPort     = 8888,   # WSL-side Django port
+    [string]$WslDistro = "",    # Optional: target specific WSL distro (e.g. Ubuntu-22.04)
+    [string]$WslVenv   = ""     # Optional: custom path to WSL venv activate script
 )
 
 Write-Host ""
 Write-Host "=== Marathi TTS Server ===" -ForegroundColor Cyan
 Write-Host ""
 
+function ConvertTo-WslPath([string]$winPath) {
+    if ($winPath -match '^([a-zA-Z]):(.*)$') {
+        $d = $Matches[1].ToLower()
+        $rest = $Matches[2] -replace '\\', '/'
+        return "/mnt/$d$rest"
+    }
+    return $winPath -replace '\\', '/'
+}
+
+$wslWebDir = ConvertTo-WslPath $PSScriptRoot
+$wslPrefix = if ($WslDistro) { "wsl -d $WslDistro" } else { "wsl" }
+
 # --- Step 1: Stop old processes ---
 Write-Host "[1/5] Stopping old processes..." -ForegroundColor Yellow
-wsl -d Ubuntu-22.04 -e bash -c "pkill -f 'manage.py runserver' 2>/dev/null"
+& { $ErrorActionPreference = 'SilentlyContinue'; Invoke-Expression "$wslPrefix -e bash -c 'pkill -f \`"manage.py runserver\`" 2>/dev/null'" }
 Get-Process python -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -match 'tcp_proxy' } |
     Stop-Process -Force -ErrorAction SilentlyContinue
@@ -24,11 +38,17 @@ Start-Sleep -Seconds 2
 
 # --- Step 2: Start Django in WSL (background job, no extra window) ---
 Write-Host "[2/5] Starting Django on WSL port $WslPort..." -ForegroundColor Yellow
-$wslCmd = "cd /mnt/d/marathi_tts/marathi_tts_web && source /home/vicky/venv/bin/activate && export CUDA_VISIBLE_DEVICES=-1 TF_CPP_MIN_LOG_LEVEL=3 TRANSFORMERS_NO_TF=1 USE_TF=0 TRANSFORMERS_VERBOSITY=error && python manage.py runserver 0.0.0.0:${WslPort} --noreload"
+$venvActivation = if ($WslVenv) {
+    "source `"$WslVenv`""
+} else {
+    "if [ -f ~/.venv/bin/activate ]; then source ~/.venv/bin/activate; elif [ -f ~/venv/bin/activate ]; then source ~/venv/bin/activate; elif [ -f ./.venv/bin/activate ]; then source ./.venv/bin/activate; fi"
+}
+
+$wslCmd = "cd '$wslWebDir' && $venvActivation && export CUDA_VISIBLE_DEVICES=-1 TF_CPP_MIN_LOG_LEVEL=3 TRANSFORMERS_NO_TF=1 USE_TF=0 TRANSFORMERS_VERBOSITY=error && python3 manage.py runserver 0.0.0.0:${WslPort} --noreload"
 $djangoJob = Start-Job -ScriptBlock {
-    param($cmd)
-    wsl -d Ubuntu-22.04 -- bash -c $cmd
-} -ArgumentList $wslCmd
+    param($prefix, $cmd)
+    Invoke-Expression "$prefix -- bash -c `"$cmd`""
+} -ArgumentList $wslPrefix, $wslCmd
 
 # --- Step 3: Wait for Django ---
 Write-Host "[3/5] Waiting for Django to start..." -ForegroundColor Yellow
@@ -54,10 +74,11 @@ Write-Host "  Django is ready." -ForegroundColor Green
 
 # --- Step 4: Start TCP proxy (background job, no extra window) ---
 Write-Host "[4/5] Starting TCP proxy (Windows :$Port -> WSL :$WslPort)..." -ForegroundColor Yellow
+$proxyScript = Join-Path $PSScriptRoot "tcp_proxy.py"
 $proxyJob = Start-Job -ScriptBlock {
-    param($p, $wp)
-    python "d:\marathi_tts\marathi_tts_web\tcp_proxy.py" $p $wp
-} -ArgumentList $Port, $WslPort
+    param($script, $p, $wp)
+    python $script $p $wp
+} -ArgumentList $proxyScript, $Port, $WslPort
 Start-Sleep -Seconds 1
 
 # --- Step 5: Done ---
@@ -81,7 +102,7 @@ Stop-Job $djangoJob  -ErrorAction SilentlyContinue
 Stop-Job $proxyJob   -ErrorAction SilentlyContinue
 Remove-Job $djangoJob -Force -ErrorAction SilentlyContinue
 Remove-Job $proxyJob  -Force -ErrorAction SilentlyContinue
-wsl -d Ubuntu-22.04 -e bash -c "pkill -f 'manage.py runserver' 2>/dev/null"
+& { $ErrorActionPreference = 'SilentlyContinue'; Invoke-Expression "$wslPrefix -e bash -c 'pkill -f \`"manage.py runserver\`" 2>/dev/null'" }
 Get-Process python -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -match 'tcp_proxy' } |
     Stop-Process -Force -ErrorAction SilentlyContinue

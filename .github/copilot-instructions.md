@@ -33,7 +33,7 @@ Checklist after every structural change:
 project root to ensure you are working on the latest code.**
 
 ```powershell
-cd d:\marathi_tts
+# In project root:
 git pull
 ```
 
@@ -59,7 +59,7 @@ and pull request against `main`/`master`/`develop`.
 
 **`test_all_platforms.py` path handling:** The script now uses `_ROOT = os.path.dirname(
 os.path.abspath(__file__))` to compute all platform paths dynamically — works on both
-Windows (`d:\marathi_tts\`) and the CI Linux runner.
+Windows and the CI Linux runner.
 
 **Copilot coding agent:** Once the repo is on GitHub, create Issues for planned features
 (from `FEATURES.txt`), assign them to Copilot, and it will open a PR. CI auto-runs on
@@ -223,6 +223,7 @@ intent filters. When a user shares content from another app (browser, gallery, e
 | `NativePdfExtractor` | Extracts text from PDF via Android APIs |
 | `NativeImageOcr` | OCR via ML Kit |
 | `BookPageProcessor` | Handles book-photo pipeline |
+| `BookPdfBuilder` | Builds A4 PDF (24 pt margins, fit-aspect centring) from captured page JPEGs; writes to `Downloads/MarathiTTS` via `MediaStore` (Q+) or legacy `Environment` path. |
 | `TextReflow` | Cleans/reflows extracted text |
 
 ### Utilities (`util/` package)
@@ -308,9 +309,10 @@ you MUST apply the identical change to the same relative path in all three platf
 ```python
 import shutil, os
 
-WEB  = r'd:\marathi_tts\marathi_tts_web\tts'
-DESK = r'd:\marathi_tts\marathi_tts_desktop\python_bridge\tts'
-MOB  = r'd:\marathi_tts\marathi_tts_mobile\app\src\main\python\tts'
+ROOT = os.path.dirname(os.path.abspath(__file__))  # or repository root
+WEB  = os.path.join(ROOT, 'marathi_tts_web', 'tts')
+DESK = os.path.join(ROOT, 'marathi_tts_desktop', 'python_bridge', 'tts')
+MOB  = os.path.join(ROOT, 'marathi_tts_mobile', 'app', 'src', 'main', 'python', 'tts')
 
 def sync(relative_path: str):
     src = os.path.join(WEB, relative_path)
@@ -482,7 +484,7 @@ the output shows `RESULT: ALL PASS`.**
 ### Run the test
 
 ```powershell
-cd d:\marathi_tts
+# From project root:
 python test_all_platforms.py
 ```
 
@@ -650,18 +652,54 @@ runs grammar internally, but the second pass is a no-op on already-corrected tex
 
 ---
 
-## BookReader Camera Flow (Mobile)
+## BookReader Camera Flow (Mobile) — FEAT-83
 
-**Google Lens-like auto-save:** Point camera at book → tap shutter → auto-crop + perspective correct → return to reader. No manual crop step.
+**OSS-inspired pure-Kotlin scanner. NO new dependencies, NO cloud APIs.** Single
+spread or bulk multi-page capture with live HUD, auto-capture, frame-quality
+gating, Sobel edge refinement, spread auto-split, and one-tap PDF export.
 
-**Algorithm:** takePhoto() → loadAndShowCrop():
-1. Load JPEG with EXIF rotation
-2. Pre-crop to overlay guide frame (getFrameFractions())
-3. Run PageEdgeDetector.detect() on pre-cropped bitmap
-4. If confidence ≥ 0.30 → apply PerspectiveCropView.perspectiveCropDirect() for de-warp
-5. Save JPEG → setResult(RESULT_OK) → finish()
+### Components (all in `ui/bookreader/`)
 
-**Fallback:** Confirm (✓) and Retake (↩) buttons are wired for the manual crop editor (Phase 2), but the default flow bypasses it entirely via auto-save.
+| Class | Responsibility |
+|-------|---------------|
+| `LiveEdgeDetector` | Per-frame quad detection on CameraX `ImageAnalysis` `ImageProxy` (640×480 thumbnails, `STRATEGY_KEEP_ONLY_LATEST`). Returns `LiveQuad(tl, tr, br, bl, confidence, frameWidth, frameHeight)` or null. |
+| `FrameQualityAnalyzer` | Returns `FrameQuality(blurVariance, glareLuminance, isBlurry, hasGlare)`. Thresholds: blur<60.0 (Laplacian variance), glare>3% pixels at lum 245+. |
+| `LiveQuadOverlayView` | HUD: quad outline + corner dots + countdown ring + status pill. State enum: IDLE/ADJUSTING/STABLE/WARNING (gray/yellow/green/red). |
+| `BulkScanController` | Auto-capture state machine: IDLE → ADJUSTING → STABLE_HOLDING → FIRING → POST_CAPTURE_HOLD → AWAITING_PAGE_CHG. 800 ms stable hold, 1200 ms post-capture lockout. Page-change detection by centre shift (>4% of width) or brightness delta (>18). |
+| `PageEdgeDetector.refineWithSobel()` | Snaps each detected edge to the strongest gradient ridge within ±5% of the projection peak via 3×3 Sobel Gx/Gy kernels. +0.10 confidence bonus when snapped. |
+
+### Flow (single capture)
+
+1. Live HUD shows quad + status as user aims.
+2. Manual: tap shutter; Auto: `BulkScanController` waits for stable + good quality
+   then auto-fires.
+3. `loadAndShowCrop()`: load JPEG with EXIF rotation → pre-crop to overlay frame
+   → `PageEdgeDetector.detect()` (now includes Sobel refinement).
+4. If confidence ≥ 0.30 → `PerspectiveCropView.perspectiveCropDirect()` for de-warp.
+5. **Spread auto-split:** when `isSpreadMode` AND deskewed bitmap is wider than
+   tall, split at midpoint → save L + R JPEGs separately.
+6. Single-page mode (or single capture): finish → `RESULT_OK` with
+   `EXTRA_IMAGE_PATH` (legacy) + `EXTRA_IMAGE_PATHS` (ArrayList).
+
+### Flow (bulk mode)
+
+1. User toggles BULK in shutter panel — camera stays open across many pages.
+2. Each capture appends to `capturedPaths`; page-count chip + Done button shown.
+3. After capture, `BulkScanController.notifyCaptureCompleted(refLum, refCenter)`
+   moves to `AWAITING_PAGE_CHG`; next stable + page-change resumes auto-fire.
+4. User taps Done → finish with all `EXTRA_IMAGE_PATHS`.
+5. `BookReaderViewModel.processMultiplePages()` walks pages sequentially with
+   "Processed N of M" status.
+6. Snackbar offers **Export PDF** action → `BookPdfBuilder.build()` writes A4 PDF
+   to `Downloads/MarathiTTS` via MediaStore (Q+) or legacy Environment path.
+
+### Activity extras
+
+| Extra | Type | Purpose |
+|-------|------|--------|
+| `EXTRA_SPREAD_MODE` | Boolean | Trigger spread auto-split when bitmap is landscape. |
+| `EXTRA_IMAGE_PATH` | String | Legacy single-image return (first captured path). |
+| `EXTRA_IMAGE_PATHS` | ArrayList&lt;String&gt; | Multi-page return (always populated, even for single capture). |
 
 ---
 

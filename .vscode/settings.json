@@ -39,5 +39,6 @@
         }
     ],
     // Task runner
-    "task.autoDetect": "off"
+    "task.autoDetect": "off",
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }

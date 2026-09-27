@@ -6,14 +6,32 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
 
 <!-- Add new bugs at the top of this section -->
 
-- BUG-49 [MEDIUM] Male voice only works via edge-tts — gTTS fallback can't produce
+- BUG-71 [HIGH] Python bridge (edge-tts/gTTS) fails on Android — all TTS falls to
+  System TTS. Edge-tts requires asyncio + aiohttp + websockets which may have Chaquopy
+  compatibility issues. Needs investigation of exact Chaquopy runtime error.
+
+- ~~BUG-49 [MEDIUM] Male voice only works via edge-tts — gTTS fallback can't produce
   real male voice, only pitch-shifts female voice ~4 semitones lower. If edge-tts fails
-  (no network), user gets approximate male voice with no UI feedback explaining this.
-  **Mitigated** [Unreleased] — added `voice_note` field to gTTS return dicts and display
-  in OutputFragment engine label ("⚠ Male voice approximated (gTTS pitch-shift)").
-  Full fix requires offline male TTS model (Piper VITS or similar).
+  (no network), user gets approximate male voice with no UI feedback explaining this.~~
+  (fixed [Unreleased] — switched edge-tts voice map to hi-IN-MadhurNeural which is a
+  distinct male voice. gTTS fallback still pitch-shifts, but edge-tts is now the default
+  path with proper male voice quality. Also see BUG-69 Phase 2.)
 
 ## Recently Fixed (Unreleased)
+
+- ~~BUG-72 [CRITICAL] System TTS y-glide pronunciation — anusvara→या, ज→ज्य~~
+  (fixed [Unreleased] — SystemTtsEngine used Locale("mr", "IN") which maps to Google's
+  Marathi TTS voice with intrinsic y-glide. Switched all Devanagari locales (mr, sa) to
+  Locale("hi", "IN") — Hindi voice handles Devanagari without palatalization, same
+  approach as edge-tts voice switch (BUG-69 Phase 2). Also added Kotlin-side pronunciation
+  preprocessing: ज्ञ→द्न्य, ॐ→ओम्, avagraha expansion, visarga r-sandhi before voiced
+  consonants, Vedic accent stripping, abbreviation expansion.)
+
+- ~~BUG-73 [HIGH] Streaming hangs — concurrent UtteranceProgressListener overwrite~~
+  (fixed [Unreleased] — SystemTtsEngine.synthesize() now wraps with synthMutex.withLock
+  so only one synthesis call uses the UtteranceProgressListener at a time. Without this,
+  Semaphore(3) concurrent chunks overwrote each other's listeners, causing continuations
+  to never resume and hang at 30s timeout.)
 
 - ~~BUG-70 [CRITICAL] Audio stops when switching tabs — OutputFragment.onDestroyView()
   killed playback~~
@@ -25,10 +43,16 @@ Track reported bugs here. Mark fixed items with ~~strikethrough~~ and the versio
   persistent playback controls across all tabs. FEAT-81/82.)
 
 - ~~BUG-69 [HIGH] ZWNJ insertions in edge-tts paths caused pronunciation artifacts~~
-  (fixed [Unreleased] — apply_gtts_mr_fixes() was designed for gTTS concatenative
+  (fixed [Unreleased] — Phase 1: apply_gtts_mr_fixes() was designed for gTTS concatenative
   synthesis but was applied to all edge-tts neural paths. ZWNJ insertions confused
   the neural model. Fix: created apply_edge_tts_fixes() with only chandrabindu +
-  halant rules, no ZWNJ. Updated all 6 edge-tts functions across mobile + desktop.)
+  halant rules, no ZWNJ. Updated all 6 edge-tts functions across mobile + desktop.
+  Phase 2: ZWNJ removal alone did not eliminate ज→ज्य / च→च्य y-glide — the
+  Marathi neural voices (mr-IN-AarohiNeural, mr-IN-ManoharNeural) have intrinsic
+  palatalization in their training data. Fix: switched _EDGE_VOICE_MAP for "mr" and
+  "mr-old" from mr-IN to hi-IN voices (hi-IN-SwaraNeural, hi-IN-MadhurNeural).
+  Hindi voices handle Devanagari correctly without y-glide. Also added defensive
+  ZWNJ/ZWJ/ZWS stripping in apply_edge_tts_fixes(). Also fixes BUG-49 male voice.)
 
 - ~~BUG-68 [HIGH] Accent/gender chips hidden behind collapsed "Options" toggle on Input screen~~
   (fixed [Unreleased] — after moving accent/gender from Output to Input screen, the chips

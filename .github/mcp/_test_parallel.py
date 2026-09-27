@@ -2,12 +2,15 @@
 import subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-script = r'd:\marathi_tts\test_all_platforms.py'
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent.parent
+script = str(ROOT / 'test_all_platforms.py')
 python = sys.executable
 
 def run_one(p):
     r = subprocess.run([python, script, '--platform', p],
-                       cwd=r'd:\marathi_tts', capture_output=True, text=True, timeout=90)
+                       cwd=str(ROOT), capture_output=True, text=True, timeout=90)
     return p, r.returncode, r.stdout + r.stderr
 
 start = time.time()

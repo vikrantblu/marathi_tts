@@ -18,7 +18,7 @@
 ## Step 1 — Initialise git and push
 
 ```powershell
-cd d:\marathi_tts
+cd marathi_tts
 
 # One-time setup
 git init

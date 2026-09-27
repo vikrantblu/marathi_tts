@@ -2,7 +2,7 @@
 """Helper script: writes all bridge Python files."""
 import os
 
-DEST = r"D:\marathi_tts\marathi_tts_desktop\python_bridge"
+DEST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "marathi_tts_desktop", "python_bridge")
 
 FILES = {}
 

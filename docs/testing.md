@@ -5,7 +5,7 @@
 ### Running tests
 
 ```powershell
-cd d:\marathi_tts
+cd marathi_tts
 python test_all_platforms.py
 ```
 

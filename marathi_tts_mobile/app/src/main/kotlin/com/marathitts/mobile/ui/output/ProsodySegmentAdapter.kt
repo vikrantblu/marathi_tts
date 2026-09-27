@@ -34,6 +34,7 @@ class ProsodySegmentAdapter(
         set(value) {
             val old = field
             field = value
+            android.util.Log.d("ProsodyAdapter", "activePlayingIndex $old→$value itemCount=$itemCount")
             if (old >= 0 && old < itemCount) notifyItemChanged(old)
             if (value >= 0 && value < itemCount) notifyItemChanged(value)
         }

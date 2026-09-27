@@ -3,11 +3,13 @@ import sys, io, os, re, unicodedata, glob
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
+_BASE = os.path.dirname(os.path.abspath(__file__))
+
 ROOTS = [
-    r'd:\marathi_tts\marathi_tts_web\data\stotras',
-    r'd:\marathi_tts\marathi_tts_desktop\stotras',
-    r'd:\marathi_tts\marathi_tts_mobile\app\src\main\assets\stotras',
-    r'd:\marathi_tts\stotras',
+    os.path.join(_BASE, 'marathi_tts_web', 'data', 'stotras'),
+    os.path.join(_BASE, 'marathi_tts_desktop', 'stotras'),
+    os.path.join(_BASE, 'marathi_tts_mobile', 'app', 'src', 'main', 'assets', 'stotras'),
+    os.path.join(_BASE, 'stotras'),
 ]
 
 # Bengali: U+0980–U+09FF
@@ -40,7 +42,7 @@ def classify(cp):
 total_issues = 0
 for root in ROOTS:
     for fpath in sorted(glob.glob(os.path.join(root, '*.txt'))):
-        fname = os.path.relpath(fpath, r'd:\marathi_tts')
+        fname = os.path.relpath(fpath, _BASE)
         try:
             with open(fpath, encoding='utf-8') as f:
                 lines = f.readlines()

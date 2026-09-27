@@ -27,6 +27,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
+        <!-- Live quad / countdown / status pill overlay (auto-mode HUD) -->
+        <com.marathitts.mobile.ui.bookreader.LiveQuadOverlayView
+            android:id="@+id/liveQuadOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
         <!-- ────────────────────────────────────────────
              TOP-LEFT floating controls (back + mode info + toggle)
              Slim semi-transparent bar so it barely intrudes on the view
@@ -84,7 +90,61 @@
             android:layout_gravity="end"
             android:background="#88000000"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+
+            <!-- Auto / Manual mode toggle -->
+            <Button
+                android:id="@+id/autoToggleBtn"
+                android:layout_width="68dp"
+                android:layout_height="32dp"
+                android:text="AUTO"
+                android:textSize="11sp"
+                android:padding="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:backgroundTint="#444CAF50"
+                android:textColor="#FFFFFF"
+                style="@style/Widget.MaterialComponents.Button.TextButton"/>
+
+            <!-- Bulk-scan toggle -->
+            <Button
+                android:id="@+id/bulkToggleBtn"
+                android:layout_width="68dp"
+                android:layout_height="32dp"
+                android:layout_marginTop="4dp"
+                android:text="BULK"
+                android:textSize="11sp"
+                android:padding="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:backgroundTint="#44607D8B"
+                android:textColor="#FFFFFF"
+                style="@style/Widget.MaterialComponents.Button.TextButton"/>
+
+            <!-- Captured page count chip (visible in bulk mode) -->
+            <TextView
+                android:id="@+id/pageCountChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="#CC000000"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:text="0 pages"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+            <!-- Spacer pushes shutter to vertical centre -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
 
             <!-- Shutter ring + button -->
             <FrameLayout
@@ -107,13 +167,34 @@
             </FrameLayout>
 
             <TextView
+                android:id="@+id/shutterHint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="Tap"
+                android:text="Auto"
                 android:textColor="#AAFFFFFF"
                 android:textSize="11sp"
                 android:gravity="center"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <!-- Done button — visible when bulk session has captured ≥1 page -->
+            <Button
+                android:id="@+id/doneBtn"
+                android:layout_width="68dp"
+                android:layout_height="40dp"
+                android:text="DONE"
+                android:textSize="12sp"
+                android:padding="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:backgroundTint="#4CAF50"
+                android:textColor="#FFFFFF"
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.Button"/>
 
         </LinearLayout>
 

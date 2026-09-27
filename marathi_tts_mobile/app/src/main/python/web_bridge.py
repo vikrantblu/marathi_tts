@@ -278,16 +278,49 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
             cleaned_text = f"{title}\n\n{cleaned_text}"
 
         # Image OCR — skipped on mobile (PIL/pytesseract unavailable)
+        # Instead, extract alt text + captions and return image URLs for
+        # Kotlin-side ML Kit OCR.
         image_texts = []
+        image_urls = []
+        _has_pil = False
         try:
             import PIL  # noqa: F401
             _has_pil = True
         except ImportError:
-            _has_pil = False
+            pass
+
+        img_tags = soup.find_all("img", src=True)
+        for img_tag in img_tags[:10]:
+            # Collect alt text and title attributes
+            alt = (img_tag.get("alt") or "").strip()
+            img_title = (img_tag.get("title") or "").strip()
+            if alt and len(alt) > 5:
+                image_texts.append(alt)
+            elif img_title and len(img_title) > 5:
+                image_texts.append(img_title)
+
+            # Collect full image URLs for Kotlin-side OCR
+            src = img_tag["src"]
+            if not src.startswith("http"):
+                from urllib.parse import urljoin
+                src = urljoin(url, src)
+            # Skip tiny icons/UI images (common patterns)
+            width = img_tag.get("width", "")
+            height = img_tag.get("height", "")
+            if width and width.isdigit() and int(width) < 50:
+                continue
+            if height and height.isdigit() and int(height) < 50:
+                continue
+            image_urls.append(src)
+
+        # Extract figcaption text
+        for fig in soup.find_all("figcaption"):
+            cap = fig.get_text(strip=True)
+            if cap and len(cap) > 5:
+                image_texts.append(cap)
+
         if process_images and _has_pil:
-            img_tags = soup.find_all("img", src=True)[:5]
-            log.info("Processing %d images for OCR", len(img_tags))
-            for img_tag in img_tags:
+            for img_tag in img_tags[:5]:
                 ocr_text = _ocr_image_url(img_tag["src"], url)
                 if ocr_text and len(ocr_text) > 20:
                     image_texts.append(ocr_text)
@@ -295,11 +328,12 @@ def fetch_url(url: str, process_images: bool = True) -> dict:
         if image_texts:
             cleaned_text += "\n\n[Image Text]\n" + "\n".join(image_texts)
 
-        log.info("=== fetch_url DONE | chars=%d img_texts=%d elapsed=%.2fs ===",
-                 len(cleaned_text), len(image_texts), time.time() - t0)
+        log.info("=== fetch_url DONE | chars=%d img_texts=%d images=%d elapsed=%.2fs ===",
+                 len(cleaned_text), len(image_texts), len(image_urls), time.time() - t0)
         return {
             "success": True, "text": cleaned_text, "title": title,
             "image_texts_count": len(image_texts),
+            "image_urls": image_urls,
             "char_count": len(cleaned_text),
             "elapsed_sec": round(time.time() - t0, 2),
         }

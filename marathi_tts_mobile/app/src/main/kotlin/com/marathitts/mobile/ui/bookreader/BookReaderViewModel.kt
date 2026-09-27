@@ -117,6 +117,51 @@ class BookReaderViewModel(app: Application) : AndroidViewModel(app) {
         else processBookSpread(path, append = false)
     }
 
+    /**
+     * Process several already-deskewed page JPEGs in sequence.  Each page is
+     * fed through [BookPageProcessor.processSinglePage] (the camera activity
+     * already split book spreads into separate left/right pages, so spread
+     * mode is irrelevant here).  Pages are appended one-by-one with status
+     * updates so the user sees real-time progress.
+     */
+    fun processMultiplePages(imagePaths: List<String>, append: Boolean = false) {
+        if (imagePaths.isEmpty()) return
+        val current = _state.value ?: BookReaderState()
+        _state.value = current.copy(
+            isProcessing = true, error = null,
+            lastCapturedImagePath = imagePaths.last(),
+            status = "Processing 0 of ${imagePaths.size}…"
+        )
+        viewModelScope.launch {
+            var doAppend = append
+            for ((idx, path) in imagePaths.withIndex()) {
+                try {
+                    val result = withContext(Dispatchers.IO) {
+                        val bitmap = BitmapFactory.decodeFile(path)
+                            ?: throw IllegalArgumentException("Could not load $path")
+                        try { BookPageProcessor.processSinglePage(bitmap) }
+                        finally { bitmap.recycle() }
+                    }
+                    applyOcrResult(result, doAppend)
+                    doAppend = true   // subsequent pages always append
+                    val cur = _state.value ?: BookReaderState()
+                    _state.value = cur.copy(
+                        isProcessing = idx < imagePaths.lastIndex,
+                        status = "Processed ${idx + 1} of ${imagePaths.size}"
+                    )
+                } catch (e: Exception) {
+                    val cur = _state.value ?: BookReaderState()
+                    _state.value = cur.copy(
+                        isProcessing = false,
+                        error = e.message,
+                        status = "Error on page ${idx + 1}: ${e.message ?: "failed"}"
+                    )
+                    return@launch
+                }
+            }
+        }
+    }
+
     private fun applyOcrResult(result: BookPageProcessor.BookReadResult, append: Boolean) {
         val current = _state.value ?: BookReaderState()
         if (result.mergedText.isBlank()) {

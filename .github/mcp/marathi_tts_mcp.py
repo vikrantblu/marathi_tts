@@ -14,7 +14,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent  # d:\marathi_tts
+ROOT = Path(__file__).resolve().parent.parent.parent  # repository root
 
 # ── MCP protocol helpers ────────────────────────────────────────────────────
 

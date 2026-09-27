@@ -10,7 +10,7 @@
 
 Your project is **remarkably well-built**. You have:
 
-- A shared Python phonetic core ([marathi_phonetics.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/marathi_phonetics.py), [sandhi_engine.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/sandhi_engine.py), [metre_engine.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py), [prosody_engine.py](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py)) across all 3 platforms
+- A shared Python phonetic core ([marathi_phonetics.py](marathi_tts_web/tts/utils/phonetic/marathi_phonetics.py), [sandhi_engine.py](marathi_tts_web/tts/utils/phonetic/sandhi_engine.py), [metre_engine.py](marathi_tts_web/tts/utils/phonetic/metre_engine.py), [prosody_engine.py](marathi_tts_web/tts/utils/audio/prosody_engine.py)) across all 3 platforms
 - Three distinct phonetic modes: **Modern Marathi**, **Sanskrit/Stotra**, and **Old Marathi** (Dnyaneshwari/Sant literature)
 - Metre-aware prosody (12 metres in catalogue) with per-metre rate, pauses, and pitch contour
 - Grammar engine with 90+ spelling fixes, sandhi, vibhakti, word order
@@ -50,7 +50,7 @@ The suggestions below are **enhancements on top of an already solid foundation**
 
 ### 4. ✅ SHIPPED — MetreEngine Gaṇa Pattern Matching + New Metres
 
-**Problem**: The syllabic metre matching ([_match_syllabic_metre](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py#496-527)) uses average syllable count across all lines with ±2 tolerance. This works for homogeneous texts but **misidentifies mixed-metre stotras** (e.g., a stotra that opens with Anushtubh and switches to Shardula-vikridita). It also can't distinguish:
+**Problem**: The syllabic metre matching ([_match_syllabic_metre](marathi_tts_web/tts/utils/phonetic/metre_engine.py#496-527)) uses average syllable count across all lines with ±2 tolerance. This works for homogeneous texts but **misidentifies mixed-metre stotras** (e.g., a stotra that opens with Anushtubh and switches to Shardula-vikridita). It also can't distinguish:
 
 - **Indravajra** (11 syllables, pattern: ¯¯⌣¯¯⌣⌣¯⌣¯¯) from **Trishtubh** (also 11 syllables but different gaṇa pattern)
 - **Upajati** (mixed Indravajra + Vamshastha) from Trishtubh
@@ -63,7 +63,7 @@ The suggestions below are **enhancements on top of an already solid foundation**
 
 ### 5. ✅ SHIPPED — Sandhi Engine Missing Key Rules
 
-**Problem**: The [SandhiEngine](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/sandhi_engine.py#254-408) handles avagraha, visarga+vowel, and anusvara+sibilant, but misses:
+**Problem**: The [SandhiEngine](marathi_tts_web/tts/utils/phonetic/sandhi_engine.py#254-408) handles avagraha, visarga+vowel, and anusvara+sibilant, but misses:
 
 | Missing Rule                              | Example                                                       | Impact                                     |
 | ----------------------------------------- | ------------------------------------------------------------- | ------------------------------------------ |
@@ -75,15 +75,15 @@ The suggestions below are **enhancements on top of an already solid foundation**
 
 ### 6. ✅ SHIPPED — Yati (Caesura) Pauses Implemented
 
-**Problem**: [MetreDefinition](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py#153-170) has a [pause_yati_ms](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py#325-328) field (e.g., 200ms for Anushtubh, 280ms for Mandakranta), and the [apply_to_segments()](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py#419-448) method references it, but **no code actually inserts yati pauses within a pāda**. The pause is only applied at danda (।) and double-danda (॥) boundaries.
+**Problem**: [MetreDefinition](marathi_tts_web/tts/utils/phonetic/metre_engine.py#153-170) has a [pause_yati_ms](marathi_tts_web/tts/utils/phonetic/metre_engine.py#325-328) field (e.g., 200ms for Anushtubh, 280ms for Mandakranta), and the [apply_to_segments()](marathi_tts_web/tts/utils/phonetic/metre_engine.py#419-448) method references it, but **no code actually inserts yati pauses within a pāda**. The pause is only applied at danda (।) and double-danda (॥) boundaries.
 
-**Recommendation**: In [_segment_verse_block()](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#194-261), detect the yati position within each pāda based on the detected metre:
+**Recommendation**: In [_segment_verse_block()](marathi_tts_web/tts/utils/audio/prosody_engine.py#194-261), detect the yati position within each pāda based on the detected metre:
 
 - **Anushtubh**: yati after syllable 4 (the pāda's rhythmic pivot)
 - **Mandākrāntā**: yati after syllables 4, 6, 7 (three caesurae!)
 - **Shārdūlavikrīḍita**: yati after syllables 12, 7
 
-Insert [TextSegment](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#43-54) splits at yati points with [pause_yati_ms](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py#325-328) silence. This is what makes human recitation sound musical vs. robotic.
+Insert [TextSegment](marathi_tts_web/tts/utils/audio/prosody_engine.py#43-54) splits at yati points with [pause_yati_ms](marathi_tts_web/tts/utils/phonetic/metre_engine.py#325-328) silence. This is what makes human recitation sound musical vs. robotic.
 
 ### 7. ✅ SHIPPED — Old Marathi Ovi: Rhythmic Pulse
 
@@ -94,7 +94,7 @@ Insert [TextSegment](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/pros
 - Lines 1-3: `tts_rate=0.82`, `pause_after_ms=400ms` (flowing, musical)
 - Line 4 (cadence): `tts_rate=0.75`, `pause_after_ms=800ms` (slow, conclusive)
 - Between stanzas: `pause_after_ms=1200ms` with pitch reset
-- The rhyme group detection ([_find_rhyme_groups](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py#532-555)) already finds lines 1-3 — use this to identify the cadence line
+- The rhyme group detection ([_find_rhyme_groups](marathi_tts_web/tts/utils/phonetic/metre_engine.py#532-555)) already finds lines 1-3 — use this to identify the cadence line
 
 ---
 
@@ -118,7 +118,7 @@ Insert [TextSegment](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/pros
 </speak>
 ```
 
-This would give **native neural-quality** prosody instead of pydub resampling artifacts. The [TextSegment](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#43-54) dataclass already has all the fields needed (`pause_after_ms`, `tts_rate`, `pitch_shift`, [emphasis](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#409-428)).
+This would give **native neural-quality** prosody instead of pydub resampling artifacts. The [TextSegment](marathi_tts_web/tts/utils/audio/prosody_engine.py#43-54) dataclass already has all the fields needed (`pause_after_ms`, `tts_rate`, `pitch_shift`, [emphasis](marathi_tts_web/tts/utils/audio/prosody_engine.py#409-428)).
 
 ### 9. ✅ SHIPPED — Emotion-Adaptive Voice Connected to Verse Mode
 
@@ -137,13 +137,13 @@ This would give **native neural-quality** prosody instead of pydub resampling ar
 
 **Problem**: The feature matrix shows `Stotra library: ✅ Desktop, ✅ (text) Mobile`. Desktop has pre-recorded audio files in `stotras/` directory that the bridge matches via fingerprinting. Mobile only has the text catalog — no pre-recorded playback.
 
-**Recommendation**: Bundle the same pre-recorded stotra audio files into the mobile APK's `assets/stotras/` directory. The fingerprint matching logic already exists in [tts_bridge.py](file:///d:/marathi_tts/marathi_tts_desktop/python_bridge/tts_bridge.py) — it just needs the audio files.
+**Recommendation**: Bundle the same pre-recorded stotra audio files into the mobile APK's `assets/stotras/` directory. The fingerprint matching logic already exists in [tts_bridge.py](marathi_tts_desktop/python_bridge/tts_bridge.py) — it just needs the audio files.
 
 ### 11. ✅ SHIPPED — Pitch Contour Implemented
 
-**Problem**: [MetreDefinition](file:///d:/marathi_tts/marathi_tts_web/tts/utils/phonetic/metre_engine.py#153-170) has `pitch_contour` field (`'rising'`, `'falling'`, `'wave'`, `'level'`) and [TextSegment](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#43-54) has `pitch_shift`, but nothing connects them. The pitch contour is **documented but not applied** — all segments get `pitch_shift=0.0`.
+**Problem**: [MetreDefinition](marathi_tts_web/tts/utils/phonetic/metre_engine.py#153-170) has `pitch_contour` field (`'rising'`, `'falling'`, `'wave'`, `'level'`) and [TextSegment](marathi_tts_web/tts/utils/audio/prosody_engine.py#43-54) has `pitch_shift`, but nothing connects them. The pitch contour is **documented but not applied** — all segments get `pitch_shift=0.0`.
 
-**Recommendation**: Implement pitch contour application in [_apply_metre_prosody()](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#148-182):
+**Recommendation**: Implement pitch contour application in [_apply_metre_prosody()](marathi_tts_web/tts/utils/audio/prosody_engine.py#148-182):
 
 - `'wave'`: Segments 1,3,5... get `+0.5st`, segments 2,4,6... get `-0.5st` (gentle wave)
 - `'falling'`: Progressive `-0.3st` per segment within a stanza (natural verse descent)
@@ -193,13 +193,13 @@ with ~70 rule-based suffix rules (all platforms) + optional Morfessor model for 
 
 ### 15. ✅ SHIPPED — Chandrabindu Nasalization via Edge-TTS Volume
 
-**Problem**: In [apply_old_marathi_phonetics()](file:///d:/marathi_tts/marathi_tts_desktop/python_bridge/tts_bridge.py#76-77), chandrabindu (ँ) and anusvara (ं) are both preserved — which is correct. But the **documentation notes** that chandrabindu is "lighter nasalization" without any actual TTS difference. gTTS treats them identically.
+**Problem**: In [apply_old_marathi_phonetics()](marathi_tts_desktop/python_bridge/tts_bridge.py#76-77), chandrabindu (ँ) and anusvara (ं) are both preserved — which is correct. But the **documentation notes** that chandrabindu is "lighter nasalization" without any actual TTS difference. gTTS treats them identically.
 
 **Recommendation**: For edge-tts (which supports SSML), chandrabindu syllables could get a `<prosody volume="-3dB">` wrapper to simulate lighter nasalization. Minor but adds authenticity for Old Marathi poetry.
 
-### 16. Dead Code in [_segment_verse_block()](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#194-261)
+### 16. Dead Code in [_segment_verse_block()](marathi_tts_web/tts/utils/audio/prosody_engine.py#194-261)
 
-**Problem**: In [prosody_engine.py:251-260](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#L251-L260), there is unreachable code after `return segments` on line 249. Steps 4 and 5 (speaking rate scaling, emphasis marking) are dead code inside [_segment_verse_block()](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#194-261) — they already run in the parent [segment_text()](file:///d:/marathi_tts/marathi_tts_web/tts/utils/audio/prosody_engine.py#69-143) method.
+**Problem**: In [prosody_engine.py:251-260](marathi_tts_web/tts/utils/audio/prosody_engine.py#L251-L260), there is unreachable code after `return segments` on line 249. Steps 4 and 5 (speaking rate scaling, emphasis marking) are dead code inside [_segment_verse_block()](marathi_tts_web/tts/utils/audio/prosody_engine.py#194-261) — they already run in the parent [segment_text()](marathi_tts_web/tts/utils/audio/prosody_engine.py#69-143) method.
 
 **Recommendation**: Remove lines 251-260 to clean up the dead code.
 

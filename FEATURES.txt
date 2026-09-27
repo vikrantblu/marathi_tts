@@ -51,10 +51,10 @@ Track feature requests and shipped features here.
 - FEAT-56 Batch stotra playlist: select multiple -> generate all -> play in order — SHIPPED
   Long-press enters playlist mode. Multi-select with checkboxes. Batch TTS generation
   with progress bar. Sequential playback via AudioPlayerService.playQueueAsync().
-- FEAT-57 Marathi accent profiles (9 Maharashtra regional accents) — SHIPPED (v4.1.0+)
-  Expanded from 5 generic to 9 region-specific profiles: Standard, Mumbai, Pune,
-  Kolhapuri, Vidarbha, Malvani, Marathwada, Khandeshi, Konkan. Offsets increased
-  to 10-18% for audible difference. needs_fx threshold lowered to >0.01.
+- FEAT-57 Marathi accent profiles (9 Maharashtra regional accents) — REMOVED
+  Accent profiles only worked with gTTS/edge-tts (Python bridge). With SystemTtsEngine
+  fallback (Android native), the accent parameter was completely ignored. UI removed;
+  Python code kept dormant for future re-enablement when edge-tts becomes primary.
 - FEAT-58 Smart text clipping: NLP-aware breakpoints for long texts — SHIPPED
   Real-time clip preview in InputFragment when text exceeds 250 chars. Shows segment
   count and first 6 segment previews. Same splitting logic as streaming generation.
@@ -181,6 +181,32 @@ Track feature requests and shipped features here.
 - FEAT-82 ✅ Back-nav dialog: OnBackPressedCallback shows MaterialAlertDialog when audio is
   playing with 3 options: "Stop & Go Back", "Keep Playing", "Cancel". Prevents accidental
   audio interruption when navigating away.
+
+### BookReader Scanner Overhaul (FEAT-83)
+- FEAT-83 ✅ OSS-inspired pure-Kotlin book scanner. NO new dependencies, NO cloud APIs.
+  - Live edge detection: per-frame quad detection on CameraX ImageAnalysis
+    (LiveEdgeDetector, 640×480 thumbnails, STRATEGY_KEEP_ONLY_LATEST).
+  - Live HUD: LiveQuadOverlayView draws quad outline + corner dots + countdown ring +
+    status pill (IDLE/ADJUSTING/STABLE/WARNING colour states).
+  - Frame quality gating: FrameQualityAnalyzer rejects blurry frames (Laplacian
+    variance < 60) and glare-saturated frames (>3% pixels at luminance 245+).
+  - Auto-capture: BulkScanController state machine (IDLE → ADJUSTING → STABLE_HOLDING
+    → FIRING → POST_CAPTURE_HOLD → AWAITING_PAGE_CHG) with 800 ms stable hold +
+    1200 ms post-capture lockout. Toggle AUTO ↔ MANUAL via shutter-panel button.
+  - Bulk-scan mode: BULK toggle keeps the camera open across many pages, accumulates
+    captured page JPEGs, shows a page-count chip + Done button. Page-change detection
+    uses centre-shift fraction or brightness delta after each capture.
+  - Sobel edge refinement: PageEdgeDetector.refineWithSobel() snaps each detected
+    edge to the strongest gradient ridge within ±5% of the projection peak (3×3
+    Gx/Gy kernels). Adds +0.10 confidence bonus when snap succeeds.
+  - Auto-split spreads: when isSpreadMode and the deskewed bitmap is wider than
+    tall, BookCameraActivity splits at the midpoint into separate L + R JPEGs.
+  - Multi-page return: BookCameraActivity now sets EXTRA_IMAGE_PATHS (ArrayList) in
+    addition to the legacy single EXTRA_IMAGE_PATH; BookReaderViewModel gains
+    processMultiplePages() that walks pages sequentially with status updates.
+  - PDF export: BookPdfBuilder writes captured pages to A4 PDF (24 pt margins,
+    fit-aspect-ratio centring) into Downloads/MarathiTTS via MediaStore (Q+) or
+    legacy Environment path. Offered via Snackbar action after multi-page capture.
 
 ## Shipped — v1.0.0 (2026-02)
 

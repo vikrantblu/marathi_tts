@@ -1,7 +1,8 @@
-import sys, io, re, unicodedata
+import sys, io, os, re, unicodedata
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-with open(r'd:\marathi_tts\marathi_tts_mobile\app\src\main\assets\stotras\vishnu_sahasranama.txt', encoding='utf-8') as f:
+_BASE = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(_BASE, 'marathi_tts_mobile', 'app', 'src', 'main', 'assets', 'stotras', 'vishnu_sahasranama.txt'), encoding='utf-8') as f:
     lines = f.readlines()
 
 ok_chars = set(' \t\n.,;:?!-()[]{}|/\\"') | {'\u2019','\u2018','\u201c','\u201d'}

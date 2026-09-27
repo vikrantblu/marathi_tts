@@ -1,6 +1,25 @@
 param([switch]$Dump)
 
-$adb = "C:\Users\vikra\AppData\Local\Android\Sdk\platform-tools\adb.exe"
+# Locate ADB dynamically
+$adb = (Get-Command adb -ErrorAction SilentlyContinue)?.Source
+if (-not $adb) {
+    $sdkCandidates = @(
+        $env:ANDROID_HOME,
+        $env:ANDROID_SDK_ROOT,
+        $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA "Android\Sdk" }),
+        $(if ($env:SystemDrive) { "$env:SystemDrive\Android\Sdk" }),
+        "~/Android/Sdk"
+    )
+    foreach ($cand in $sdkCandidates) {
+        if ($cand -and (Test-Path $cand)) {
+            $candidateExe = Join-Path $cand "platform-tools\adb.exe"
+            if (Test-Path $candidateExe) { $adb = $candidateExe; break }
+            $candidateUnix = Join-Path $cand "platform-tools/adb"
+            if (Test-Path $candidateUnix) { $adb = $candidateUnix; break }
+        }
+    }
+}
+if (-not $adb) { $adb = "adb" }
 
 # Live-tail our app's logs only (filtered by tag).
 # Press Ctrl+C to stop.

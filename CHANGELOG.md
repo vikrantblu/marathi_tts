@@ -23,6 +23,77 @@ Versions follow [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH` 
 ## [Unreleased]
 <!-- Changes staged but not yet released go here -->
 ### Added
+- **FEAT-83 BookReader Scanner Overhaul (OSS-inspired, pure Kotlin, no APIs)**:
+  - Live edge detection with CameraX `ImageAnalysis` (`LiveEdgeDetector` on 640×480
+    thumbnails, `STRATEGY_KEEP_ONLY_LATEST`).
+  - `LiveQuadOverlayView` HUD: quad outline + corner dots + countdown ring + status
+    pill with IDLE / ADJUSTING / STABLE / WARNING colour states.
+  - Frame-quality gating: `FrameQualityAnalyzer` rejects blurry frames (Laplacian
+    variance < 60) and glare-saturated frames.
+  - Auto-capture state machine: `BulkScanController` with 800 ms stability hold,
+    1200 ms post-capture lockout, page-change detection by centre shift / brightness
+    delta. AUTO ↔ MANUAL toggle.
+  - Bulk-scan mode: BULK toggle keeps the camera open across many pages, accumulates
+    captured page JPEGs, shows a page-count chip + Done button.
+  - Sobel edge refinement: `PageEdgeDetector.refineWithSobel()` snaps each detected
+    edge to the strongest gradient ridge within ±5% of the projection peak.
+  - Auto-split spreads: when in spread mode and the deskewed bitmap is wider than
+    tall, `BookCameraActivity` splits at the midpoint into separate L + R JPEGs.
+  - Multi-page return: new `EXTRA_IMAGE_PATHS` (ArrayList) extra and
+    `BookReaderViewModel.processMultiplePages()` for sequential OCR with progress.
+  - PDF export: new `BookPdfBuilder` writes captured pages to A4 PDF (24 pt
+    margins, fit-aspect-ratio centring) into `Downloads/MarathiTTS` via MediaStore
+    (Q+) or legacy Environment path. Offered via Snackbar after multi-page capture.
+
+### Fixed
+- **True Streaming Playback**: Playback now starts after the first chunk is generated
+  instead of waiting for ALL chunks. Uses progressive queue: AudioPlayerService plays
+  chunks as they arrive; if the next chunk isn't ready yet, waits 300ms and retries.
+- **ENOENT Prevention**: File existence check (`File.exists()`) before adding paths
+  to the streaming queue. System TTS timeout no longer causes missing-file errors.
+- **System TTS Preprocessing**: Strip zero-width characters (ZWNJ, ZWJ, ZWSP, BOM)
+  before passing text to Android's built-in TextToSpeech. Prevents potential
+  mispronunciation from invisible Unicode characters.
+- **Sentence-Chunk Index Mapping**: Streaming playback now tracks which audio chunk
+  maps to which sentence. Failed chunks are skipped without misaligning highlights.
+- **BUG-69 Phase 2**: ज→ज्य / च→च्य y-glide persisted after ZWNJ removal because it
+  was intrinsic to the mr-IN neural voice. Switched edge-tts voice map for Marathi from
+  mr-IN-AarohiNeural/ManoharNeural to hi-IN-SwaraNeural/MadhurNeural. Hindi voices
+  handle Devanagari without the palatalization y-glide. Also fixes male voice quality
+  (BUG-49) — hi-IN-MadhurNeural is a proper masculine voice.
+- **apply_edge_tts_fixes()**: Added defensive ZWNJ/ZWJ/ZWS stripping so no zero-width
+  characters ever reach the edge-tts neural model.
+
+### Changed
+- **Share-to-App auto-generate**: URLs shared from Chrome now auto-fetch content and
+  auto-generate TTS with zero taps — no more "Send to TTS" + "Generate" double-tap.
+- **Web fetch image OCR**: web_bridge.py now extracts image alt/title text and figcaption
+  elements, and returns image URLs. WebFetchViewModel automatically downloads and runs
+  ML Kit OCR on images when extracted text is minimal (< 100 chars). Fixes extraction of
+  blogspot posts that contain Marathi text as images.
+- **Output screen complete redesign**: Replaced prosody segment cards and technical
+  details with a single full-text view that highlights the active sentence during
+  playback. Auto-scrolls to keep the highlighted sentence visible. Removed emotion
+  intensity slider, speed slider, export button, prosody preview RecyclerView, and
+  phonetic explainer dialog.
+- **Tab-based navigation**: InputFragment now triggers generation via activity-scoped
+  OutputViewModel and switches to the Output tab programmatically. Users can freely
+  switch between Input/Output/Me tabs without losing generation state.
+- **OutputViewModel** is now activity-scoped (`activityViewModels()`) — generation
+  state and audio chunks survive tab switches.
+
+### Removed
+- **FEAT-57**: Removed accent profile UI chips from Input screen. The 9 regional accent
+  profiles (Standard, Mumbai, Pune, Kolhapuri, etc.) only worked with gTTS/edge-tts but
+  were silently ignored by Android's native SystemTtsEngine fallback. Python backend code
+  kept dormant for future re-enablement.
+
+### Fixed
+- **Streaming playback highlighting**: Added fallback prosody segments when Python
+  `analyze_prosody()` fails (e.g. with SystemTtsEngine), so the prosody preview card
+  always appears during streaming playback and segment highlighting works.
+
+### Added
 - **FEAT-81**: Persistent mini-player bar — activity-scoped PlaybackViewModel holds
   AudioPlayerService so audio playback survives tab switches. Mini-player bar with title
   marquee, play/pause, and stop buttons appears between NavHostFragment and BottomNav.

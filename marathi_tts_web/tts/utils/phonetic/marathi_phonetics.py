@@ -942,6 +942,12 @@ def apply_edge_tts_fixes(text: str) -> str:
     if not text:
         return text
 
+    # ── 0. Strip all zero-width characters (ZWNJ/ZWJ/ZWS) ──────────
+    # Edge-tts neural model treats these as tokenisation boundaries
+    # causing y-glide mispronunciation (ज→ज्य, च→च्य).  Defensive
+    # measure — even if upstream removes them, ensure none slip through.
+    text = text.replace('\u200C', '').replace('\u200D', '').replace('\u200B', '')
+
     # ── 1. Matra + anusvara → chandrabindu at word boundaries ────────
     # Broader pattern: matches matra+anusvara when followed by anything
     # that is NOT a Devanagari letter/matra/conjunct character OR at

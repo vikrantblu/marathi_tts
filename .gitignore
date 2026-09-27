@@ -187,15 +187,35 @@ keystore.properties
 
 # Android / Gradle build cache — never commit these
 .gradle/
+**/.gradle/
 marathi_tts_mobile/.gradle/
 marathi_tts_desktop/.gradle/
 **/build/
+bin/
+**/bin/
+marathi_tts_desktop/bin/
 local.properties
+**/local.properties
 
-# Audio data and recordings (large binary files)
+# Audio data, recordings, and generated outputs (large binary files)
 data/processed/
 data/piper_dataset/
 recordings/
+marathi_tts_desktop/python_bridge/output/*.mp3
+marathi_tts_desktop/python_bridge/output/*.wav
+*.mp3
+*.wav
+
+# Runtime and device logs
+logcat*.txt
+crash_log*.txt
+recent_logcat*.txt
+test_run_*.log
+
+# Backup and temp files
+*.bak
+*.bak.*
+temp_*
 
 # Leftover icon generation files
 generate_app_icon.py

@@ -69,12 +69,12 @@ gradlew.bat run
 ### Set project root (optional but recommended)
 
 The desktop app has a **"Project root"** field at the top.  Set it to the path of the `marathi_tts`
-Django project (e.g. `D:\marathi_tts`).  This lets the bridge scripts import the full TTS engine
+repository (e.g. `C:\path\to\marathi_tts` or `/path/to/marathi_tts`).  This lets the bridge scripts import the full TTS engine
 for highest quality output.  If left blank, the bridges fall back to gTTS + lightweight utilities.
 
 Alternatively set the environment variable before launching:
 ```bash
-set MARATHI_TTS_PROJECT_ROOT=D:\marathi_tts   # Windows
+set MARATHI_TTS_PROJECT_ROOT=C:\path\to\marathi_tts   # Windows
 export MARATHI_TTS_PROJECT_ROOT=/path/to/marathi_tts  # Linux/macOS
 ```
 

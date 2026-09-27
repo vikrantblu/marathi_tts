@@ -10,17 +10,20 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import com.marathitts.mobile.MainActivity
 import com.marathitts.mobile.R
 import com.marathitts.mobile.databinding.FragmentInputBinding
+import com.marathitts.mobile.ui.output.OutputViewModel
 import com.marathitts.mobile.util.AppPreferences
 
 class InputFragment : Fragment() {
 
     private var _binding: FragmentInputBinding? = null
     private val binding get() = _binding!!
+    private val outputViewModel: OutputViewModel by activityViewModels()
     private var optionsExpanded = true
-    private var selectedAccent = "standard"
     private var selectedGender = "female"
 
     companion object {
@@ -45,7 +48,6 @@ class InputFragment : Fragment() {
         setupGenerateButton()
         setupOptionsToggle()
         setupSmartClipPreview()
-        setupAccentChips()
         setupGenderChips()
 
         // Accept text passed from other screens (Correction, Emotion, History, Modi, Stotra)
@@ -67,12 +69,17 @@ class InputFragment : Fragment() {
         }
 
         // Accept text returned from child screens (OCR, PDF, Web, STT, BookReader)
-        findNavController().currentBackStackEntry
-            ?.savedStateHandle
-            ?.getLiveData<String>("extracted_text")
+        val savedState = findNavController().currentBackStackEntry?.savedStateHandle
+        savedState?.getLiveData<String>("extracted_text")
             ?.observe(viewLifecycleOwner) { text ->
                 if (text.isNotBlank()) {
                     binding.textInput.setText(text)
+                    // Auto-generate when text arrives from a share flow (e.g. URL shared from Chrome)
+                    val autoGen = savedState.get<Boolean>("auto_generate_extracted") == true
+                    if (autoGen) {
+                        savedState.remove<Boolean>("auto_generate_extracted")
+                        binding.root.post { binding.btnGenerate.performClick() }
+                    }
                 }
             }
     }
@@ -143,14 +150,9 @@ class InputFragment : Fragment() {
             val langCode = if (rawCode == "auto") detectLanguage(text) else rawCode
             val isVerse = binding.switchVerse.isChecked
 
-            val bundle = Bundle().apply {
-                putString("input_text", text)
-                putString("language", langCode)
-                putBoolean("is_verse", isVerse)
-                putString("accent", selectedAccent)
-                putString("gender", selectedGender)
-            }
-            findNavController().navigate(R.id.action_input_to_output, bundle)
+            // Generate via activity-scoped ViewModel and switch to Output tab
+            outputViewModel.requestGeneration(text, langCode, isVerse, selectedGender)
+            (requireActivity() as? MainActivity)?.selectOutputTab()
         }
     }
 
@@ -161,38 +163,6 @@ class InputFragment : Fragment() {
             binding.btnOptionsToggle.setIconResource(
                 if (optionsExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more
             )
-        }
-    }
-
-    /** FEAT-57: Accent profile chip wiring (moved from OutputFragment). */
-    private fun setupAccentChips() {
-        val chipToAccent = mapOf(
-            R.id.chip_accent_standard to "standard",
-            R.id.chip_accent_mumbai to "mumbai",
-            R.id.chip_accent_pune to "pune",
-            R.id.chip_accent_kolhapuri to "kolhapuri",
-            R.id.chip_accent_vidarbha to "vidarbha",
-            R.id.chip_accent_malvani to "malvani",
-            R.id.chip_accent_marathwada to "marathwada",
-            R.id.chip_accent_khandeshi to "khandeshi",
-            R.id.chip_accent_konkan to "konkan"
-        )
-        val accentToDesc = mapOf(
-            "standard" to R.string.accent_standard_desc,
-            "mumbai" to R.string.accent_mumbai_desc,
-            "pune" to R.string.accent_pune_desc,
-            "kolhapuri" to R.string.accent_kolhapuri_desc,
-            "vidarbha" to R.string.accent_vidarbha_desc,
-            "malvani" to R.string.accent_malvani_desc,
-            "marathwada" to R.string.accent_marathwada_desc,
-            "khandeshi" to R.string.accent_khandeshi_desc,
-            "konkan" to R.string.accent_konkan_desc
-        )
-        binding.accentChips.setOnCheckedStateChangeListener { _, checkedIds ->
-            val chipId = checkedIds.firstOrNull() ?: R.id.chip_accent_standard
-            selectedAccent = chipToAccent[chipId] ?: "standard"
-            binding.accentDescription.text =
-                getString(accentToDesc[selectedAccent] ?: R.string.accent_standard_desc)
         }
     }
 
