@@ -4,7 +4,7 @@
 #   docker build -t marathi-tts-web .
 #   docker run -p 8000:8000 marathi-tts-web
 
-FROM python:3.11-slim AS base
+FROM python:3.14-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
